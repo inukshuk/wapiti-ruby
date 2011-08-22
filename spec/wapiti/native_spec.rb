@@ -11,5 +11,52 @@ module Wapiti
 
 		it { Native.should respond_to(:dump) }
 		
+		describe 'Options' do
+			
+			let(:options) { Native::Options.new }
+
+			it { Native::Options.should be_an_instance_of(Class) }
+			
+			it { options.should_not be nil }
+		
+			describe '#mode' do
+				it 'returns -1 by default' do
+					options.mode.should == -1
+				end
+			end
+
+			describe '#mode=' do
+				it 'sets the mode to the given value' do
+					lambda { options.mode = 1 }.should change { options.mode }.from(-1).to(1)
+				end
+			end
+
+
+			describe '#input' do
+				it 'returns an empty string by default' do
+					options.input.should == ''
+				end
+			end
+
+			describe '#input=' do
+				it 'sets the input string to the given value' do
+					lambda { options.input = 'foo' }.should change { options.input }.to('foo')
+				end
+			end
+
+			describe '#output' do
+				it 'returns an empty string by default' do
+					options.output.should == ''
+				end
+			end
+
+			describe '#output=' do
+				it 'sets the output string to the given value' do
+					lambda { options.output = 'foo' }.should change { options.output }.to('foo')
+				end
+			end
+			
+		end
+		
 	end
 end

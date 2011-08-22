@@ -10,6 +10,24 @@ module Wapiti
 		it { Native.should respond_to(:label) }
 
 		it { Native.should respond_to(:dump) }
+	
+		describe '.train' do
+			
+			let(:options) { Native::Options.new }
+
+			it 'should require an argument' do
+				expect { Native.train }.to raise_error(ArgumentError)
+			end
+
+			it 'should raise an error if argument is no options instance' do
+				expect { Native.train(0) }.to raise_error(NativeError)
+			end
+			
+			it 'should raise an error if options not set to training mode' do
+				expect { Native.train(options) }.not_to raise_error
+			end
+			
+		end
 		
 		describe 'Options' do
 			

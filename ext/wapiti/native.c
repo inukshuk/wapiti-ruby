@@ -4,21 +4,12 @@
 
 #include <ruby.h>
 
+VALUE mWapiti;
 VALUE mNative;
+
 VALUE cOptions;
+VALUE cNativeError;
 
-
-static void train() {
-	
-}
-
-static void label() {
-	
-}
-
-static void dump() {
-	
-}
 
 /* --- Options Class --- */
 
@@ -76,7 +67,7 @@ static VALUE options_mode(VALUE self) {
 static VALUE options_set_mode(VALUE self, VALUE rb_fixnum) {
 	opt_t* options = get_options(self);
 
-	Check_Type(rb_fixnum, T_FIXNUM);
+	FIXNUM_P(rb_fixnum);
 	options->mode = FIX2INT(rb_fixnum);
 	
 	return rb_fixnum;
@@ -112,7 +103,7 @@ void Init_options() {
 	rb_define_alloc_func(cOptions, allocate_options);
 	
 	rb_define_method(cOptions, "initialize", initialize_options, 0);
-	
+
 	rb_define_method(cOptions, "mode", options_mode, 0);
 	rb_define_method(cOptions, "mode=", options_set_mode, 1);
 
@@ -125,15 +116,58 @@ void Init_options() {
 }
 
 
-/* --- Entry Point --- */
+/* --- Top-Level Utility Methods --- */
+
+static VALUE train(VALUE self, VALUE rb_options) {
+
+	if (strncmp("Wapiti::Native::Options", rb_obj_classname(rb_options), 23) != 0) {
+		rb_raise(cNativeError, "argument must be a native options instance");
+	} 
+	
+	// Check_Type(rb_options, rb_intern("Wapiti::Native::Options"));
+	// opt_t* options = get_options(rb_options);
+
+	// Next we prepare the model
+	// mdl_t *mdl = mdl_new(rdr_new(opt.maxent));
+	// mdl->opt = opt;
+	
+	// if (options->mode != 0) {
+	// 	rb_raise(cNativeError, "invalid options argument: mode should be set to 0 for training");
+	// }
+	
+	// 	// And switch to requested mode
+	// 	switch (opt.mode) {
+	// 		case 0: dotrain(mdl); break;
+	// 		case 1: dolabel(mdl); break;
+	// 		case 2: dodump(mdl); break;
+	// 	}
+	// 	// And cleanup
+	// 	mdl_free(mdl);
+	
+	return Qnil;
+}
+
+static VALUE label(VALUE self, VALUE rb_options) {
+	return Qnil;
+}
+
+static VALUE dump(VALUE self, VALUE rb_options) {
+	return Qnil;	
+}
+
+
+
+/* --- Wapiti Extension Entry Point --- */
 
 void Init_native() {
-	VALUE mWapiti = rb_const_get(rb_mKernel, rb_intern("Wapiti"));
+	mWapiti = rb_const_get(rb_mKernel, rb_intern("Wapiti"));
 	mNative = rb_define_module_under(mWapiti, "Native");
 
-	rb_define_singleton_method(mNative, "train", train, 0);
-	rb_define_singleton_method(mNative, "label", label, 0);
-	rb_define_singleton_method(mNative, "dump", dump, 0);
+	cNativeError = rb_const_get(mWapiti, rb_intern("NativeError"));
+	
+	rb_define_singleton_method(mNative, "train", train, 1);
+	rb_define_singleton_method(mNative, "label", label, 1);
+	rb_define_singleton_method(mNative, "dump", dump, 1);
 	
 	rb_define_const(mNative, "VERSION", rb_str_new2(VERSION));
 	

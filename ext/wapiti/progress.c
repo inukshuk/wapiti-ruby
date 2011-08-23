@@ -91,7 +91,7 @@ void uit_setup(mdl_t *mdl) {
 		warning("failed to set signal handler, no clean early stop");
 	times(&mdl->timer);
 	if (mdl->opt->stopwin != 0)
-		mdl->werr = xmalloc(sizeof(double) * mdl->opt->stopwin);
+		mdl->werr = wapiti_xmalloc(sizeof(double) * mdl->opt->stopwin);
 	mdl->wcnt = mdl->wpos = 0;
 }
 

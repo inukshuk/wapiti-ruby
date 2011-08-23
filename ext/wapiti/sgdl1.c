@@ -104,7 +104,7 @@ void trn_sgdl1(mdl_t *mdl) {
 	// point to two lists of observations terminated by <none>, one for
 	// unigrams obss and one for bigrams obss.
 	info("    - Build the index\n");
-	sgd_idx_t *idx  = xmalloc(sizeof(sgd_idx_t) * S);
+	sgd_idx_t *idx  = wapiti_xmalloc(sizeof(sgd_idx_t) * S);
 	for (int s = 0; s < S; s++) {
 		const seq_t *seq = mdl->train->seq[s];
 		const int T = seq->len;
@@ -119,8 +119,8 @@ void trn_sgdl1(mdl_t *mdl) {
 		}
 		uobs[ucnt++] = none;
 		bobs[bcnt++] = none;
-		idx[s].uobs = xmalloc(sizeof(size_t) * ucnt);
-		idx[s].bobs = xmalloc(sizeof(size_t) * bcnt);
+		idx[s].uobs = wapiti_xmalloc(sizeof(size_t) * ucnt);
+		idx[s].bobs = wapiti_xmalloc(sizeof(size_t) * bcnt);
 		memcpy(idx[s].uobs, uobs, ucnt * sizeof(size_t));
 		memcpy(idx[s].bobs, bobs, bcnt * sizeof(size_t));
 	}
@@ -137,11 +137,11 @@ void trn_sgdl1(mdl_t *mdl) {
 	// time.
 	// We also need an aditional vector named <q> who hold the penalty
 	// already applied to each features.
-	int *perm = xmalloc(sizeof(int) * S);
+	int *perm = wapiti_xmalloc(sizeof(int) * S);
 	for (int s = 0; s < S; s++)
 		perm[s] = s;
-	double *g = xmalloc(sizeof(double) * F);
-	double *q = xmalloc(sizeof(double) * F);
+	double *g = wapiti_xmalloc(sizeof(double) * F);
+	double *q = wapiti_xmalloc(sizeof(double) * F);
 	for (size_t f = 0; f < F; f++)
 		g[f] = q[f] = 0.0;
 	// We can now start training the model, we perform the requested number

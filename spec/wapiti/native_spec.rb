@@ -24,7 +24,24 @@ module Wapiti
 			end
 			
 			it 'should raise an error if options not set to training mode' do
-				expect { Native.train(options) }.not_to raise_error
+				expect { Native.train(options) }.to raise_error(NativeError)
+			end
+			
+			context 'when given a valid configuration instance' do
+				
+				let(:model) { Tempfile.new('model') }
+				
+				before(:each) do
+					options.mode = 0
+					options.pattern = File.expand_path('../../fixtures/chpattern.txt', __FILE__)
+					options.input = File.expand_path('../../fixtures/chtrain.txt', __FILE__)
+					options.output = model.path
+				end
+				
+				it 'should not fail' do
+					expect { Native.train(options) }.not_to raise_error
+				end
+				
 			end
 			
 		end
@@ -50,30 +67,20 @@ module Wapiti
 			end
 
 
-			describe '#input' do
-				it 'returns an empty string by default' do
-					options.input.should == ''
+			%w{ input output pattern model algorithm }.each do |m|
+				describe "##{m}" do
+					it 'returns an empty string by default' do
+						options.send(m).should be_a(String)
+					end
 				end
-			end
 
-			describe '#input=' do
-				it 'sets the input string to the given value' do
-					lambda { options.input = 'foo' }.should change { options.input }.to('foo')
+				describe "##{m}=" do
+					it 'sets the input string to the given value' do
+						lambda { options.send("#{m}=", 'foo') }.should change { options.send(m) }.to('foo')
+					end
 				end
 			end
-
-			describe '#output' do
-				it 'returns an empty string by default' do
-					options.output.should == ''
-				end
-			end
-
-			describe '#output=' do
-				it 'sets the output string to the given value' do
-					lambda { options.output = 'foo' }.should change { options.output }.to('foo')
-				end
-			end
-			
+						
 		end
 		
 	end

@@ -7,5 +7,5 @@ Autotest.add_hook :initialize do |at|
 end
 
 Autotest.add_hook :run_command do |at|
-  system 'bundle exec rake clean compile'
+  system 'bundle exec rake compile'
 end

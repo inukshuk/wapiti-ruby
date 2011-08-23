@@ -34,6 +34,17 @@
 
 #include "tools.h"
 
+/*
+ * Wapiti Ruby Logging
+ *
+ * Wapiti-Ruby delegates all wapiti logging messages to a Ruby logger in the
+ * main Wapiti module.
+ *
+ */
+
+#include "native.h"
+
+
 /*******************************************************************************
  * Error handling and memory managment
  *
@@ -54,12 +65,14 @@
  */
 void fatal(const char *msg, ...) {
 	va_list args;
-	fprintf(stderr, "error: ");
 	va_start(args, msg);
-	vfprintf(stderr, msg, args);
+
+	VALUE message = rb_vsprintf(msg, args);
+
 	va_end(args);
-	fprintf(stderr, "\n");
-	exit(EXIT_FAILURE);
+	
+	(void)rb_funcall(cLogger, rb_intern("fatal"), 1, message);
+	rb_raise(cNativeError, StringValuePtr(message));
 }
 
 /* pfatal:
@@ -72,12 +85,15 @@ void fatal(const char *msg, ...) {
 void pfatal(const char *msg, ...) {
 	const char *err = strerror(errno);
 	va_list args;
-	fprintf(stderr, "error: ");
 	va_start(args, msg);
-	vfprintf(stderr, msg, args);
+
+	VALUE message = rb_vsprintf(msg, args);
+	rb_str_catf(message, ": <%s>", err);
+
 	va_end(args);
-	fprintf(stderr, "\n\t<%s>\n", err);
-	exit(EXIT_FAILURE);
+
+	(void)rb_funcall(cLogger, rb_intern("fatal"), 1, message);
+	rb_raise(cNativeError, StringValuePtr(message));
 }
 
 /* warning:
@@ -87,11 +103,11 @@ void pfatal(const char *msg, ...) {
  */
 void warning(const char *msg, ...) {
 	va_list args;
-	fprintf(stderr, "warning: ");
 	va_start(args, msg);
-	vfprintf(stderr, msg, args);
+
+	(void)rb_funcall(cLogger, rb_intern("warn"), 1, rb_vsprintf(msg, args));
+
 	va_end(args);
-	fprintf(stderr, "\n");
 }
 
 /* info:
@@ -103,15 +119,17 @@ void warning(const char *msg, ...) {
 void info(const char *msg, ...) {
 	va_list args;
 	va_start(args, msg);
-	vfprintf(stderr, msg, args);
+
+	(void)rb_funcall(cLogger, rb_intern("info"), 1, rb_vsprintf(msg, args));
+
 	va_end(args);
 }
 
-/* xmalloc:
+/* wapiti_xmalloc:
  *   A simple wrapper around malloc who violently fail if memory cannot be
  *   allocated, so it will never return NULL.
  */
-void *xmalloc(size_t size) {
+void *wapiti_xmalloc(size_t size) {
 	void *ptr = malloc(size);
 	if (ptr == NULL)
 		fatal("out of memory");
@@ -119,7 +137,7 @@ void *xmalloc(size_t size) {
 }
 
 /* xrealloc:
- *   As xmalloc, this is a simple wrapper around realloc who fail on memory
+ *   As wapiti_xmalloc, this is a simple wrapper around realloc who fail on memory
  *   error and so never return NULL.
  */
 void *xrealloc(void *ptr, size_t size) {
@@ -135,7 +153,7 @@ void *xrealloc(void *ptr, size_t size) {
  */
 char *xstrdup(const char *str) {
 	const int len = strlen(str) + 1;
-	char *res = xmalloc(sizeof(char) * len);
+	char *res = wapiti_xmalloc(sizeof(char) * len);
 	memcpy(res, str, len);
 	return res;
 }
@@ -159,7 +177,7 @@ char *ns_readstr(FILE *file) {
 	int len;
 	if (fscanf(file, "%d:", &len) != 1)
 		pfatal("cannot read from file");
-	char *buf = xmalloc(len + 1);
+	char *buf = wapiti_xmalloc(len + 1);
 	if (fread(buf, len, 1, file) != 1)
 		pfatal("cannot read from file");
 	if (fgetc(file) != ',')

@@ -163,12 +163,12 @@ void tag_viterbi(mdl_t *mdl, const seq_t *seq,
 	         size_t out[], double *sc, double psc[]) {
 	const size_t  Y = mdl->nlbl;
 	const int     T = seq->len;
-	double  *vpsi  = xmalloc(sizeof(double) * T * Y * Y);
-	size_t  *vback = xmalloc(sizeof(size_t) * T * Y);
+	double  *vpsi  = wapiti_xmalloc(sizeof(double) * T * Y * Y);
+	size_t  *vback = wapiti_xmalloc(sizeof(size_t) * T * Y);
 	double (*psi) [T][Y][Y] = (void *)vpsi;
 	size_t (*back)[T][Y]    = (void *)vback;
-	double  *cur = xmalloc(sizeof(double) * Y);
-	double  *old = xmalloc(sizeof(double) * Y);
+	double  *cur = wapiti_xmalloc(sizeof(double) * Y);
+	double  *old = wapiti_xmalloc(sizeof(double) * Y);
 	// We first compute the scores for each transitions in the lattice of
 	// labels.
 	int op;
@@ -246,12 +246,12 @@ void tag_nbviterbi(mdl_t *mdl, const seq_t *seq, size_t N,
 	           size_t out[][N], double sc[], double psc[][N]) {
 	const size_t  Y = mdl->nlbl;
 	const int     T = seq->len;
-	double  *vpsi  = xmalloc(sizeof(double) * T * Y * Y);
-	size_t  *vback = xmalloc(sizeof(size_t) * T * Y * N);
+	double  *vpsi  = wapiti_xmalloc(sizeof(double) * T * Y * Y);
+	size_t  *vback = wapiti_xmalloc(sizeof(size_t) * T * Y * N);
 	double (*psi) [T][Y    ][Y] = (void *)vpsi;
 	size_t (*back)[T][Y * N]    = (void *)vback;
-	double  *cur = xmalloc(sizeof(double) * Y * N);
-	double  *old = xmalloc(sizeof(double) * Y * N);
+	double  *cur = wapiti_xmalloc(sizeof(double) * Y * N);
+	double  *old = wapiti_xmalloc(sizeof(double) * Y * N);
 	// We first compute the scores for each transitions in the lattice of
 	// labels.
 	int op;
@@ -366,9 +366,9 @@ void tag_label(mdl_t *mdl, FILE *fin, FILE *fout) {
 			break;
 		seq_t *seq = rdr_raw2seq(mdl->reader, raw, mdl->opt->check);
 		const int T = seq->len;
-		size_t *out = xmalloc(sizeof(size_t) * T * N);
-		double *psc = xmalloc(sizeof(double) * T * N);
-		double *scs = xmalloc(sizeof(double) * N);
+		size_t *out = wapiti_xmalloc(sizeof(size_t) * T * N);
+		double *psc = wapiti_xmalloc(sizeof(double) * T * N);
+		double *scs = wapiti_xmalloc(sizeof(double) * N);
 		if (N == 1)
 			tag_viterbi(mdl, seq, (size_t*)out, scs, (double*)psc);
 		else
@@ -512,7 +512,7 @@ void tag_eval(mdl_t *mdl, double *te, double *se) {
 	// used to retrieve partial result they computed.
 	eval_t *eval[W];
 	for (size_t w = 0; w < W; w++) {
-		eval[w] = xmalloc(sizeof(eval_t));
+		eval[w] = wapiti_xmalloc(sizeof(eval_t));
 		eval[w]->mdl = mdl;
 		eval[w]->dat = dat;
 	}

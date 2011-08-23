@@ -1,36 +1,43 @@
+#include <string.h>
 
-#include <options.h>
-#include <wapiti.h>
+#include "options.h"
+#include "reader.h"
+#include "model.h"
+#include "wapiti.h"
 
-#include <ruby.h>
+#include "native.h"
+
 
 VALUE mWapiti;
 VALUE mNative;
 
 VALUE cOptions;
 VALUE cNativeError;
+VALUE cLogger;
+
+
+extern void dotrain(mdl_t *mdl);
 
 
 /* --- Options Class --- */
 
 // Auxiliary Methods
 
-static opt_t* get_options(VALUE self) {
-	opt_t* options;	
+static opt_t *get_options(VALUE self) {
+	opt_t *options;	
 	Data_Get_Struct(self, opt_t, options);
 	return options;
 }
 
-// Copies a Ruby string to the heap and returns a pointer to it.
-static char* copy_string(VALUE rb_string) {
-	char* data;
-	
+// Copies a Ruby string to the heap and stores it in a pointer.
+// Frees the pointer before assigning the new value.
+static void copy_string(char **dst, VALUE rb_string) {
 	Check_Type(rb_string, T_STRING);
-	
-	data = calloc(RSTRING_LEN(rb_string), sizeof(char));
-	memcpy(data, StringValuePtr(rb_string), RSTRING_LEN(rb_string));
-	
-	return data;
+
+	if (*dst) { free(*dst); *dst = (char*)0; }
+	*dst = calloc(RSTRING_LEN(rb_string) + 1, sizeof(char));
+
+	memcpy(*dst, StringValuePtr(rb_string), RSTRING_LEN(rb_string) + 1);
 }
 
 
@@ -38,8 +45,12 @@ static char* copy_string(VALUE rb_string) {
 
 static void deallocate_options(opt_t* options) {
 	
+	// free string options
 	if (options->input) { free(options->input); }
 	if (options->output) { free(options->output); }
+	if (options->algo) { free(options->algo); }
+	if (options->devel) { free(options->devel); }
+	if (options->pattern) { free(options->pattern); }
 	
 	free(options);
 	options = (opt_t*)0;
@@ -54,6 +65,12 @@ static VALUE initialize_options(VALUE self) {
 	opt_t* options = get_options(self);
 	*options = opt_defaults;
 	
+	// copy the default algorithm name to the heap so that all options strings
+	// are on the heap
+	char* tmp = calloc(strlen(options->algo), sizeof(char));
+	memcpy(tmp, options->algo, strlen(options->algo));
+	options->algo = tmp;
+	
 	return self;
 }
 
@@ -65,34 +82,70 @@ static VALUE options_mode(VALUE self) {
 }
 
 static VALUE options_set_mode(VALUE self, VALUE rb_fixnum) {
-	opt_t* options = get_options(self);
+	opt_t *options = get_options(self);
 
-	FIXNUM_P(rb_fixnum);
+	Check_Type(rb_fixnum, T_FIXNUM);
 	options->mode = FIX2INT(rb_fixnum);
 	
 	return rb_fixnum;
 }
 
 static VALUE options_input(VALUE self) {
-	char* input = get_options(self)->input;
+	char *input = get_options(self)->input;
 	return rb_str_new2(input ? input : "");
 }
 
 static VALUE options_set_input(VALUE self, VALUE rb_string) {
-	opt_t* options = get_options(self);
-	options->input = copy_string(rb_string);
-	
+	opt_t *options = get_options(self);
+	copy_string(&(options->input), rb_string);
+
 	return rb_string;
 }
 
 static VALUE options_output(VALUE self) {
-	char* output = get_options(self)->output;
+	char *output = get_options(self)->output;
 	return rb_str_new2(output ? output : "");
 }
 
 static VALUE options_set_output(VALUE self, VALUE rb_string) {
-	opt_t* options = get_options(self);
-	options->output = copy_string(rb_string);
+	opt_t *options = get_options(self);
+	copy_string(&(options->output), rb_string);
+	
+	return rb_string;
+}
+
+static VALUE options_pattern(VALUE self) {
+	char *pattern = get_options(self)->pattern;
+	return rb_str_new2(pattern ? pattern : "");
+}
+
+static VALUE options_set_pattern(VALUE self, VALUE rb_string) {
+	opt_t *options = get_options(self);
+	copy_string(&(options->pattern), rb_string);
+	
+	return rb_string;
+}
+
+static VALUE options_model(VALUE self) {
+	char *model = get_options(self)->model;
+	return rb_str_new2(model ? model : "");
+}
+
+static VALUE options_set_model(VALUE self, VALUE rb_string) {
+	opt_t *options = get_options(self);
+	copy_string(&(options->model), rb_string);
+	
+	return rb_string;
+}
+
+static VALUE options_algorithm(VALUE self) {
+	char *algorithm = get_options(self)->algo;
+	return rb_str_new2(algorithm ? algorithm : "");
+}
+
+static VALUE options_set_algorithm(VALUE self, VALUE rb_string) {
+	opt_t *options = get_options(self);
+	copy_string(&(options->algo), rb_string);
 	
 	return rb_string;
 }
@@ -108,50 +161,57 @@ void Init_options() {
 	rb_define_method(cOptions, "mode=", options_set_mode, 1);
 
 	rb_define_method(cOptions, "input", options_input, 0);
-	rb_define_method(cOptions, "output", options_output, 0);
-	
 	rb_define_method(cOptions, "input=", options_set_input, 1);
+
+	rb_define_method(cOptions, "output", options_output, 0);	
 	rb_define_method(cOptions, "output=", options_set_output, 1);
+
+	rb_define_method(cOptions, "pattern", options_pattern, 0);
+	rb_define_method(cOptions, "pattern=", options_set_pattern, 1);
+
+	rb_define_method(cOptions, "model", options_model, 0);
+	rb_define_method(cOptions, "model=", options_set_model, 1);
+
+	rb_define_method(cOptions, "algorithm", options_algorithm, 0);
+	rb_define_method(cOptions, "algorithm=", options_set_algorithm, 1);
+
 
 }
 
 
 /* --- Top-Level Utility Methods --- */
 
-static VALUE train(VALUE self, VALUE rb_options) {
+static VALUE train(VALUE self __attribute__((__unused__)), VALUE rb_options) {
 
 	if (strncmp("Wapiti::Native::Options", rb_obj_classname(rb_options), 23) != 0) {
 		rb_raise(cNativeError, "argument must be a native options instance");
 	} 
 	
-	// Check_Type(rb_options, rb_intern("Wapiti::Native::Options"));
-	// opt_t* options = get_options(rb_options);
+	opt_t *options = get_options(rb_options);
+
+	if (options->mode != 0) {
+		rb_raise(cNativeError, "invalid options argument: mode should be set to 0 for training");
+	}
 
 	// Next we prepare the model
-	// mdl_t *mdl = mdl_new(rdr_new(opt.maxent));
-	// mdl->opt = opt;
+	mdl_t *model = mdl_new(rdr_new(options->maxent));
+	model->opt = options;
+
+	dotrain(model);
 	
-	// if (options->mode != 0) {
-	// 	rb_raise(cNativeError, "invalid options argument: mode should be set to 0 for training");
-	// }
-	
-	// 	// And switch to requested mode
-	// 	switch (opt.mode) {
-	// 		case 0: dotrain(mdl); break;
-	// 		case 1: dolabel(mdl); break;
-	// 		case 2: dodump(mdl); break;
-	// 	}
-	// 	// And cleanup
-	// 	mdl_free(mdl);
+	// And cleanup
+	mdl_free(model);
 	
 	return Qnil;
 }
 
-static VALUE label(VALUE self, VALUE rb_options) {
+static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {
+	opt_t *options = get_options(rb_options);
 	return Qnil;
 }
 
-static VALUE dump(VALUE self, VALUE rb_options) {
+static VALUE dump(VALUE self __attribute__((__unused__)), VALUE rb_options) {
+	opt_t *options = get_options(rb_options);
 	return Qnil;	
 }
 
@@ -164,6 +224,7 @@ void Init_native() {
 	mNative = rb_define_module_under(mWapiti, "Native");
 
 	cNativeError = rb_const_get(mWapiti, rb_intern("NativeError"));
+	cLogger = rb_funcall(mWapiti, rb_intern("log"), 0);
 	
 	rb_define_singleton_method(mNative, "train", train, 1);
 	rb_define_singleton_method(mNative, "label", label, 1);

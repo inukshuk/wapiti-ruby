@@ -64,7 +64,7 @@
  *   to set one in the model before any attempts to synchronize it.
  */
 mdl_t *mdl_new(rdr_t *rdr) {
-	mdl_t *mdl = xmalloc(sizeof(mdl_t));
+	mdl_t *mdl = wapiti_xmalloc(sizeof(mdl_t));
 	mdl->nlbl   = mdl->nobs  = mdl->nftr = 0;
 	mdl->kind   = NULL;
 	mdl->uoff   = mdl->boff  = NULL;
@@ -205,7 +205,7 @@ void mdl_compact(mdl_t *mdl) {
 	info("    - Scan the model\n");
 	qrk_t *old_obs = mdl->reader->obs;
 	qrk_t *new_obs = qrk_new();
-	size_t *trans = xmalloc(sizeof(size_t) * mdl->nobs);
+	size_t *trans = wapiti_xmalloc(sizeof(size_t) * mdl->nobs);
 	for (size_t oldo = 0; oldo < mdl->nobs; oldo++) {
 		bool active = false;
 		if (mdl->kind[oldo] & 1)

@@ -66,7 +66,7 @@ static const struct {
 };
 static const int trn_cnt = sizeof(trn_lst) / sizeof(trn_lst[0]);
 
-static void dotrain(mdl_t *mdl) {
+void dotrain(mdl_t *mdl) {
 	// Check if the user requested the trainer list. If this is not the
 	// case, search the trainer.
 	if (!strcmp(mdl->opt->algo, "list")) {

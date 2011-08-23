@@ -155,7 +155,7 @@ void trn_rprop(mdl_t *mdl) {
 	}
 	// Prepare the rprop state used to send information to the rprop worker
 	// about updating weight using the gradient.
-	rprop_t *st = xmalloc(sizeof(rprop_t));
+	rprop_t *st = wapiti_xmalloc(sizeof(rprop_t));
 	st->mdl = mdl;
 	st->xp  = xp;  st->stp = stp;
 	st->g   = g;   st->gp  = gp;

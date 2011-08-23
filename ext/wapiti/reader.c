@@ -63,7 +63,7 @@
  *   previously saved reader if you want to use it for reading sequences.
  */
 rdr_t *rdr_new(bool maxent) {
-	rdr_t *rdr = xmalloc(sizeof(rdr_t));
+	rdr_t *rdr = wapiti_xmalloc(sizeof(rdr_t));
 	rdr->maxent = maxent;
 	rdr->npats = rdr->nuni = rdr->nbi = 0;
 	rdr->ntoks = 0;
@@ -123,7 +123,7 @@ static char *rdr_readline(FILE *file) {
 		return NULL;
 	// Initialize the buffer
 	int len = 0, size = 16;
-	char *buffer = xmalloc(size);
+	char *buffer = wapiti_xmalloc(size);
 	// We read the line chunk by chunk until end of line, file or error
 	while (!feof(file)) {
 		if (fgets(buffer + len, size - len, file) == NULL) {
@@ -204,7 +204,7 @@ raw_t *rdr_readraw(rdr_t *rdr, FILE *file) {
 		return NULL;
 	// Prepare the raw sequence object
 	int size = 32, cnt = 0;
-	raw_t *raw = xmalloc(sizeof(raw_t) + sizeof(char *) * size);
+	raw_t *raw = wapiti_xmalloc(sizeof(raw_t) + sizeof(char *) * size);
 	// And read the next sequence in the file, this will skip any blank line
 	// before reading the sequence stoping at end of file or on a new blank
 	// line.
@@ -286,8 +286,8 @@ static seq_t *rdr_rawtok2seq(rdr_t *rdr, const tok_t *tok) {
 			}
 		}
 	}
-	seq_t *seq = xmalloc(sizeof(seq_t) + sizeof(pos_t) * T);
-	seq->raw = xmalloc(sizeof(size_t) * size);
+	seq_t *seq = wapiti_xmalloc(sizeof(seq_t) + sizeof(pos_t) * T);
+	seq->raw = wapiti_xmalloc(sizeof(size_t) * size);
 	seq->len = T;
 	size_t *raw = seq->raw;
 	for (int t = 0; t < T; t++) {
@@ -336,8 +336,8 @@ static seq_t *rdr_pattok2seq(rdr_t *rdr, const tok_t *tok) {
 	// So now the tok object is ready, we can start building the seq_t
 	// object by appling patterns. First we allocate the seq_t object. The
 	// sequence itself as well as the sub array are allocated in one time.
-	seq_t *seq = xmalloc(sizeof(seq_t) + sizeof(pos_t) * T);
-	seq->raw = xmalloc(sizeof(size_t) * (rdr->nuni + rdr->nbi) * T);
+	seq_t *seq = wapiti_xmalloc(sizeof(seq_t) + sizeof(pos_t) * T);
+	seq->raw = wapiti_xmalloc(sizeof(size_t) * (rdr->nuni + rdr->nbi) * T);
 	seq->len = T;
 	size_t *tmp = seq->raw;
 	for (int t = 0; t < T; t++) {
@@ -393,11 +393,11 @@ seq_t *rdr_raw2seq(rdr_t *rdr, const raw_t *raw, bool lbl) {
 	const int T = raw->len;
 	// Allocate the tok_t object, the label array is allocated only if they
 	// are requested by the user.
-	tok_t *tok = xmalloc(sizeof(tok_t) + T * sizeof(char **));
-	tok->cnts = xmalloc(sizeof(size_t) * T);
+	tok_t *tok = wapiti_xmalloc(sizeof(tok_t) + T * sizeof(char **));
+	tok->cnts = wapiti_xmalloc(sizeof(size_t) * T);
 	tok->lbl = NULL;
 	if (lbl == true)
-		tok->lbl = xmalloc(sizeof(char *) * T);
+		tok->lbl = wapiti_xmalloc(sizeof(char *) * T);
 	// We now take the raw sequence line by line and split them in list of
 	// tokens. To reduce memory fragmentation, the raw line is copied and
 	// his reference is kept by the first tokens, next tokens are pointer to
@@ -430,7 +430,7 @@ seq_t *rdr_raw2seq(rdr_t *rdr, const raw_t *raw, bool lbl) {
 		}
 		// And put the remaining tokens in the tok_t object
 		tok->cnts[t] = cnt;
-		tok->toks[t] = xmalloc(sizeof(char *) * cnt);
+		tok->toks[t] = wapiti_xmalloc(sizeof(char *) * cnt);
 		memcpy(tok->toks[t], toks, sizeof(char *) * cnt);
 	}
 	tok->len = T;
@@ -478,11 +478,11 @@ seq_t *rdr_readseq(rdr_t *rdr, FILE *file, bool lbl) {
 dat_t *rdr_readdat(rdr_t *rdr, FILE *file, bool lbl) {
 	// Prepare dataset
 	size_t size = 1000;
-	dat_t *dat = xmalloc(sizeof(dat_t));
+	dat_t *dat = wapiti_xmalloc(sizeof(dat_t));
 	dat->nseq = 0;
 	dat->mlen = 0;
 	dat->lbl = lbl;
-	dat->seq = xmalloc(sizeof(seq_t *) * size);
+	dat->seq = wapiti_xmalloc(sizeof(seq_t *) * size);
 	// Load sequences
 	while (!feof(file)) {
 		// Read the next sequence
@@ -523,7 +523,7 @@ void rdr_load(rdr_t *rdr, FILE *file) {
 	if (fscanf(file, "#rdr#%d/%d\n", &rdr->npats, &rdr->ntoks) != 2)
 		fatal(err);
 	rdr->nuni = rdr->nbi = 0;
-	rdr->pats = xmalloc(sizeof(pat_t *) * rdr->npats);
+	rdr->pats = wapiti_xmalloc(sizeof(pat_t *) * rdr->npats);
 	for (int p = 0; p < rdr->npats; p++) {
 		char *pat = ns_readstr(file);
 		rdr->pats[p] = pat_comp(pat);

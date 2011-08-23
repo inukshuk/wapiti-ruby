@@ -31,6 +31,8 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#include <ruby.h>
+
 #define unused(v) ((void)(v))
 #define none ((size_t)-1)
 
@@ -42,7 +44,7 @@ void pfatal(const char *msg, ...);
 void warning(const char *msg, ...);
 void info(const char *msg, ...);
 
-void *xmalloc(size_t size);
+void *wapiti_xmalloc(size_t size);
 void *xrealloc(void *ptr, size_t size);
 char *xstrdup(const char *str);
 

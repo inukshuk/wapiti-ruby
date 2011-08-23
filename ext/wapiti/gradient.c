@@ -177,9 +177,9 @@ void grd_check(grd_t *grd, int len) {
 	grd->bnorm = xvm_new(T);
 	if (grd->mdl->opt->sparse) {
 		grd->psiuni = xvm_new(T * Y);
-		grd->psiyp  = xmalloc(sizeof(size_t) * T * Y * Y);
-		grd->psiidx = xmalloc(sizeof(size_t) * T * Y);
-		grd->psioff = xmalloc(sizeof(size_t) * T);
+		grd->psiyp  = wapiti_xmalloc(sizeof(size_t) * T * Y * Y);
+		grd->psiidx = wapiti_xmalloc(sizeof(size_t) * T * Y);
+		grd->psioff = wapiti_xmalloc(sizeof(size_t) * T);
 	}
 	grd->len = len;
 }
@@ -189,7 +189,7 @@ void grd_check(grd_t *grd, int len) {
  *   the longest sequence present in the data set.
  */
 grd_t *grd_new(mdl_t *mdl, double *g) {
-	grd_t *grd  = xmalloc(sizeof(grd_t));
+	grd_t *grd  = wapiti_xmalloc(sizeof(grd_t));
 	grd->mdl    = mdl;
 	grd->len    = 0;
 	grd->g      = g;

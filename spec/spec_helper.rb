@@ -1,1 +1,3 @@
 require 'wapiti'
+
+require 'tempfile'

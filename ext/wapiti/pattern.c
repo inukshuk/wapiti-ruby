@@ -220,7 +220,7 @@ pat_t *pat_comp(char *p) {
 		if (p[pos] == '%')
 			mitems++;
 	mitems = mitems * 2 + 1;
-	pat = xmalloc(sizeof(pat_t) + sizeof(pat->items[0]) * mitems);
+	pat = wapiti_xmalloc(sizeof(pat_t) + sizeof(pat->items[0]) * mitems);
 	pat->src = p;
 	// Next, we go through the pattern compiling the items as they are
 	// found. Commands are parsed and put in a corresponding item, and
@@ -272,7 +272,7 @@ pat_t *pat_comp(char *p) {
 				if (p[pos] != '"')
 					fatal("unended argument: %s", p);
 				const int len = pos - start;
-				item->value = xmalloc(sizeof(char) * (len + 1));
+				item->value = wapiti_xmalloc(sizeof(char) * (len + 1));
 				memcpy(item->value, p + start, len);
 				item->value[len] = '\0';
 				pos++;
@@ -291,7 +291,7 @@ pat_t *pat_comp(char *p) {
 			const int len = pos - start;
 			item->type  = 's';
 			item->caps  = false;
-			item->value = xmalloc(sizeof(char) * (len + 1));
+			item->value = wapiti_xmalloc(sizeof(char) * (len + 1));
 			memcpy(item->value, p + start, len);
 			item->value[len] = '\0';
 		}
@@ -313,7 +313,7 @@ char *pat_exec(const pat_t *pat, const tok_t *tok, int at) {
 	const int T = tok->len;
 	// Prepare the buffer who will hold the result
 	int size = 16, pos = 0;
-	char *buffer = xmalloc(sizeof(char) * size);
+	char *buffer = wapiti_xmalloc(sizeof(char) * size);
 	// And loop over the compiled items
 	for (int it = 0; it < pat->nitems; it++) {
 		const pat_item_t *item = &(pat->items[it]);

@@ -81,12 +81,12 @@ struct qrk_s {
  */
 qrk_t *qrk_new(void) {
 	const uint64_t size = 128;
-	qrk_t *qrk = xmalloc(sizeof(qrk_t));
+	qrk_t *qrk = wapiti_xmalloc(sizeof(qrk_t));
 	qrk->root  = NULL;
 	qrk->count = 0;
 	qrk->lock  = false;
 	qrk->size  = size;
-	qrk->leafs = xmalloc(sizeof(leaf_t) * size);
+	qrk->leafs = wapiti_xmalloc(sizeof(leaf_t) * size);
 	return qrk;
 }
 
@@ -132,7 +132,7 @@ size_t qrk_str2id(qrk_t *qrk, const char *key) {
 		if (qrk->lock == true)
 			return none;
 		const size_t size = sizeof(char) * (len + 1);
-		leaf_t *lf = xmalloc(sizeof(leaf_t) + size);
+		leaf_t *lf = wapiti_xmalloc(sizeof(leaf_t) + size);
 		memcpy(lf->key, key, size);
 		lf->id = 0;
 		qrk->root = qrk_lf2nd(lf);
@@ -174,8 +174,8 @@ size_t qrk_str2id(qrk_t *qrk, const char *key) {
 	const uint8_t chr = bst[pos];
 	const int side = ((chr | byte) + 1) >> 8;
 	const size_t size = sizeof(char) * (len + 1);
-	node_t *nx = xmalloc(sizeof(node_t));
-	leaf_t *lf = xmalloc(sizeof(leaf_t) + size);
+	node_t *nx = wapiti_xmalloc(sizeof(node_t));
+	leaf_t *lf = wapiti_xmalloc(sizeof(leaf_t) + size);
 	memcpy(lf->key, key, size);
 	lf->id   = qrk->count++;
 	nx->pos  = pos;

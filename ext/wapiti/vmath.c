@@ -63,7 +63,7 @@ double *xvm_new(size_t N) {
 		fatal("out of memory");
 	return ptr;
 #else
-	return xmalloc(sizeof(double) * N);
+	return wapiti_xmalloc(sizeof(double) * N);
 #endif
 }
 

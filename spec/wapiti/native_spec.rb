@@ -54,6 +54,34 @@ module Wapiti
 			
 			it { options.should_not be nil }
 		
+			describe '#initialize' do
+				
+				it 'should fail if called with more than one parameter' do
+					expect { Native::Options.new(1,2) }.to raise_error
+				end
+				
+				it 'should fail if called with a parameter that is no hash' do
+					expect { Native::Options.new([]) }.to raise_error
+				end
+
+				it 'should set defaults according to the supplied hash' do
+					Native::Options.new(:compact => true).should be_compact
+				end
+				
+				it 'should accept and execute a self-yielding block' do
+					opt = Native::Options.new(:compact => true) { |o| o.sparse = true }
+					opt.should be_compact
+					opt.should be_sparse
+				end
+				
+			end
+			
+			describe '#update' do
+				it 'sets all option values according to the given hash' do
+					lambda { options.update( :mode => 1 ) }.should change { options.mode }.from(-1).to(1)
+				end
+			end
+			
 			describe '#mode' do
 				it 'returns -1 by default' do
 					options.mode.should == -1

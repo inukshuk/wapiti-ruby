@@ -43,6 +43,10 @@ static void copy_string(char **dst, VALUE rb_string) {
 
 // Constructor / Desctructor
 
+static void mark_options(opt_t* options) {
+	// nothing
+}
+
 static void deallocate_options(opt_t* options) {
 	
 	// free string options
@@ -58,10 +62,10 @@ static void deallocate_options(opt_t* options) {
 
 static VALUE allocate_options(VALUE self) {
 	opt_t* options = malloc(sizeof(opt_t));
-	return Data_Wrap_Struct(self, 0, deallocate_options, options);
+	return Data_Wrap_Struct(self, mark_options, deallocate_options, options);
 }
 
-static VALUE initialize_options(VALUE self) {
+static VALUE initialize_options(int argc, VALUE *argv, VALUE self) {	
 	opt_t* options = get_options(self);
 	*options = opt_defaults;
 	
@@ -70,12 +74,28 @@ static VALUE initialize_options(VALUE self) {
 	char* tmp = calloc(strlen(options->algo), sizeof(char));
 	memcpy(tmp, options->algo, strlen(options->algo));
 	options->algo = tmp;
+
+	if (argc > 1) {
+		rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")), "wrong number of arguments (%d for 0..1)", argc);
+	}
+
+	// set defaults
+	if (argc) {
+		Check_Type(argv[0], T_HASH);
+		(void)rb_funcall(self, rb_intern("update"), 1, argv[0]);
+	}
+	
+	// yield self if block_given?
+	if (rb_block_given_p()) {
+		rb_yield(self);
+	}
 	
 	return self;
 }
 
 
 // Instance Methods
+
 
 // Fixnum Accessors
 
@@ -327,7 +347,9 @@ void Init_options() {
 	cOptions = rb_define_class_under(mNative, "Options", rb_cObject);
 	rb_define_alloc_func(cOptions, allocate_options);
 	
-	rb_define_method(cOptions, "initialize", initialize_options, 0);
+	rb_define_method(cOptions, "initialize", initialize_options, -1);
+
+	// Option Accessors
 
 	rb_define_method(cOptions, "mode", options_mode, 0);
 	rb_define_method(cOptions, "mode=", options_set_mode, 1);

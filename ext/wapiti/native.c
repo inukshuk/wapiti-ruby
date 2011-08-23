@@ -189,8 +189,7 @@ static VALUE options_maxent(VALUE self) {
 }
 
 static VALUE options_set_maxent(VALUE self, VALUE rb_boolean) {
-	get_options(self)->maxent = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);
-	
+	get_options(self)->maxent = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);	
 	return rb_boolean;
 }
 
@@ -200,7 +199,6 @@ static VALUE options_compact(VALUE self) {
 
 static VALUE options_set_compact(VALUE self, VALUE rb_boolean) {
 	get_options(self)->compact = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);
-	
 	return rb_boolean;
 }
 
@@ -210,7 +208,42 @@ static VALUE options_sparse(VALUE self) {
 
 static VALUE options_set_sparse(VALUE self, VALUE rb_boolean) {
 	get_options(self)->sparse = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);
-	
+	return rb_boolean;
+}
+
+static VALUE options_check(VALUE self) {
+	return get_options(self)->check ? Qtrue : Qfalse;	
+}
+
+static VALUE options_set_check(VALUE self, VALUE rb_boolean) {
+	get_options(self)->check = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);	
+	return rb_boolean;
+}
+
+static VALUE options_label(VALUE self) {
+	return get_options(self)->label ? Qtrue : Qfalse;	
+}
+
+static VALUE options_set_label(VALUE self, VALUE rb_boolean) {
+	get_options(self)->label = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);	
+	return rb_boolean;
+}
+
+static VALUE options_outsc(VALUE self) {
+	return get_options(self)->outsc ? Qtrue : Qfalse;	
+}
+
+static VALUE options_set_outsc(VALUE self, VALUE rb_boolean) {
+	get_options(self)->outsc = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);	
+	return rb_boolean;
+}
+
+static VALUE options_lblpost(VALUE self) {
+	return get_options(self)->lblpost ? Qtrue : Qfalse;	
+}
+
+static VALUE options_set_lblpost(VALUE self, VALUE rb_boolean) {
+	get_options(self)->lblpost = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);	
 	return rb_boolean;
 }
 
@@ -338,7 +371,6 @@ void Init_options() {
 	rb_define_alias(cOptions, "stop_epsilon", "stopeps");
 	rb_define_alias(cOptions, "stop_epsilon=", "stopeps=");
 
-
 	rb_define_method(cOptions, "maxent", options_maxent, 0);
 	rb_define_method(cOptions, "maxent=", options_set_maxent, 1);
 
@@ -353,6 +385,34 @@ void Init_options() {
 	rb_define_method(cOptions, "sparse=", options_set_sparse, 1);
 
 	rb_define_alias(cOptions, "sparse?", "sparse");
+
+	rb_define_method(cOptions, "label", options_label, 0);
+	rb_define_method(cOptions, "label=", options_set_label, 1);
+
+	rb_define_alias(cOptions, "label?", "label");
+
+	rb_define_method(cOptions, "check", options_check, 0);
+	rb_define_method(cOptions, "check=", options_set_check, 1);
+
+	rb_define_alias(cOptions, "check?", "check");
+
+	rb_define_method(cOptions, "lblpost", options_lblpost, 0);
+	rb_define_method(cOptions, "lblpost=", options_set_lblpost, 1);
+
+	rb_define_alias(cOptions, "lblpost?", "lblpost");
+
+	rb_define_alias(cOptions, "posterior", "lblpost");
+	rb_define_alias(cOptions, "posterior?", "lblpost");
+	rb_define_alias(cOptions, "posterior=", "lblpost=");
+
+	rb_define_method(cOptions, "outsc", options_outsc, 0);
+	rb_define_method(cOptions, "outsc=", options_set_outsc, 1);
+
+	rb_define_alias(cOptions, "outsc?", "outsc");
+
+	rb_define_alias(cOptions, "score", "outsc");
+	rb_define_alias(cOptions, "score?", "outsc");
+	rb_define_alias(cOptions, "score=", "outsc=");
 
 	rb_define_method(cOptions, "input", options_input, 0);
 	rb_define_method(cOptions, "input=", options_set_input, 1);

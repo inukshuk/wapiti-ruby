@@ -100,6 +100,27 @@ static VALUE options_set_maxent(VALUE self, VALUE rb_boolean) {
 	return rb_boolean;
 }
 
+static VALUE options_compact(VALUE self) {
+	return get_options(self)->compact ? Qtrue : Qfalse;	
+}
+
+static VALUE options_set_compact(VALUE self, VALUE rb_boolean) {
+	get_options(self)->compact = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);
+	
+	return rb_boolean;
+}
+
+static VALUE options_sparse(VALUE self) {
+	return get_options(self)->sparse ? Qtrue : Qfalse;	
+}
+
+static VALUE options_set_sparse(VALUE self, VALUE rb_boolean) {
+	get_options(self)->sparse = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);
+	
+	return rb_boolean;
+}
+
+
 static VALUE options_input(VALUE self) {
 	char *input = get_options(self)->input;
 	return rb_str_new2(input ? input : "");
@@ -186,6 +207,16 @@ void Init_options() {
 	rb_define_method(cOptions, "maxent=", options_set_maxent, 1);
 
 	rb_define_alias(cOptions, "maxent?", "maxent");
+
+	rb_define_method(cOptions, "compact", options_compact, 0);
+	rb_define_method(cOptions, "compact=", options_set_compact, 1);
+
+	rb_define_alias(cOptions, "compact?", "compact");
+
+	rb_define_method(cOptions, "sparse", options_sparse, 0);
+	rb_define_method(cOptions, "sparse=", options_set_sparse, 1);
+
+	rb_define_alias(cOptions, "sparse?", "sparse");
 
 	rb_define_method(cOptions, "input", options_input, 0);
 	rb_define_method(cOptions, "input=", options_set_input, 1);

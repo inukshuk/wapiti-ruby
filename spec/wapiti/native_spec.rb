@@ -66,18 +66,20 @@ module Wapiti
 				end
 			end
 
-			describe '#maxent' do
-				it 'returns false by default' do
-					options.maxent.should be false
+			%w{ maxent compact sparse }.each do |m|
+				describe "##{m}" do
+					it 'returns false by default' do
+						options.send(m).should be false
+					end
 				end
-			end
 
-			describe '#axent=' do
-				it 'sets the maxent to the given value' do
-					lambda { options.maxent = true }.should change { options.maxent }.from(false).to(true)
-					lambda { options.maxent = false }.should change { options.maxent }.from(true).to(false)
-					lambda { options.maxent = 123 }.should change { options.maxent }.from(false).to(true)
-					lambda { options.maxent = nil }.should change { options.maxent }.from(true).to(false)
+				describe "##{m}=" do
+					it "sets #{m} to the given value" do
+						lambda { options.send("#{m}=", true) }.should change { options.send(m) }.from(false).to(true)
+						lambda { options.send("#{m}=", false) }.should change { options.send(m) }.from(true).to(false)
+						lambda { options.send("#{m}=", 123) }.should change { options.send(m) }.from(false).to(true)
+						lambda { options.send("#{m}=", nil) }.should change { options.send(m) }.from(true).to(false)
+					end
 				end
 			end
 

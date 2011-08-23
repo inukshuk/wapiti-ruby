@@ -90,6 +90,16 @@ static VALUE options_set_mode(VALUE self, VALUE rb_fixnum) {
 	return rb_fixnum;
 }
 
+static VALUE options_maxent(VALUE self) {
+	return get_options(self)->maxent ? Qtrue : Qfalse;	
+}
+
+static VALUE options_set_maxent(VALUE self, VALUE rb_boolean) {
+	get_options(self)->maxent = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);
+	
+	return rb_boolean;
+}
+
 static VALUE options_input(VALUE self) {
 	char *input = get_options(self)->input;
 	return rb_str_new2(input ? input : "");
@@ -150,6 +160,18 @@ static VALUE options_set_algorithm(VALUE self, VALUE rb_string) {
 	return rb_string;
 }
 
+static VALUE options_development_data(VALUE self) {
+	char *development_data = get_options(self)->devel;
+	return rb_str_new2(development_data ? development_data : "");
+}
+
+static VALUE options_set_development_data(VALUE self, VALUE rb_string) {
+	opt_t *options = get_options(self);
+	copy_string(&(options->devel), rb_string);
+	
+	return rb_string;
+}
+
 
 void Init_options() {
 	cOptions = rb_define_class_under(mNative, "Options", rb_cObject);
@@ -159,6 +181,11 @@ void Init_options() {
 
 	rb_define_method(cOptions, "mode", options_mode, 0);
 	rb_define_method(cOptions, "mode=", options_set_mode, 1);
+
+	rb_define_method(cOptions, "maxent", options_maxent, 0);
+	rb_define_method(cOptions, "maxent=", options_set_maxent, 1);
+
+	rb_define_alias(cOptions, "maxent?", "maxent");
 
 	rb_define_method(cOptions, "input", options_input, 0);
 	rb_define_method(cOptions, "input=", options_set_input, 1);
@@ -175,6 +202,14 @@ void Init_options() {
 	rb_define_method(cOptions, "algorithm", options_algorithm, 0);
 	rb_define_method(cOptions, "algorithm=", options_set_algorithm, 1);
 
+	rb_define_alias(cOptions, "algo", "algorithm");
+	rb_define_alias(cOptions, "algo=", "algorithm=");
+
+	rb_define_method(cOptions, "development_data", options_development_data, 0);
+	rb_define_method(cOptions, "development_data=", options_set_development_data, 1);
+
+	rb_define_alias(cOptions, "devel", "development_data");
+	rb_define_alias(cOptions, "devel=", "development_data=");
 
 }
 

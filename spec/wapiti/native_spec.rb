@@ -66,8 +66,22 @@ module Wapiti
 				end
 			end
 
+			describe '#maxent' do
+				it 'returns false by default' do
+					options.maxent.should be false
+				end
+			end
 
-			%w{ input output pattern model algorithm }.each do |m|
+			describe '#axent=' do
+				it 'sets the maxent to the given value' do
+					lambda { options.maxent = true }.should change { options.maxent }.from(false).to(true)
+					lambda { options.maxent = false }.should change { options.maxent }.from(true).to(false)
+					lambda { options.maxent = 123 }.should change { options.maxent }.from(false).to(true)
+					lambda { options.maxent = nil }.should change { options.maxent }.from(true).to(false)
+				end
+			end
+
+			%w{ input output pattern model algorithm devel }.each do |m|
 				describe "##{m}" do
 					it 'returns an empty string by default' do
 						options.send(m).should be_a(String)

@@ -66,6 +66,43 @@ module Wapiti
 				end
 			end
 
+			describe '#threads' do
+				it 'returns 1 by default' do
+					options.threads.should == 1
+				end
+			end
+
+			describe '#threads=' do
+				it 'sets threads to the given value' do
+					lambda { options.threads = 2 }.should change { options.threads }.from(1).to(2)
+				end
+			end
+
+			describe '#jobsize' do
+				it 'returns 64 by default' do
+					options.jobsize.should == 64
+				end
+			end
+
+			describe '#jobsize=' do
+				it 'sets jobsize to the given value' do
+					lambda { options.jobsize = 128 }.should change { options.jobsize }.by(64)
+				end
+			end
+
+			describe '#maxiter' do
+				it 'returns 0 by default' do
+					options.maxiter.should == 0
+				end
+			end
+
+			describe '#maxiter=' do
+				it 'sets maxiter to the given value' do
+					lambda { options.maxiter = 20 }.should change { options.maxiter }.by(20)
+				end
+			end
+
+
 			%w{ maxent compact sparse }.each do |m|
 				describe "##{m}" do
 					it 'returns false by default' do

@@ -77,6 +77,8 @@ static VALUE initialize_options(VALUE self) {
 
 // Instance Methods
 
+// Fixnum Accessors
+
 static VALUE options_mode(VALUE self) {
 	return INT2FIX(get_options(self)->mode);
 }
@@ -89,6 +91,48 @@ static VALUE options_set_mode(VALUE self, VALUE rb_fixnum) {
 	
 	return rb_fixnum;
 }
+
+static VALUE options_maxiter(VALUE self) {
+	return INT2FIX(get_options(self)->maxiter);
+}
+
+static VALUE options_set_maxiter(VALUE self, VALUE rb_fixnum) {
+	opt_t *options = get_options(self);
+
+	Check_Type(rb_fixnum, T_FIXNUM);
+	options->maxiter = FIX2INT(rb_fixnum);
+	
+	return rb_fixnum;
+}
+
+static VALUE options_jobsize(VALUE self) {
+	return INT2FIX(get_options(self)->jobsize);
+}
+
+static VALUE options_set_jobsize(VALUE self, VALUE rb_fixnum) {
+	opt_t *options = get_options(self);
+
+	Check_Type(rb_fixnum, T_FIXNUM);
+	options->jobsize = FIX2INT(rb_fixnum);
+	
+	return rb_fixnum;
+}
+
+static VALUE options_nthread(VALUE self) {
+	return INT2FIX(get_options(self)->nthread);
+}
+
+static VALUE options_set_nthread(VALUE self, VALUE rb_fixnum) {
+	opt_t *options = get_options(self);
+
+	Check_Type(rb_fixnum, T_FIXNUM);
+	options->nthread = FIX2INT(rb_fixnum);
+	
+	return rb_fixnum;
+}
+
+
+// Boolean Accessors
 
 static VALUE options_maxent(VALUE self) {
 	return get_options(self)->maxent ? Qtrue : Qfalse;	
@@ -120,6 +164,8 @@ static VALUE options_set_sparse(VALUE self, VALUE rb_boolean) {
 	return rb_boolean;
 }
 
+
+// String Accessors
 
 static VALUE options_input(VALUE self) {
 	char *input = get_options(self)->input;
@@ -202,6 +248,21 @@ void Init_options() {
 
 	rb_define_method(cOptions, "mode", options_mode, 0);
 	rb_define_method(cOptions, "mode=", options_set_mode, 1);
+
+	rb_define_method(cOptions, "maxiter", options_maxiter, 0);
+	rb_define_method(cOptions, "maxiter=", options_set_maxiter, 1);
+
+	rb_define_alias(cOptions, "max_iterations", "maxiter");
+	rb_define_alias(cOptions, "max_iterations=", "maxiter=");
+	
+	rb_define_method(cOptions, "jobsize", options_jobsize, 0);
+	rb_define_method(cOptions, "jobsize=", options_set_jobsize, 1);
+
+	rb_define_method(cOptions, "nthread", options_nthread, 0);
+	rb_define_method(cOptions, "nthread=", options_set_nthread, 1);
+
+	rb_define_alias(cOptions, "threads", "nthread");
+	rb_define_alias(cOptions, "threads=", "nthread=");
 
 	rb_define_method(cOptions, "maxent", options_maxent, 0);
 	rb_define_method(cOptions, "maxent=", options_set_maxent, 1);

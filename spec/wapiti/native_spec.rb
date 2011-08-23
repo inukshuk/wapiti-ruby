@@ -102,6 +102,67 @@ module Wapiti
 				end
 			end
 
+			describe '#stop_window' do
+				it 'returns 5 by default' do
+					options.stop_window.should == 5
+				end
+			end
+
+			describe '#stop_window=' do
+				it 'sets stop_window to the given value' do
+					lambda { options.stop_window = 20 }.should change { options.stop_window }.by(15)
+				end
+			end
+
+			describe '#convergence_window' do
+				it 'returns 5 by default' do
+					options.convergence_window.should == 5
+				end
+			end
+
+			describe '#convergence_window=' do
+				it 'sets convergence_window to the given value' do
+					lambda { options.convergence_window = 20 }.should change { options.convergence_window }.by(15)
+				end
+			end
+
+
+			describe '#stop_epsilon' do
+				it 'returns 0.02 by default' do
+					options.stop_epsilon.should == 0.02
+				end
+			end
+
+			describe '#stop_epsilon=' do
+				it 'sets stop_epsilon to the given value' do
+					lambda { options.stop_epsilon = 0.35 }.should change { options.stop_epsilon }
+				end
+			end
+
+			describe '#rho1' do
+				it 'returns 0.5 by default' do
+					options.rho1.should == 0.5
+				end
+			end
+
+			describe '#rho1=' do
+				it 'sets rho1 to the given value' do
+					lambda { options.rho1 = 2.5 }.should change { options.rho1 }.by(2)
+				end
+			end
+
+			describe '#rho2' do
+				it 'returns 0.0001 by default' do
+					options.rho2.should == 0.0001
+				end
+			end
+
+			describe '#rho2=' do
+				it 'sets rho2 to the given value' do
+					lambda { options.rho2 = 0.0002 }.should change { options.rho2 }.by(0.0001)
+				end
+			end
+
 
 			%w{ maxent compact sparse }.each do |m|
 				describe "##{m}" do

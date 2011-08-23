@@ -84,13 +84,34 @@ static VALUE options_mode(VALUE self) {
 }
 
 static VALUE options_set_mode(VALUE self, VALUE rb_fixnum) {
-	opt_t *options = get_options(self);
-
 	Check_Type(rb_fixnum, T_FIXNUM);
-	options->mode = FIX2INT(rb_fixnum);
+	get_options(self)->mode = FIX2INT(rb_fixnum);
 	
 	return rb_fixnum;
 }
+
+static VALUE options_stopwin(VALUE self) {
+	return INT2FIX(get_options(self)->stopwin);
+}
+
+static VALUE options_set_stopwin(VALUE self, VALUE rb_fixnum) {
+	Check_Type(rb_fixnum, T_FIXNUM);
+	get_options(self)->stopwin = FIX2INT(rb_fixnum);
+	
+	return rb_fixnum;
+}
+
+static VALUE options_objwin(VALUE self) {
+	return INT2FIX(get_options(self)->objwin);
+}
+
+static VALUE options_set_objwin(VALUE self, VALUE rb_fixnum) {
+	Check_Type(rb_fixnum, T_FIXNUM);
+	get_options(self)->objwin = FIX2INT(rb_fixnum);
+	
+	return rb_fixnum;
+}
+
 
 static VALUE options_maxiter(VALUE self) {
 	return INT2FIX(get_options(self)->maxiter);
@@ -129,6 +150,35 @@ static VALUE options_set_nthread(VALUE self, VALUE rb_fixnum) {
 	options->nthread = FIX2INT(rb_fixnum);
 	
 	return rb_fixnum;
+}
+
+// Float Accessors
+
+static VALUE options_rho1(VALUE self) {
+	return rb_float_new(get_options(self)->rho1);
+}
+
+static VALUE options_set_rho1(VALUE self, VALUE rb_numeric) {
+	get_options(self)->rho1 = NUM2DBL(rb_numeric);
+	return rb_numeric;
+}
+
+static VALUE options_rho2(VALUE self) {
+	return rb_float_new(get_options(self)->rho2);
+}
+
+static VALUE options_set_rho2(VALUE self, VALUE rb_numeric) {
+	get_options(self)->rho2 = NUM2DBL(rb_numeric);
+	return rb_numeric;
+}
+
+static VALUE options_stopeps(VALUE self) {
+	return rb_float_new(get_options(self)->stopeps);
+}
+
+static VALUE options_set_stopeps(VALUE self, VALUE rb_numeric) {
+	get_options(self)->stopeps = NUM2DBL(rb_numeric);
+	return rb_numeric;
 }
 
 
@@ -249,6 +299,18 @@ void Init_options() {
 	rb_define_method(cOptions, "mode", options_mode, 0);
 	rb_define_method(cOptions, "mode=", options_set_mode, 1);
 
+	rb_define_method(cOptions, "stopwin", options_stopwin, 0);
+	rb_define_method(cOptions, "stopwin=", options_set_stopwin, 1);
+
+	rb_define_alias(cOptions, "stop_window", "stopwin");
+	rb_define_alias(cOptions, "stop_window=", "stopwin=");
+
+	rb_define_method(cOptions, "objwin", options_objwin, 0);
+	rb_define_method(cOptions, "objwin=", options_set_objwin, 1);
+
+	rb_define_alias(cOptions, "convergence_window", "objwin");
+	rb_define_alias(cOptions, "convergence_window=", "objwin=");
+	
 	rb_define_method(cOptions, "maxiter", options_maxiter, 0);
 	rb_define_method(cOptions, "maxiter=", options_set_maxiter, 1);
 
@@ -263,6 +325,19 @@ void Init_options() {
 
 	rb_define_alias(cOptions, "threads", "nthread");
 	rb_define_alias(cOptions, "threads=", "nthread=");
+
+	rb_define_method(cOptions, "rho1", options_rho1, 0);
+	rb_define_method(cOptions, "rho1=", options_set_rho1, 1);
+
+	rb_define_method(cOptions, "rho2", options_rho2, 0);
+	rb_define_method(cOptions, "rho2=", options_set_rho2, 1);
+
+	rb_define_method(cOptions, "stopeps", options_stopeps, 0);
+	rb_define_method(cOptions, "stopeps=", options_set_stopeps, 1);
+
+	rb_define_alias(cOptions, "stop_epsilon", "stopeps");
+	rb_define_alias(cOptions, "stop_epsilon=", "stopeps=");
+
 
 	rb_define_method(cOptions, "maxent", options_maxent, 0);
 	rb_define_method(cOptions, "maxent=", options_set_maxent, 1);

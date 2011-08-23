@@ -30,3 +30,4 @@ task :release => [:build] do
 end
 
 CLEAN.include('*.gem')
+CLEAN.include('*.rbc')

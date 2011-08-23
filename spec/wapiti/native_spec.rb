@@ -38,6 +38,8 @@ module Wapiti
 					options.output = model.path
 				end
 				
+				after(:each) { model.close; model.unlink }
+				
 				it 'should not fail' do
 					expect { Native.train(options) }.not_to raise_error
 				end

@@ -442,8 +442,14 @@ void Init_options() {
 	rb_define_method(cOptions, "output", options_output, 0);	
 	rb_define_method(cOptions, "output=", options_set_output, 1);
 
+	rb_define_alias(cOptions, "out", "output");
+	rb_define_alias(cOptions, "out=", "output=");
+	
 	rb_define_method(cOptions, "pattern", options_pattern, 0);
 	rb_define_method(cOptions, "pattern=", options_set_pattern, 1);
+
+	rb_define_alias(cOptions, "template", "pattern");
+	rb_define_alias(cOptions, "template=", "pattern=");
 
 	rb_define_method(cOptions, "model", options_model, 0);
 	rb_define_method(cOptions, "model=", options_set_model, 1);

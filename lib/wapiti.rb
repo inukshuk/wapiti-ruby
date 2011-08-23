@@ -1,7 +1,8 @@
 
-require 'wapiti/version'
-
 require 'logger'
+require 'tempfile'
+
+require 'wapiti/version'
 
 module Wapiti
 	

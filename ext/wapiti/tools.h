@@ -45,7 +45,7 @@ void warning(const char *msg, ...);
 void info(const char *msg, ...);
 
 void *wapiti_xmalloc(size_t size);
-void *xrealloc(void *ptr, size_t size);
+void *wapiti_xrealloc(void *ptr, size_t size);
 char *xstrdup(const char *str);
 
 char *ns_readstr(FILE *file);

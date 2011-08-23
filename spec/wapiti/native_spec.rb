@@ -6,9 +6,7 @@ module Wapiti
     end
     
 		it { Native.should respond_to(:train) }
-
 		it { Native.should respond_to(:label) }
-
 		it { Native.should respond_to(:dump) }
 	
 		describe '.train' do
@@ -46,6 +44,12 @@ module Wapiti
 				
 			end
 			
+		end
+		
+		describe '.label' do
+		end
+		
+		describe '.dump' do
 		end
 		
 		describe 'Options' do

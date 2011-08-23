@@ -366,7 +366,7 @@ char *pat_exec(const pat_t *pat, const tok_t *tok, int at) {
 		if (pos + len >= size - 1) {
 			while (pos + len >= size - 1)
 				size = size * 1.4;
-			buffer = xrealloc(buffer, sizeof(char) * size);
+			buffer = wapiti_xrealloc(buffer, sizeof(char) * size);
 		}
 		memcpy(buffer + pos, value, len);
 		if (item->caps)
@@ -376,7 +376,7 @@ char *pat_exec(const pat_t *pat, const tok_t *tok, int at) {
 	}
 	// Adjust the result and return it.
 	buffer[pos++] = '\0';
-	buffer = xrealloc(buffer, sizeof(char) * pos);
+	buffer = wapiti_xrealloc(buffer, sizeof(char) * pos);
 	return buffer;
 }
 

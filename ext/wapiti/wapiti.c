@@ -173,7 +173,7 @@ void dotrain(mdl_t *mdl) {
 /*******************************************************************************
  * Labeling
  ******************************************************************************/
-static void dolabel(mdl_t *mdl) {
+void dolabel(mdl_t *mdl) {
 	// First, load the model provided by the user. This is mandatory to
 	// label new datas ;-)
 	if (mdl->opt->model == NULL)
@@ -209,7 +209,7 @@ static void dolabel(mdl_t *mdl) {
 /*******************************************************************************
  * Dumping
  ******************************************************************************/
-static void dodump(mdl_t *mdl) {
+void dodump(mdl_t *mdl) {
 	// Load input model file
 	info("* Load model\n");
 	FILE *fin = stdin;

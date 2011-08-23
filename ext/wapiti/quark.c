@@ -184,7 +184,7 @@ size_t qrk_str2id(qrk_t *qrk, const char *key) {
 	if (lf->id == qrk->size) {
 		qrk->size *= 1.4;
 		const size_t size = sizeof(leaf_t *) * qrk->size;
-		qrk->leafs = xrealloc(qrk->leafs, size);
+		qrk->leafs = wapiti_xrealloc(qrk->leafs, size);
 	}
 	qrk->leafs[lf->id] = lf;
 	// And last thing to do: inserting the new node in the trie. We have to

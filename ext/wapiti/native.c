@@ -16,8 +16,6 @@ VALUE cNativeError;
 VALUE cLogger;
 
 
-extern void dotrain(mdl_t *mdl);
-
 
 /* --- Options Class --- */
 
@@ -472,7 +470,6 @@ void Init_options() {
 /* --- Top-Level Utility Methods --- */
 
 static VALUE train(VALUE self __attribute__((__unused__)), VALUE rb_options) {
-
 	if (strncmp("Wapiti::Native::Options", rb_obj_classname(rb_options), 23) != 0) {
 		rb_raise(cNativeError, "argument must be a native options instance");
 	} 
@@ -483,25 +480,55 @@ static VALUE train(VALUE self __attribute__((__unused__)), VALUE rb_options) {
 		rb_raise(cNativeError, "invalid options argument: mode should be set to 0 for training");
 	}
 
-	// Next we prepare the model
 	mdl_t *model = mdl_new(rdr_new(options->maxent));
 	model->opt = options;
 
 	dotrain(model);
 	
-	// And cleanup
 	mdl_free(model);
 	
 	return Qnil;
 }
 
 static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {
+	if (strncmp("Wapiti::Native::Options", rb_obj_classname(rb_options), 23) != 0) {
+		rb_raise(cNativeError, "argument must be a native options instance");
+	} 
+
 	opt_t *options = get_options(rb_options);
+
+	if (options->mode != 1) {
+		rb_raise(cNativeError, "invalid options argument: mode should be set to 1 for training");
+	}
+
+	mdl_t *model = mdl_new(rdr_new(options->maxent));
+	model->opt = options;
+
+	dolabel(model);
+	
+	mdl_free(model);
+
 	return Qnil;
 }
 
 static VALUE dump(VALUE self __attribute__((__unused__)), VALUE rb_options) {
+	if (strncmp("Wapiti::Native::Options", rb_obj_classname(rb_options), 23) != 0) {
+		rb_raise(cNativeError, "argument must be a native options instance");
+	} 
+
 	opt_t *options = get_options(rb_options);
+
+	if (options->mode != 2) {
+		rb_raise(cNativeError, "invalid options argument: mode should be set to 2 for training");
+	}
+
+	mdl_t *model = mdl_new(rdr_new(options->maxent));
+	model->opt = options;
+
+	dodump(model);
+	
+	mdl_free(model);
+
 	return Qnil;	
 }
 

@@ -136,11 +136,11 @@ void *wapiti_xmalloc(size_t size) {
 	return ptr;
 }
 
-/* xrealloc:
+/* wapiti_xrealloc:
  *   As wapiti_xmalloc, this is a simple wrapper around realloc who fail on memory
  *   error and so never return NULL.
  */
-void *xrealloc(void *ptr, size_t size) {
+void *wapiti_xrealloc(void *ptr, size_t size) {
 	void *new = realloc(ptr, size);
 	if (new == NULL)
 		fatal("out of memory");

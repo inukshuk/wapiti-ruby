@@ -144,7 +144,7 @@ static char *rdr_readline(FILE *file) {
 		len += strlen(buffer + len);
 		if (len == size - 1 && buffer[len - 1] != '\n') {
 			size = size * 1.4;
-			buffer = xrealloc(buffer, size);
+			buffer = wapiti_xrealloc(buffer, size);
 			continue;
 		}
 		break;
@@ -154,7 +154,7 @@ static char *rdr_readline(FILE *file) {
 	// data
 	if (buffer[len - 1] == '\n')
 		buffer[--len] = '\0';
-	return xrealloc(buffer, len + 1);
+	return wapiti_xrealloc(buffer, len + 1);
 }
 
 /* rdr_loadpat:
@@ -188,7 +188,7 @@ void rdr_loadpat(rdr_t *rdr, FILE *file) {
 			default:
 				fatal("unknown pattern type '%c'", line[0]);
 		}
-		rdr->pats = xrealloc(rdr->pats, sizeof(char *) * rdr->npats);
+		rdr->pats = wapiti_xrealloc(rdr->pats, sizeof(char *) * rdr->npats);
 		rdr->pats[rdr->npats - 1] = pat;
 		rdr->ntoks = max(rdr->ntoks, pat->ntoks);
 	}
@@ -228,7 +228,7 @@ raw_t *rdr_readraw(rdr_t *rdr, FILE *file) {
 		// Next, grow the buffer if needed and add the new line in it
 		if (size == cnt) {
 			size *= 1.4;
-			raw = xrealloc(raw, sizeof(raw_t)
+			raw = wapiti_xrealloc(raw, sizeof(raw_t)
 			                + sizeof(char *) * size);
 		}
 		raw->lines[cnt++] = line;
@@ -244,7 +244,7 @@ raw_t *rdr_readraw(rdr_t *rdr, FILE *file) {
 		free(raw);
 		return NULL;
 	}
-	raw = xrealloc(raw, sizeof(raw_t) + sizeof(char *) * cnt);
+	raw = wapiti_xrealloc(raw, sizeof(raw_t) + sizeof(char *) * cnt);
 	raw->len = cnt;
 	return raw;
 }
@@ -492,7 +492,7 @@ dat_t *rdr_readdat(rdr_t *rdr, FILE *file, bool lbl) {
 		// Grow the buffer if needed
 		if (dat->nseq == size) {
 			size *= 1.4;
-			dat->seq = xrealloc(dat->seq, sizeof(seq_t *) * size);
+			dat->seq = wapiti_xrealloc(dat->seq, sizeof(seq_t *) * size);
 		}
 		// And store the sequence
 		dat->seq[dat->nseq++] = seq;
@@ -508,7 +508,7 @@ dat_t *rdr_readdat(rdr_t *rdr, FILE *file, bool lbl) {
 	}
 	// Adjust the dataset size and return
 	if (size > dat->nseq)
-		dat->seq = xrealloc(dat->seq, sizeof(seq_t *) * dat->nseq);
+		dat->seq = wapiti_xrealloc(dat->seq, sizeof(seq_t *) * dat->nseq);
 	return dat;
 }
 

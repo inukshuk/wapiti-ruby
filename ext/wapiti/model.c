@@ -148,9 +148,9 @@ void mdl_sync(mdl_t *mdl) {
 	mdl->nobs = O;
 	// Allocate the observations datastructure. If the model is empty or
 	// discarded, a new one iscreated, else the old one is expanded.
-	char   *kind = xrealloc(mdl->kind, sizeof(char  ) * O);
-	size_t *uoff = xrealloc(mdl->uoff, sizeof(size_t) * O);
-	size_t *boff = xrealloc(mdl->boff, sizeof(size_t) * O);
+	char   *kind = wapiti_xrealloc(mdl->kind, sizeof(char  ) * O);
+	size_t *uoff = wapiti_xrealloc(mdl->uoff, sizeof(size_t) * O);
+	size_t *boff = wapiti_xrealloc(mdl->boff, sizeof(size_t) * O);
 	mdl->kind = kind;
 	mdl->uoff = uoff;
 	mdl->boff = boff;

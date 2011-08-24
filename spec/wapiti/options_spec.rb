@@ -7,6 +7,12 @@ module Wapiti
 		
 		it { options.should_not be nil }
 	
+		describe '.defaults' do
+			it 'returns a hash with the default options' do
+				Options.defaults.keys.sort.should == Options.attribute_names
+			end
+		end
+		
 		describe '#initialize' do
 			
 			it 'should fail if called with more than one parameter' do

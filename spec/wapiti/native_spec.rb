@@ -14,7 +14,7 @@ module Wapiti
 			let(:options) { Options.new }
 
 			it 'should require an argument' do
-				expect { Native.train }.to raise_error(ArgumentError)
+				expect { Native.train }.to raise_error(::ArgumentError)
 			end
 
 			it 'should raise an error if argument is no options instance' do

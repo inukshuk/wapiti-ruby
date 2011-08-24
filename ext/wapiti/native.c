@@ -12,6 +12,8 @@ VALUE mWapiti;
 VALUE mNative;
 
 VALUE cOptions;
+VALUE cModel;
+
 VALUE cNativeError;
 VALUE cLogger;
 
@@ -342,7 +344,7 @@ static VALUE options_set_development_data(VALUE self, VALUE rb_string) {
 
 
 void Init_options() {
-	cOptions = rb_define_class_under(mNative, "Options", rb_cObject);
+	cOptions = rb_define_class_under(mWapiti, "Options", rb_cObject);
 	rb_define_alloc_func(cOptions, allocate_options);
 	
 	rb_define_method(cOptions, "initialize", initialize_options, -1);
@@ -467,10 +469,19 @@ void Init_options() {
 }
 
 
+/* --- Model Class --- */
+
+static void Init_model() {
+	cModel = rb_define_class_under(mWapiti, "Model", rb_cObject);
+	// rb_define_alloc_func(cOptions, allocate_options);
+	// 
+	// rb_define_method(cOptions, "initialize", initialize_options, -1);	
+}
+
 /* --- Top-Level Utility Methods --- */
 
 static VALUE train(VALUE self __attribute__((__unused__)), VALUE rb_options) {
-	if (strncmp("Wapiti::Native::Options", rb_obj_classname(rb_options), 23) != 0) {
+	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 23) != 0) {
 		rb_raise(cNativeError, "argument must be a native options instance");
 	} 
 	
@@ -491,7 +502,7 @@ static VALUE train(VALUE self __attribute__((__unused__)), VALUE rb_options) {
 }
 
 static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {
-	if (strncmp("Wapiti::Native::Options", rb_obj_classname(rb_options), 23) != 0) {
+	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 23) != 0) {
 		rb_raise(cNativeError, "argument must be a native options instance");
 	} 
 
@@ -512,7 +523,7 @@ static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {
 }
 
 static VALUE dump(VALUE self __attribute__((__unused__)), VALUE rb_options) {
-	if (strncmp("Wapiti::Native::Options", rb_obj_classname(rb_options), 23) != 0) {
+	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 23) != 0) {
 		rb_raise(cNativeError, "argument must be a native options instance");
 	} 
 
@@ -550,4 +561,5 @@ void Init_native() {
 	rb_define_const(mNative, "VERSION", rb_str_new2(VERSION));
 	
 	Init_options();
+	Init_model();
 }

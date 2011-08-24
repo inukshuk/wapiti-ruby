@@ -15,5 +15,8 @@ end
 
 require 'wapiti/errors'
 require 'wapiti/native'
-require 'wapiti/native/options'
+
+require 'wapiti/options'
+require 'wapiti/model'
+
 require 'wapiti/utility'

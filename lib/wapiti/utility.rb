@@ -3,7 +3,7 @@ module Wapiti
 	# Creates a model based on the given pattern and training data.
 	# Returns the model's filename.
 	def train(options = {}, &block)
-		config = Native::Options.new(options, &block)
+		config = Options.new(options, &block)
 		
 		raise ArgumentError, 'no training data specified as input option' if config.input.empty?
 		raise ArgumentError, 'no pattern specified in options' if config.pattern.empty?

@@ -47,8 +47,38 @@ module Wapiti
 					Model.new(:threads => 42) { |o| o.threads = 23 }.options.threads.should == 23
 				end
 			end
-			
 		end
+		
+		describe '#options' do
+			it 'returns the options for training' do
+				Model.new.options.should be_instance_of(Options)
+			end
+		end
+		
+		describe '#nlbl' do
+			it 'returns the number of labels (0 by default)' do
+				Model.new.nlbl.should == 0
+			end
+		end
+
+		describe '#nobs' do
+			it 'returns the number of observations (0 by default)' do
+				Model.new.nobs.should == 0
+			end
+		end
+
+		describe '#nftr' do
+			it 'returns the number of features (0 by default)' do
+				Model.new.nftr.should == 0
+			end
+		end
+
+		describe '#total' do
+			it 'returns the total training time (0.0 by default)' do
+				Model.new.total.should == 0.0
+			end
+		end
+
 		
 	end
 end

@@ -503,8 +503,13 @@ static VALUE model_set_options(VALUE self, VALUE rb_options) {
 		rb_raise(cNativeError, "argument must be a Wapiti::Options instance");
 	}
 	
+	mdl_t *model = get_model(self);
+	
 	// Store reference to options in model struct
-	get_model(self)->opt = get_options(rb_options);
+	model->opt = get_options(rb_options);
+	
+	// Update reader
+	model->reader->maxent = model->opt->maxent;
 	
 	// Save instance variable
 	rb_ivar_set(self, rb_intern("@options"), rb_options);
@@ -546,12 +551,37 @@ static VALUE initialize_model(int argc, VALUE *argv, VALUE self) {
 }
 
 
+// Native accessors
+
+static VALUE model_nlbl(VALUE self) {
+	return INT2FIX(get_model(self)->nlbl);
+}
+
+static VALUE model_nobs(VALUE self) {
+	return INT2FIX(get_model(self)->nobs);
+}
+
+static VALUE model_nftr(VALUE self) {
+	return INT2FIX(get_model(self)->nftr);
+}
+
+static VALUE model_total(VALUE self) {
+	return rb_float_new(get_model(self)->total);
+}
+
+
 static void Init_model() {
 	cModel = rb_define_class_under(mWapiti, "Model", rb_cObject);
 	rb_define_alloc_func(cModel, allocate_model);
 	
 	rb_define_method(cModel, "initialize", initialize_model, -1);
+
 	rb_define_attr(cModel, "options", 1, 0);
+	
+	rb_define_method(cModel, "nlbl", model_nlbl, 0);
+	rb_define_method(cModel, "nobs", model_nobs, 0);
+	rb_define_method(cModel, "nftr", model_nftr, 0);
+	rb_define_method(cModel, "total", model_total, 0);
 }
 
 /* --- Top-Level Utility Methods --- */

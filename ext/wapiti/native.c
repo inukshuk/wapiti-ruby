@@ -43,7 +43,7 @@ static void copy_string(char **dst, VALUE rb_string) {
 
 // Constructor / Desctructor
 
-static void mark_options(opt_t* options) {
+static void mark_options(opt_t* options __attribute__((__unused__))) {
 	// nothing
 }
 
@@ -76,7 +76,8 @@ static VALUE initialize_options(int argc, VALUE *argv, VALUE self) {
 	options->algo = tmp;
 
 	if (argc > 1) {
-		rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")), "wrong number of arguments (%d for 0..1)", argc);
+		rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")),
+			"wrong number of arguments (%d for 0..1)", argc);
 	}
 
 	// set defaults
@@ -471,17 +472,92 @@ void Init_options() {
 
 /* --- Model Class --- */
 
+// Auxiliary Methods
+
+static mdl_t *get_model(VALUE self) {
+	mdl_t *model;	
+	Data_Get_Struct(self, mdl_t, model);
+	return model;
+}
+
+// Constructor / Desctructor
+
+static void mark_model(mdl_t *model __attribute__((__unused__))) {
+	// nothing
+}
+
+static void deallocate_model(mdl_t *model) {
+	if (model) {
+		mdl_free(model);
+		model = (mdl_t*)0;
+	}
+}
+
+static VALUE allocate_model(VALUE self) {
+	mdl_t *model = mdl_new(rdr_new(false));
+	return Data_Wrap_Struct(self, mark_model, deallocate_model, model);
+}
+
+static VALUE model_set_options(VALUE self, VALUE rb_options) {	
+	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
+		rb_raise(cNativeError, "argument must be a Wapiti::Options instance");
+	}
+	
+	// Store reference to options in model struct
+	get_model(self)->opt = get_options(rb_options);
+	
+	// Save instance variable
+	rb_ivar_set(self, rb_intern("@options"), rb_options);
+
+	return rb_options;
+}
+
+static VALUE initialize_model(int argc, VALUE *argv, VALUE self) {
+	VALUE options;
+	
+	if (argc > 1) {
+		rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")),
+			"wrong number of arguments (%d for 0..1)", argc);
+	}
+
+	if (argc) {
+		if (TYPE(argv[0]) == T_HASH) {
+			options = rb_funcall(cOptions, rb_intern("new"), 1, argv[0]);			
+		}
+		else {
+			if (strncmp("Wapiti::Options", rb_obj_classname(argv[0]), 15) != 0) {
+				rb_raise(cNativeError, "argument must be a hash or an options instance");
+			}
+			options = argv[0];
+		}
+	}
+	else {
+		options = rb_funcall(cOptions, rb_intern("new"), 0);
+	}
+	
+	// yield self if block_given?
+	if (rb_block_given_p()) {
+	 	rb_yield(options);
+	}
+
+	model_set_options(self, options);
+		
+	return self;
+}
+
+
 static void Init_model() {
 	cModel = rb_define_class_under(mWapiti, "Model", rb_cObject);
-	// rb_define_alloc_func(cOptions, allocate_options);
-	// 
-	// rb_define_method(cOptions, "initialize", initialize_options, -1);	
+	rb_define_alloc_func(cModel, allocate_model);
+	
+	rb_define_method(cModel, "initialize", initialize_model, -1);
+	rb_define_attr(cModel, "options", 1, 0);
 }
 
 /* --- Top-Level Utility Methods --- */
 
 static VALUE train(VALUE self __attribute__((__unused__)), VALUE rb_options) {
-	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 23) != 0) {
+	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
 		rb_raise(cNativeError, "argument must be a native options instance");
 	} 
 	
@@ -502,7 +578,7 @@ static VALUE train(VALUE self __attribute__((__unused__)), VALUE rb_options) {
 }
 
 static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {
-	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 23) != 0) {
+	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
 		rb_raise(cNativeError, "argument must be a native options instance");
 	} 
 
@@ -523,7 +599,7 @@ static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {
 }
 
 static VALUE dump(VALUE self __attribute__((__unused__)), VALUE rb_options) {
-	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 23) != 0) {
+	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
 		rb_raise(cNativeError, "argument must be a native options instance");
 	} 
 

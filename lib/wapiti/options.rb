@@ -22,7 +22,7 @@ module Wapiti
 		# Returns the value of the attribute identified by +name+ or nil
 		# if there is no such attribute.
 		def [](name)
-			has_attribute?(name) ? nil : send(name)
+			has_attribute?(name) ? send(name) : nil
 		end
 		
 		# Updates the value of the attribute identified by +name+ with the
@@ -51,7 +51,7 @@ module Wapiti
 		alias to_hash attributes
 		
 		def has_attribute?(attribute)
-			Options.attributes.include?(attribute)
+			Options.attribute_names.include?(attribute)
 		end
 		
 		def <=>(other)

@@ -12,6 +12,5 @@ module Wapiti
 	end
 
 	class NativeError < Error; end
-	class ArgumentError < Error; end
 	
 end

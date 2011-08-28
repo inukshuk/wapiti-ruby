@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 
 #include "wapiti.h"
@@ -7,7 +8,6 @@
 #include "trainers.h"
 
 #include "native.h"
-
 
 VALUE mWapiti;
 VALUE mNative;
@@ -612,32 +612,38 @@ static VALUE model_compact(VALUE self) {
 	return self;
 }
 
+// call-seq:
+//   m.save       # => saves the model to the file defined in m.path
+//   m.save(path) # => sets m.path and saves the model to the file <path>
+//
+// Saves the model to a file. Uses the Model's path if no argument given,
+// otherwise uses the passed-in argument as the Model's path.
 static VALUE model_save(int argc, VALUE *argv, VALUE self) {
 	if (argc > 1) {
 		rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")),
 			"wrong number of arguments (%d for 0..1)", argc);
 	}
 	
-	FILE *file;	
+	FILE *file = 0;
 	mdl_t *model = get_model(self);
 	
-	// save passed-in argument in options
+	// save passed-in path in options
 	if (argc) {
-		rb_funcall(rb_ivar_get(self, "@options"), rb_intern("model="), 1, argv[0]);
+		rb_funcall(rb_ivar_get(self, rb_intern("@options")), rb_intern("model="), 1, argv[0]);
 	}
 
 	// open the output file
 	if (!model->opt->model) {
 		rb_raise(cNativeError, "failed to save model: no model file defined in options");
+	}
 	
-		if (!(file = fopen(model->opt->model, "w"))) {
-			rb_raise(cNativeError, "failed to save model: failed to open model file");
-		}
+	if (!(file = fopen(model->opt->model, "w"))) {
+		rb_raise(cNativeError, "failed to save model: failed to open model file");
 	}
 	
 	mdl_save(model, file);
 	fclose(file);
-		
+
 	return self;
 }
 
@@ -647,21 +653,21 @@ static VALUE model_load(int argc, VALUE *argv, VALUE self) {
 			"wrong number of arguments (%d for 0..1)", argc);
 	}
 	
-	FILE *file;	
+	FILE *file = 0;	
 	mdl_t *model = get_model(self);
 	
 	// save passed-in argument in options
 	if (argc) {
-		rb_funcall(rb_ivar_get(self, "@options"), rb_intern("model="), 1, argv[0]);
+		rb_funcall(rb_ivar_get(self, rb_intern("@options")), rb_intern("model="), 1, argv[0]);
 	}
 	
 	// open the model file
 	if (!model->opt->model) {
 		rb_raise(cNativeError, "failed to load model: no model file defined in options");
+	}
 	
-		if (!(file = fopen(model->opt->model, "r"))) {
-			rb_raise(cNativeError, "failed to load model: failed to open model file");
-		}
+	if (!(file = fopen(model->opt->model, "r"))) {
+		rb_raise(cNativeError, "failed to load model: failed to open model file");
 	}
 	
 	mdl_load(model, file);

@@ -12,5 +12,6 @@ module Wapiti
 	end
 
 	class NativeError < Error; end
+	class ConfigurationError < Error; end
 	
 end

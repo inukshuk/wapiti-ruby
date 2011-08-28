@@ -1,6 +1,22 @@
 module Wapiti
 	describe 'Model' do
 		
+		describe '.train' do
+			context 'given sufficient options' do
+				let(:options) {
+					{ 
+						:pattern => File.expand_path('../../fixtures/chpattern.txt', __FILE__),
+						:input => File.expand_path('../../fixtures/chtrain.txt', __FILE__)
+					}
+				}
+				
+				it 'returns a valid model instance' do
+					Model.train(options).labels.should == 17
+				end
+				
+			end
+		end
+		
 		describe 'initialization' do
 		
 			context 'when passed no arguments' do
@@ -55,21 +71,21 @@ module Wapiti
 			end
 		end
 		
-		describe '#nlbl' do
+		describe '#labels' do
 			it 'returns the number of labels (0 by default)' do
-				Model.new.nlbl.should == 0
+				Model.new.labels.should == 0
 			end
 		end
 
-		describe '#nobs' do
+		describe '#observations' do
 			it 'returns the number of observations (0 by default)' do
-				Model.new.nobs.should == 0
+				Model.new.observations.should == 0
 			end
 		end
 
-		describe '#nftr' do
+		describe '#features' do
 			it 'returns the number of features (0 by default)' do
-				Model.new.nftr.should == 0
+				Model.new.features.should == 0
 			end
 		end
 

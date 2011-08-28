@@ -1,11 +1,12 @@
 module Wapiti
-		
+	
 	class Options
 		
 		include Comparable
 		
 		class << self
 				
+			# Returns a sorted list of available option attributes.
 			def attribute_names
 				@attribute_names ||= %w{ mode stop_window convergence_window
 					max_iterations jobsize threads rho1 rho2 stop_epsilon input output
@@ -13,8 +14,14 @@ module Wapiti
 					posterior score }.sort.map(&:to_sym).freeze
 			end
 			
+			# Returns the default options.
 			def defaults
 				@defaults ||= new.attributes
+			end
+
+			# Returns the list of supported algorithm options.
+			def algorithms
+				@algorithms ||= %w{ l-bfgs sgd-l1 bcd rprop rprop+ rprop- auto }.freeze
 			end
 			
 		end
@@ -53,6 +60,12 @@ module Wapiti
 		def has_attribute?(attribute)
 			Options.attribute_names.include?(attribute)
 		end
+		
+		def valid_algorithm?
+			self.class.algorithms.include?(algorithm)
+		end
+		
+		alias valid? valid_algorithm?
 		
 		def <=>(other)
 			other.respond_to?(:attributes) ? attributes <=> other.attributes : nil

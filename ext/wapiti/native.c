@@ -1,9 +1,10 @@
 #include <string.h>
 
+#include "wapiti.h"
 #include "options.h"
 #include "reader.h"
 #include "model.h"
-#include "wapiti.h"
+#include "trainers.h"
 
 #include "native.h"
 
@@ -17,6 +18,30 @@ VALUE cModel;
 VALUE cNativeError;
 VALUE cLogger;
 
+
+/* --- Utilities --- */
+
+static void trn_auto(mdl_t *mdl) {
+	const int maxiter = mdl->opt->maxiter;
+	mdl->opt->maxiter = 3;
+	trn_sgdl1(mdl);
+	mdl->opt->maxiter = maxiter;
+	trn_lbfgs(mdl);
+}
+
+static const struct {
+	char *name;
+	void (* train)(mdl_t *mdl);
+} trn_lst[] = {
+	{"l-bfgs", trn_lbfgs},
+	{"sgd-l1", trn_sgdl1},
+	{"bcd",    trn_bcd  },
+	{"rprop",  trn_rprop},
+	{"rprop+", trn_rprop},
+	{"rprop-", trn_rprop},
+	{"auto",   trn_auto }
+};
+static const int trn_cnt = sizeof(trn_lst) / sizeof(trn_lst[0]);
 
 
 /* --- Options Class --- */
@@ -546,7 +571,12 @@ static VALUE initialize_model(int argc, VALUE *argv, VALUE self) {
 	}
 
 	model_set_options(self, options);
-		
+
+	// Load a previous model if specified by options
+	if (get_options(options)->model) {
+		rb_funcall(self, rb_intern("load"), 0);
+	}
+
 	return self;
 }
 
@@ -570,6 +600,177 @@ static VALUE model_total(VALUE self) {
 }
 
 
+// Instance methods
+
+static VALUE model_sync(VALUE self) {
+	mdl_sync(get_model(self));
+	return self;
+}
+
+static VALUE model_compact(VALUE self) {
+	mdl_compact(get_model(self));
+	return self;
+}
+
+static VALUE model_save(int argc, VALUE *argv, VALUE self) {
+	if (argc > 1) {
+		rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")),
+			"wrong number of arguments (%d for 0..1)", argc);
+	}
+	
+	FILE *file;	
+	mdl_t *model = get_model(self);
+	
+	// save passed-in argument in options
+	if (argc) {
+		rb_funcall(rb_ivar_get(self, "@options"), rb_intern("model="), 1, argv[0]);
+	}
+
+	// open the output file
+	if (!model->opt->model) {
+		rb_raise(cNativeError, "failed to save model: no model file defined in options");
+	
+		if (!(file = fopen(model->opt->model, "w"))) {
+			rb_raise(cNativeError, "failed to save model: failed to open model file");
+		}
+	}
+	
+	mdl_save(model, file);
+	fclose(file);
+		
+	return self;
+}
+
+static VALUE model_load(int argc, VALUE *argv, VALUE self) {
+	if (argc > 1) {
+		rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")),
+			"wrong number of arguments (%d for 0..1)", argc);
+	}
+	
+	FILE *file;	
+	mdl_t *model = get_model(self);
+	
+	// save passed-in argument in options
+	if (argc) {
+		rb_funcall(rb_ivar_get(self, "@options"), rb_intern("model="), 1, argv[0]);
+	}
+	
+	// open the model file
+	if (!model->opt->model) {
+		rb_raise(cNativeError, "failed to load model: no model file defined in options");
+	
+		if (!(file = fopen(model->opt->model, "r"))) {
+			rb_raise(cNativeError, "failed to load model: failed to open model file");
+		}
+	}
+	
+	mdl_load(model, file);
+	fclose(file);
+	
+	return self;
+}
+
+static VALUE model_train(int argc, VALUE *argv, VALUE self) {
+	if (argc > 1) {
+		rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")),
+			"wrong number of arguments (%d for 0..1)", argc);
+	}
+	
+	mdl_t* model = get_model(self);
+	
+	int trn;
+	for (trn = 0; trn < trn_cnt; trn++) {
+		if (!strcmp(model->opt->algo, trn_lst[trn].name)) break;
+	}
+	
+	if (trn == trn_cnt) {
+		rb_raise(cNativeError, "failed to train model: unknown algorithm '%s'", model->opt->algo);
+	}
+	
+	FILE *file;
+	
+	// Load the pattern file. This will unlock the database if previously
+	// locked by loading a model.
+	if (model->opt->pattern) {
+		file = fopen(model->opt->pattern, "r");
+		
+		if (!file) {
+			rb_raise(cNativeError, "failed to train model: failed to load pattern file '%s'", model->opt->pattern);
+		}
+
+		rdr_loadpat(model->reader, file);
+		fclose(file);
+		qrk_lock(model->reader->obs, false);
+		
+	}
+	else {
+		rb_raise(cNativeError, "failed to train model: no pattern given");
+	}
+	
+	// Load the training data. When this is done we lock the quarks as we
+	// don't want to put in the model, informations present only in the
+	// devlopment set.
+	if (argc) {
+		Check_Type(argv[0], T_STRING);
+		if (!(file = fopen(StringValuePtr(argv[0]), "r"))) {
+			rb_raise(cNativeError, "failed to train model: failed to open training data '%s", StringValuePtr(argv[0]));
+		}
+	}
+	else {
+		if (model->opt->input) {
+			if (!(file = fopen(model->opt->input, "r"))) {
+				rb_raise(cNativeError, "failed to train model: failed to open training data '%s", model->opt->input);
+			}
+		}
+		else {
+			rb_raise(cNativeError, "failed to train model: no training data given");
+		}
+	}
+
+	model->train = rdr_readdat(model->reader, file, true);
+
+	if (model->opt->input) {
+		fclose(file);
+	}
+
+	qrk_lock(model->reader->lbl, true);
+	qrk_lock(model->reader->obs, true);
+	
+	if (!model->train || model->train->nseq == 0) {
+		rb_raise(cNativeError, "failed to train model: no training data loaded");
+	}
+
+	// If present, load the development set in the model. If not specified,
+	// the training dataset will be used instead.
+	if (model->opt->devel) {
+		if (!(file = fopen(model->opt->devel, "r"))) {
+			rb_raise(cNativeError, "failed to train model: cannot open development file '%s'", model->opt->devel);
+		}
+		
+		model->devel = rdr_readdat(model->reader, file, true);
+		fclose(file);
+	}
+	
+	// Initialize the model. If a previous model was loaded, this will be
+	// just a resync, else the model structure will be created.
+	rb_funcall(self, rb_intern("sync"), 0);
+
+	// Train the model.
+	uit_setup(model);
+	trn_lst[trn].train(model);
+	uit_cleanup(model);
+	
+	// If requested compact the model.
+	if (model->opt->compact) {
+		const size_t O = model->nobs;
+		const size_t F = model->nftr;
+		rb_funcall(self, rb_intern("compact"), 0);
+	}	
+	
+	return self;
+}
+
+
 static void Init_model() {
 	cModel = rb_define_class_under(mWapiti, "Model", rb_cObject);
 	rb_define_alloc_func(cModel, allocate_model);
@@ -579,16 +780,29 @@ static void Init_model() {
 	rb_define_attr(cModel, "options", 1, 0);
 	
 	rb_define_method(cModel, "nlbl", model_nlbl, 0);
+	rb_define_alias(cModel, "labels", "nlbl");
+	
 	rb_define_method(cModel, "nobs", model_nobs, 0);
+	rb_define_alias(cModel, "observations", "nobs");
+
 	rb_define_method(cModel, "nftr", model_nftr, 0);
+	rb_define_alias(cModel, "features", "nftr");
+
 	rb_define_method(cModel, "total", model_total, 0);
+
+	rb_define_method(cModel, "sync", model_sync, 0);
+	rb_define_method(cModel, "compact", model_compact, 0);
+	rb_define_method(cModel, "save", model_save, -1);
+	rb_define_method(cModel, "load", model_load, -1);
+
+	rb_define_method(cModel, "train", model_train, -1);
 }
 
 /* --- Top-Level Utility Methods --- */
 
 static VALUE train(VALUE self __attribute__((__unused__)), VALUE rb_options) {
 	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
-		rb_raise(cNativeError, "argument must be a native options instance");
+		rb_raise(cNativeError, "failed to train model: argument must be a native options instance");
 	} 
 	
 	opt_t *options = get_options(rb_options);
@@ -597,14 +811,11 @@ static VALUE train(VALUE self __attribute__((__unused__)), VALUE rb_options) {
 		rb_raise(cNativeError, "invalid options argument: mode should be set to 0 for training");
 	}
 
-	mdl_t *model = mdl_new(rdr_new(options->maxent));
-	model->opt = options;
+	VALUE rb_model = rb_funcall(cModel, rb_intern("new"), 1, rb_options);
+	
+	dotrain(get_model(rb_model));
 
-	dotrain(model);
-	
-	mdl_free(model);
-	
-	return Qnil;
+	return rb_model;
 }
 
 static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {

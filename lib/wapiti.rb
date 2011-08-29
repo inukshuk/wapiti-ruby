@@ -14,7 +14,7 @@ module Wapiti
 			Logger
 		end
 		
-		def debug
+		def debug!
 			log.level == ::Logger::DEBUG
 		end
 	end

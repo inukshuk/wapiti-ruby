@@ -9,7 +9,7 @@ module Wapiti
 				config.training_mode!
 				
 				# check configuration					
-				%{ pattern input }.each do |data|
+				%w{ pattern input }.each do |data|
 					if config.send(data).empty?
 						raise ConfigurationError, "invalid options: no #{data} data specified"
 					end

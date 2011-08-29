@@ -937,6 +937,20 @@ static VALUE model_train(int argc, VALUE *argv, VALUE self) {
 	return self;
 }
 
+// Returns all labels in the Model's label database.
+static VALUE model_labels(VALUE self) {
+	mdl_t *model = get_model(self);
+	const size_t Y = model->nlbl;
+	qrk_t *lp = model->reader->lbl;
+	VALUE labels = rb_ary_new2(Y);
+
+	for (unsigned int i = 0; i < Y; ++i) {
+		rb_ary_push(labels, rb_str_new2(qrk_id2str(lp, i)));
+	}
+	
+	return labels;
+}
+
 // cal-seq:
 //   m.label(tokens)  # => array of labelled tokens
 //
@@ -983,7 +997,7 @@ static void Init_model() {
 	rb_define_attr(cModel, "options", 1, 0);
 	
 	rb_define_method(cModel, "nlbl", model_nlbl, 0);
-	rb_define_alias(cModel, "labels", "nlbl");
+	rb_define_method(cModel, "labels", model_labels, 0);
 	
 	rb_define_method(cModel, "nobs", model_nobs, 0);
 	rb_define_alias(cModel, "observations", "nobs");
@@ -1089,7 +1103,8 @@ void Init_native() {
 	cNativeError = rb_const_get(mWapiti, rb_intern("NativeError"));
 	cConfigurationError = rb_const_get(mWapiti, rb_intern("ConfigurationError"));
 	cLogger = rb_funcall(mWapiti, rb_intern("log"), 0);
-		
+
+	rb_define_singleton_method(mNative, "label", label, 1);		
 	rb_define_singleton_method(mNative, "wapiti", wapiti, 1);
 	
 	rb_define_const(mNative, "VERSION", rb_str_new2(VERSION));

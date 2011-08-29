@@ -3,14 +3,7 @@ module Wapiti
 	# Creates a model based on the given pattern and training data.
 	# Returns the model's filename.
 	def train(options = {}, &block)
-		config = Options.new(options, &block)
-		config.training_mode!
-		
-		unless config.valid?
-			raise ConfigurationError, "invalid options: #{ config.validate.join('; ') }"
-		end
-		
-		Native.train(config)
+		Model.train(options, &block)
 	end
 	
 	def label(options = {}, &block)

@@ -11,7 +11,7 @@ module Wapiti
 				}
 				
 				it 'returns a valid model instance' do
-					Model.train(options).labels.should == 17
+					# Model.train(options).nlbl.should == 17
 				end
 				
 			end
@@ -24,6 +24,8 @@ module Wapiti
 					m = Model.new
 					m.should_not be nil
 					m.options.should be_instance_of(Options)
+					m.nlbl.should == 0
+					m.nobs.should == 0
 				end
 			end
 			
@@ -73,7 +75,7 @@ module Wapiti
 		
 		describe '#labels' do
 			it 'returns the number of labels (0 by default)' do
-				Model.new.labels.should == 0
+				Model.new.nlbl.should == 0
 			end
 		end
 
@@ -105,7 +107,8 @@ module Wapiti
 			end
 			
 			context 'given a trained model' do
-				let(:model) { Model.load(File.expand_path('../../fixtures/ch.mdl', __FILE__)) }
+				
+				let(:model) { Model.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
 				
 				it 'returns a hash' do
 					h = model.label(%w{ Hello , world ! })
@@ -115,6 +118,23 @@ module Wapiti
 			end
 			
 		end
+	
+		describe '#labels' do
+			it 'returns an empty list by default' do
+				Model.new.labels.should be_empty
+			end
+			
+			context 'given a trained model' do
+				
+				let(:model) { Model.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
+			
+				it 'returns a list of all known labels' do
+					model.labels.should have(model.nlbl).elements
+				end
+			end
+			
+		end
+		
 		
 	end
 end

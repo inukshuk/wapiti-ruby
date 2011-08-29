@@ -4,28 +4,26 @@ module Wapiti
 	# Returns the model's filename.
 	def train(options = {}, &block)
 		config = Options.new(options, &block)
-		config.mode = 0
+		config.training_mode!
 		
-		# check configuration	
-		if config.input.empty?
-			raise ConfigurationError, 'no training data specified in options'
+		unless config.valid?
+			raise ConfigurationError, "invalid options: #{ config.validate.join('; ') }"
 		end
 		
-		if config.pattern.empty?
-			raise ConfigurationError, 'no pattern specified in options' 
-		end
-		
-		unless config.valid_algorithm?
-			raise ConfigurationError, "algorithm #{config.algorithm.inspect} is not supported"
-		end
-		
-		config.output = Tempfile.new('model').path if config.output.empty?
-
-		model = Native.train(config)
-
-		config.output
+		Native.train(config)
 	end
 	
-	module_function :train
+	def label(options = {}, &block)
+		config = Options.new(options, &block)
+		config.label_mode!
+		
+		unless config.valid?
+			raise ConfigurationError, "invalid options: #{ config.validate.join('; ') }"
+		end
+
+		Native.label(config)
+	end
+	
+	module_function :train, :label
 	
 end

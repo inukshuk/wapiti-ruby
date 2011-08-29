@@ -95,6 +95,26 @@ module Wapiti
 			end
 		end
 
+		describe '#train' do
+		end
+		
+		describe '#label' do
+			
+			context 'given an empty model' do
+				
+			end
+			
+			context 'given a trained model' do
+				let(:model) { Model.load(File.expand_path('../../fixtures/ch.mdl', __FILE__)) }
+				
+				it 'returns a hash' do
+					h = model.label(%w{ Hello , world ! })
+					h.should == []
+				end
+				
+			end
+			
+		end
 		
 	end
 end

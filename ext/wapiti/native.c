@@ -6,6 +6,7 @@
 #include "reader.h"
 #include "model.h"
 #include "trainers.h"
+#include "quark.h"
 
 #include "native.h"
 
@@ -16,6 +17,7 @@ VALUE cOptions;
 VALUE cModel;
 
 VALUE cNativeError;
+VALUE cConfigurationError;
 VALUE cLogger;
 
 
@@ -94,6 +96,10 @@ static VALUE initialize_options(int argc, VALUE *argv, VALUE self) {
 	opt_t* options = get_options(self);
 	*options = opt_defaults;
 	
+	if (options->maxiter == 0) {
+		options->maxiter = INT_MAX;
+	}
+	
 	// copy the default algorithm name to the heap so that all options strings
 	// are on the heap
 	char* tmp = calloc(strlen(options->algo), sizeof(char));
@@ -130,11 +136,23 @@ static VALUE options_mode(VALUE self) {
 }
 
 static VALUE options_set_mode(VALUE self, VALUE rb_fixnum) {
-	Check_Type(rb_fixnum, T_FIXNUM);
+	Check_Type(rb_fixnum, T_FIXNUM);	
 	get_options(self)->mode = FIX2INT(rb_fixnum);
 	
 	return rb_fixnum;
 }
+
+static VALUE options_nbest(VALUE self) {
+	return INT2FIX(get_options(self)->nbest);
+}
+
+static VALUE options_set_nbest(VALUE self, VALUE rb_fixnum) {
+	Check_Type(rb_fixnum, T_FIXNUM);	
+	get_options(self)->nbest = FIX2INT(rb_fixnum);
+	
+	return rb_fixnum;
+}
+
 
 static VALUE options_stopwin(VALUE self) {
 	return INT2FIX(get_options(self)->stopwin);
@@ -198,6 +216,29 @@ static VALUE options_set_nthread(VALUE self, VALUE rb_fixnum) {
 	return rb_fixnum;
 }
 
+static VALUE options_histsz(VALUE self) {
+	return INT2FIX(get_options(self)->lbfgs.histsz);
+}
+
+static VALUE options_set_histsz(VALUE self, VALUE rb_fixnum) {
+	Check_Type(rb_fixnum, T_FIXNUM);	
+	get_options(self)->lbfgs.histsz = FIX2INT(rb_fixnum);
+	
+	return rb_fixnum;
+}
+
+static VALUE options_maxls(VALUE self) {
+	return INT2FIX(get_options(self)->lbfgs.maxls);
+}
+
+static VALUE options_set_maxls(VALUE self, VALUE rb_fixnum) {
+	Check_Type(rb_fixnum, T_FIXNUM);	
+	get_options(self)->lbfgs.maxls = FIX2INT(rb_fixnum);
+	
+	return rb_fixnum;
+}
+
+
 // Float Accessors
 
 static VALUE options_rho1(VALUE self) {
@@ -226,6 +267,70 @@ static VALUE options_set_stopeps(VALUE self, VALUE rb_numeric) {
 	get_options(self)->stopeps = NUM2DBL(rb_numeric);
 	return rb_numeric;
 }
+
+static VALUE options_eta0(VALUE self) {
+	return rb_float_new(get_options(self)->sgdl1.eta0);
+}
+
+static VALUE options_set_eta0(VALUE self, VALUE rb_numeric) {
+	get_options(self)->sgdl1.eta0 = NUM2DBL(rb_numeric);
+	return rb_numeric;
+}
+
+static VALUE options_alpha(VALUE self) {
+	return rb_float_new(get_options(self)->sgdl1.alpha);
+}
+
+static VALUE options_set_alpha(VALUE self, VALUE rb_numeric) {
+	get_options(self)->sgdl1.alpha = NUM2DBL(rb_numeric);
+	return rb_numeric;
+}
+
+static VALUE options_kappa(VALUE self) {
+	return rb_float_new(get_options(self)->bcd.kappa);
+}
+
+static VALUE options_set_kappa(VALUE self, VALUE rb_numeric) {
+	get_options(self)->bcd.kappa = NUM2DBL(rb_numeric);
+	return rb_numeric;
+}
+
+static VALUE options_stpmin(VALUE self) {
+	return rb_float_new(get_options(self)->rprop.stpmin);
+}
+
+static VALUE options_set_stpmin(VALUE self, VALUE rb_numeric) {
+	get_options(self)->rprop.stpmin = NUM2DBL(rb_numeric);
+	return rb_numeric;
+}
+
+static VALUE options_stpmax(VALUE self) {
+	return rb_float_new(get_options(self)->rprop.stpmax);
+}
+
+static VALUE options_set_stpmax(VALUE self, VALUE rb_numeric) {
+	get_options(self)->rprop.stpmax = NUM2DBL(rb_numeric);
+	return rb_numeric;
+}
+
+static VALUE options_stpinc(VALUE self) {
+	return rb_float_new(get_options(self)->rprop.stpinc);
+}
+
+static VALUE options_set_stpinc(VALUE self, VALUE rb_numeric) {
+	get_options(self)->rprop.stpinc = NUM2DBL(rb_numeric);
+	return rb_numeric;
+}
+
+static VALUE options_stpdec(VALUE self) {
+	return rb_float_new(get_options(self)->rprop.stpdec);
+}
+
+static VALUE options_set_stpdec(VALUE self, VALUE rb_numeric) {
+	get_options(self)->rprop.stpdec = NUM2DBL(rb_numeric);
+	return rb_numeric;
+}
+
 
 
 // Boolean Accessors
@@ -292,6 +397,26 @@ static VALUE options_set_lblpost(VALUE self, VALUE rb_boolean) {
 	get_options(self)->lblpost = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);	
 	return rb_boolean;
 }
+
+static VALUE options_clip(VALUE self) {
+	return get_options(self)->lbfgs.clip ? Qtrue : Qfalse;	
+}
+
+static VALUE options_set_clip(VALUE self, VALUE rb_boolean) {
+	get_options(self)->lbfgs.clip = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);	
+	return rb_boolean;
+}
+
+static VALUE options_cutoff(VALUE self) {
+	return get_options(self)->rprop.cutoff ? Qtrue : Qfalse;	
+}
+
+static VALUE options_set_cutoff(VALUE self, VALUE rb_boolean) {
+	get_options(self)->rprop.cutoff = !(TYPE(rb_boolean) == T_NIL || !rb_boolean);	
+	return rb_boolean;
+}
+
+
 
 
 // String Accessors
@@ -492,6 +617,42 @@ void Init_options() {
 	rb_define_alias(cOptions, "devel", "development_data");
 	rb_define_alias(cOptions, "devel=", "development_data=");
 
+	rb_define_method(cOptions, "clip", options_clip, 0);
+	rb_define_method(cOptions, "clip=", options_set_clip, 1);
+
+	rb_define_method(cOptions, "histsz", options_histsz, 0);
+	rb_define_method(cOptions, "histsz=", options_set_histsz, 1);
+
+	rb_define_method(cOptions, "maxls", options_maxls, 0);
+	rb_define_method(cOptions, "maxls=", options_set_maxls, 1);
+
+	rb_define_method(cOptions, "eta0", options_eta0, 0);
+	rb_define_method(cOptions, "eta0=", options_set_eta0, 1);
+
+	rb_define_method(cOptions, "alpha", options_alpha, 0);
+	rb_define_method(cOptions, "alpha=", options_set_alpha, 1);
+
+	rb_define_method(cOptions, "kappa", options_kappa, 0);
+	rb_define_method(cOptions, "kappa=", options_set_kappa, 1);
+
+	rb_define_method(cOptions, "stpmin", options_stpmin, 0);
+	rb_define_method(cOptions, "stpmin=", options_set_stpmin, 1);
+
+	rb_define_method(cOptions, "stpmax", options_stpmax, 0);
+	rb_define_method(cOptions, "stpmax=", options_set_stpmax, 1);
+
+	rb_define_method(cOptions, "stpinc", options_stpinc, 0);
+	rb_define_method(cOptions, "stpinc=", options_set_stpinc, 1);
+
+	rb_define_method(cOptions, "stpdec", options_stpdec, 0);
+	rb_define_method(cOptions, "stpdec=", options_set_stpdec, 1);
+
+	rb_define_method(cOptions, "cutoff", options_cutoff, 0);
+	rb_define_method(cOptions, "cutoff=", options_set_cutoff, 1);
+	
+	rb_define_method(cOptions, "nbest", options_nbest, 0);
+	rb_define_method(cOptions, "nbest=", options_set_nbest, 1);
+	
 }
 
 
@@ -667,7 +828,7 @@ static VALUE model_load(int argc, VALUE *argv, VALUE self) {
 	}
 	
 	if (!(file = fopen(model->opt->model, "r"))) {
-		rb_raise(cNativeError, "failed to load model: failed to open model file");
+		rb_raise(cNativeError, "failed to load model: failed to open model file '%s'", model->opt->model);
 	}
 	
 	mdl_load(model, file);
@@ -776,6 +937,42 @@ static VALUE model_train(int argc, VALUE *argv, VALUE self) {
 	return self;
 }
 
+// cal-seq:
+//   m.label(tokens)  # => array of labelled tokens
+//
+static VALUE model_label(VALUE self, VALUE rb_input) {
+
+	VALUE tokens = rb_funcall(self, rb_intern("tokenize"), 1, rb_input);
+	
+	// mdl_t *model = get_model(self);
+	// 
+	// qrk_t *labels = model->reader->lbl;
+	// const size_t Y = model->nlbl;
+	// const size_t N = model->opt->nbest;
+	// 
+	// // We start by preparing the statistic collection to be ready if check
+	// // option is used. The stat array hold the following for each label
+	// //   [0] # of reference with this label
+	// //   [1] # of token we have taged with this label
+	// //   [2] # of match of the two preceding
+	// size_t tcnt = 0, terr = 0;
+	// size_t scnt = 0, serr = 0;
+	// size_t stat[3][Y];
+	// 
+	// for (size_t y = 0; y < Y; y++) {
+	// 	stat[0][y] = stat[1][y] = stat[2][y] = 0;
+	// }
+	// 
+	// long int i;
+	// long int length = RARRAY_LEN(tokens);
+	// 
+	// for (i = 0; i < length; ++i) {
+	// 	
+	// }
+	
+	VALUE labels = rb_ary_new2(2);
+	return labels;
+}
 
 static void Init_model() {
 	cModel = rb_define_class_under(mWapiti, "Model", rb_cObject);
@@ -802,27 +999,11 @@ static void Init_model() {
 	rb_define_method(cModel, "load", model_load, -1);
 
 	rb_define_method(cModel, "train", model_train, -1);
+	rb_define_method(cModel, "label", model_label, 1);
 }
 
 /* --- Top-Level Utility Methods --- */
 
-static VALUE train(VALUE self __attribute__((__unused__)), VALUE rb_options) {
-	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
-		rb_raise(cNativeError, "failed to train model: argument must be a native options instance");
-	} 
-	
-	opt_t *options = get_options(rb_options);
-
-	if (options->mode != 0) {
-		rb_raise(cNativeError, "invalid options argument: mode should be set to 0 for training");
-	}
-
-	VALUE rb_model = rb_funcall(cModel, rb_intern("new"), 1, rb_options);
-	
-	dotrain(get_model(rb_model));
-
-	return rb_model;
-}
 
 static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {
 	if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
@@ -832,7 +1013,7 @@ static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {
 	opt_t *options = get_options(rb_options);
 
 	if (options->mode != 1) {
-		rb_raise(cNativeError, "invalid options argument: mode should be set to 1 for training");
+		rb_raise(cNativeError, "invalid options argument: mode should be set to 1 for labelling");
 	}
 
 	mdl_t *model = mdl_new(rdr_new(options->maxent));
@@ -866,7 +1047,38 @@ static VALUE dump(VALUE self __attribute__((__unused__)), VALUE rb_options) {
 	return Qnil;	
 }
 
-
+// This function is a proxy for Wapiti's main entry point.
+static VALUE wapiti(VALUE self __attribute__((__unused__)), VALUE arguments) {
+	int result = -1, argc = 0;
+	char **ap, *argv[18], *input, *tmp;
+	
+	Check_Type(arguments, T_STRING);
+	tmp = StringValueCStr(arguments);
+	
+	// allocate space for argument vector
+	input = (char*)malloc(strlen(tmp) + 8);
+	
+	// prepend command name
+	strncpy(input, "wapiti ", 8);
+	strncat(input, tmp, strlen(input) - 8);
+	
+	// remember allocation pointer
+	tmp = input;
+	
+	// turn input string into argument vector (using
+	// only the first seventeen tokens from input)
+	for (ap = argv; (*ap = strsep(&input, " \t")) != (char*)0; ++argc) {
+		if ((**ap != '\0') && (++ap >= &argv[18])) break;
+	}
+	
+	// call main entry point
+	result = wapiti_main(argc, argv);
+	
+	// free allocated memory
+	free(tmp);
+	
+	return INT2FIX(result);
+}
 
 /* --- Wapiti Extension Entry Point --- */
 
@@ -875,11 +1087,10 @@ void Init_native() {
 	mNative = rb_define_module_under(mWapiti, "Native");
 
 	cNativeError = rb_const_get(mWapiti, rb_intern("NativeError"));
+	cConfigurationError = rb_const_get(mWapiti, rb_intern("ConfigurationError"));
 	cLogger = rb_funcall(mWapiti, rb_intern("log"), 0);
-	
-	rb_define_singleton_method(mNative, "train", train, 1);
-	rb_define_singleton_method(mNative, "label", label, 1);
-	rb_define_singleton_method(mNative, "dump", dump, 1);
+		
+	rb_define_singleton_method(mNative, "wapiti", wapiti, 1);
 	
 	rb_define_const(mNative, "VERSION", rb_str_new2(VERSION));
 	

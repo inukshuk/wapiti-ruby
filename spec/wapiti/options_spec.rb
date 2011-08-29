@@ -78,14 +78,14 @@ module Wapiti
 		end
 
 		describe '#maxiter' do
-			it 'returns 0 by default' do
-				options.maxiter.should == 0
+			it 'returns a large number by default' do
+				options.maxiter.should > 0
 			end
 		end
 
 		describe '#maxiter=' do
 			it 'sets maxiter to the given value' do
-				lambda { options.maxiter = 20 }.should change { options.maxiter }.by(20)
+				lambda { options.maxiter = 20 }.should change { options.maxiter }.to(20)
 			end
 		end
 

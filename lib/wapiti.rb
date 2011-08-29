@@ -9,7 +9,15 @@ module Wapiti
 	Logger = ::Logger.new(STDOUT)
 	Logger.level = ::Logger::WARN
 	
-	def self.log() Logger; end
+	class << self
+		def log
+			Logger
+		end
+		
+		def debug
+			log.level == ::Logger::DEBUG
+		end
+	end
 	
 end
 

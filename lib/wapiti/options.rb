@@ -4,6 +4,8 @@ module Wapiti
 		
 		include Comparable
 		
+		MODE_NAME = [:train, :label, :dump].freeze
+		
 		class << self
 				
 			# Returns a sorted list of available option attributes.
@@ -50,6 +52,25 @@ module Wapiti
 		
 		alias update_attributes update
 		
+		def lbfgs
+			{ :clip => clip, :histsz => histsz, :maxls => maxls }
+		end
+		
+		def sgdl1
+			{ :eta0 => eta0, :alpha => alpha }
+		end
+		
+		def bcd
+			{ :kappa => kappa }
+		end
+		
+		def rprop
+			{
+				:stpmin => stpmin, :stpmax => stpmax, :stpinc => stpinc,
+				:stpdec => stpdec, :cutoff => cutoff
+			}
+		end
+		
 		# Returns a hash of all the attributes with their names and values.
 		def attributes
 			Hash[*Options.attribute_names.map { |a| [a, send(a)] }.flatten]
@@ -65,12 +86,53 @@ module Wapiti
 			self.class.algorithms.include?(algorithm)
 		end
 		
-		alias valid? valid_algorithm?
+		def valid?
+			validate.empty?
+		end
+		
+		def validate
+			e = []
+			e << "unknown mode: #{mode}" if mode < 0 || mode > 2
+
+			%w{ threads jobsize alpha histsz maxls eta0 alpha nbest }.each do |name|
+				e << "invalid value for #{name}: #{send(name)}" unless send(name) > 0
+			end
+
+			%w{ rho1 rho2 }.each do |name|
+				e << "invalid value for #{name}: #{send(name)}" unless send(name) >= 0.0
+			end
+			
+			e << "unknown algorithm: #{algorithm}" unless valid_algorithm?			
+			e << "BCD not supported for training maxent models" if maxent && algorithm == 'bcd'
+			e
+		end
+		
+		def mode_name
+			MODE_NAME[mode] || :unknown
+		end
+		
+		def training_mode?
+			mode == 0
+		end
+		
+		def training_mode!
+			self.mode = 0
+			self
+		end
+		
+		def label_mode?
+			mode == 1
+		end
+		
+		def label_mode!
+			self.mode = 1
+			self
+		end
 		
 		def <=>(other)
 			other.respond_to?(:attributes) ? attributes <=> other.attributes : nil
 		end
-		
+				
 	end
 	
 end

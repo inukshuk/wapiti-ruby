@@ -6,20 +6,18 @@ module Wapiti
 			
 			def train(options = {}, &block)
 				config = Options.new(options, &block)
-				config.mode = 0
+				config.training_mode!
 				
-				# check configuration	
-				if config.input.empty?
-					raise ConfigurationError, 'no training data specified in options'
+				# check configuration					
+				%{ pattern input }.each do |data|
+					if config.send(data).empty?
+						raise ConfigurationError, "invalid options: no #{data} data specified"
+					end
 				end
 				
-				if config.pattern.empty?
-					raise ConfigurationError, 'no pattern specified in options' 
-				end
-				
-				unless config.valid_algorithm?
-					raise ConfigurationError, "algorithm #{config.algorithm.inspect} is not supported"
-				end
+				unless config.valid?
+					raise ConfigurationError, "invalid options: #{ config.validate.join('; ') }"
+				end				
 				
 				new(config).train
 			end
@@ -44,6 +42,10 @@ module Wapiti
 		
 		def pattern=(filename)
 			options.pattern = filename
+		end
+		
+		def tokenize(input)
+			input
 		end
 		
 	end

@@ -269,20 +269,20 @@ void dodump(mdl_t *mdl) {
 /*******************************************************************************
  * Entry point
  ******************************************************************************/
-// int main(int argc, char *argv[argc]) {
-// 	// We first parse command line switchs
-// 	opt_t opt = opt_defaults;
-// 	opt_parse(argc, argv, &opt);
-// 	// Next we prepare the model
-// 	mdl_t *mdl = mdl_new(rdr_new(opt.maxent));
-// 	mdl->opt = &opt;
-// 	// And switch to requested mode
-// 	switch (opt.mode) {
-// 		case 0: dotrain(mdl); break;
-// 		case 1: dolabel(mdl); break;
-// 		case 2: dodump(mdl); break;
-// 	}
-// 	// And cleanup
-// 	mdl_free(mdl);
-// 	return EXIT_SUCCESS;
-// }
+int wapiti_main(int argc, char *argv[argc]) {
+	// We first parse command line switchs
+	opt_t opt = opt_defaults;
+	opt_parse(argc, argv, &opt);
+	// Next we prepare the model
+	mdl_t *mdl = mdl_new(rdr_new(opt.maxent));
+	mdl->opt = &opt;
+	// And switch to requested mode
+	switch (opt.mode) {
+		case 0: dotrain(mdl); break;
+		case 1: dolabel(mdl); break;
+		case 2: dodump(mdl); break;
+	}
+	// And cleanup
+	mdl_free(mdl);
+	return EXIT_SUCCESS;
+}

@@ -941,7 +941,9 @@ static VALUE model_train(int argc, VALUE *argv, VALUE self) {
 static VALUE model_labels(VALUE self) {
 	mdl_t *model = get_model(self);
 	const size_t Y = model->nlbl;
+	
 	qrk_t *lp = model->reader->lbl;
+	
 	VALUE labels = rb_ary_new2(Y);
 
 	for (unsigned int i = 0; i < Y; ++i) {
@@ -954,38 +956,74 @@ static VALUE model_labels(VALUE self) {
 // cal-seq:
 //   m.label(tokens)  # => array of labelled tokens
 //
-static VALUE model_label(VALUE self, VALUE rb_input) {
+static VALUE model_label(VALUE self, VALUE tokens) {
+	
+	Check_Type(tokens, T_ARRAY);
+	const unsigned int n = RARRAY_LEN(tokens);
+	
+	VALUE tags = rb_ary_new2(n), tag;
+	mdl_t *model = get_model(self);
 
-	VALUE tokens = rb_funcall(self, rb_intern("tokenize"), 1, rb_input);
+	qrk_t *labels = model->reader->lbl;
+	const unsigned int Y = model->nlbl;
+	const unsigned int N = model->opt->nbest;
+
+	raw_t *raw = xmalloc(sizeof(raw_t) + sizeof(char *) * n);	
+
+	for (unsigned int i = 0; i < n; ++i) {
+		VALUE token = rb_ary_entry(tokens, i);
+		Check_Type(token, T_STRING);
+		
+		raw->lines[i] = StringValueCStr(token);
+	}
+
+	raw->len = n;
+		
+	seq_t *seq = rdr_raw2seq(model->reader, raw, false);
+	const int T = seq->len;
 	
-	// mdl_t *model = get_model(self);
-	// 
-	// qrk_t *labels = model->reader->lbl;
-	// const size_t Y = model->nlbl;
-	// const size_t N = model->opt->nbest;
-	// 
-	// // We start by preparing the statistic collection to be ready if check
-	// // option is used. The stat array hold the following for each label
-	// //   [0] # of reference with this label
-	// //   [1] # of token we have taged with this label
-	// //   [2] # of match of the two preceding
-	// size_t tcnt = 0, terr = 0;
-	// size_t scnt = 0, serr = 0;
-	// size_t stat[3][Y];
-	// 
-	// for (size_t y = 0; y < Y; y++) {
-	// 	stat[0][y] = stat[1][y] = stat[2][y] = 0;
-	// }
-	// 
-	// long int i;
-	// long int length = RARRAY_LEN(tokens);
-	// 
-	// for (i = 0; i < length; ++i) {
-	// 	
-	// }
+	size_t *out = xmalloc(sizeof(size_t) * T * N);
+	double *psc = xmalloc(sizeof(double) * T * N);
+	double *scs = xmalloc(sizeof(double) * N);
 	
-	VALUE labels = rb_ary_new2(2);
-	return labels;
+	if (N == 1) {
+		tag_viterbi(model, seq, (size_t*)out, scs, (double*)psc);
+	}
+	else {
+		tag_nbviterbi(model, seq, N, (void*)out, scs, (void*)psc);
+	}
+	
+	for (unsigned int i = 0; i < N; ++i) {
+		if (model->opt->outsc) {
+			// output scores scs
+		}
+
+		for (int j = 0; j < T; ++j) {
+			tag = rb_ary_new2(N+1);
+
+			if (!model->opt->label) {
+				rb_ary_push(tag, rb_str_new2(raw->lines[j]));
+			}
+
+			size_t label = out[j * N + i];
+			rb_ary_push(tag, rb_str_new2(qrk_id2str(labels, label)));
+			
+			if (model->opt->outsc) {
+				// output score psc
+			}
+			
+			rb_ary_push(tags, tag);
+		}
+	}	
+	
+	xfree(out);
+	xfree(psc);
+	xfree(scs);
+	
+	rdr_freeseq(seq);
+	xfree(raw);
+			
+	return tags;
 }
 
 static void Init_model() {

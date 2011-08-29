@@ -110,8 +110,9 @@ module Wapiti
 				
 				let(:model) { Model.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
 				
-				it 'returns a hash' do
-					h = model.label(%w{ Hello , world ! })
+				it 'returns an array of token-label pairs' do
+					model.sync
+					h = model.label(['Hello NN B-VP', ', , O', 'world NN B-NP', '! ! O'])
 					h.should == []
 				end
 				

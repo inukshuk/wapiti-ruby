@@ -5,7 +5,7 @@ $:.unshift lib unless $:.include?(lib)
 require 'wapiti/version'
 
 Gem::Specification.new do |s|
-  s.name        = 'crfpp'
+  s.name        = 'wapiti'
   s.version     = Wapiti::VERSION.dup
   s.platform    = Gem::Platform::RUBY
   s.authors     = ['Sylvester Keil']
@@ -25,7 +25,7 @@ Gem::Specification.new do |s|
   s.executables  = []
   s.require_path = 'lib'
   
-  s.extensions << 'ext/crfpp/extconf.rb'
+  s.extensions << 'ext/wapiti/extconf.rb'
 
   s.rdoc_options      = %w{--line-numbers --inline-source --title "Wapiti" --main README.md --webcvs=http://github.com/inukshuk/crfpp/tree/master/}
   s.extra_rdoc_files  = %w{README.md}

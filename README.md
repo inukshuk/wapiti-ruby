@@ -79,7 +79,7 @@ Before saving your model you can use `compact` to reduce the model's size:
 By calling `#label` on a Model instance you can add labels to your sequence
 data:
 
-    model = Waiti.load('m2.mod')
+    model = Wapiti.load('m2.mod')
     model.label('test.txt')
     => [[["Confidence NN B-NP", "B-NP"], ["in IN B-PP", "B-PP"] ... ]
 

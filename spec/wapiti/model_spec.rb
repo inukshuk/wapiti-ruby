@@ -121,13 +121,13 @@ module Wapiti
 			context 'given a trained model' do
 				let(:model) { Model.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
 				
-				context 'when passed an array' do
-					let(:input) { ['Hello NN B-VP', ', , O', 'world NN B-NP', '! ! O'] }
+				context 'when passed an array of arrays' do
+					let(:input) { [['Hello NN B-VP', ', , O', 'world NN B-NP', '! ! O']] }
 					
 					it 'returns an array of token-label pairs' do
 						labels = model.label(input)
-						labels.map(&:first).should == input
-						labels.map(&:last).should == %w{ B-NP O B-NP O }
+						labels[0].map(&:first).should == input[0]
+						labels[0].map(&:last).should == %w{ B-NP O B-NP O }
 					end
 				end
 
@@ -136,7 +136,7 @@ module Wapiti
 					
 					it 'returns an array of token-label pairs' do
 						labels = model.label(input)
-						labels[0,3].should == []
+						labels.should == []
 					end
 				end
 				

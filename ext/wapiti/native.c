@@ -956,36 +956,23 @@ static VALUE model_labels(VALUE self) {
 	return labels;
 }
 
-static VALUE decode_sequence_array(VALUE self, VALUE tokens) {
-	Check_Type(tokens, T_ARRAY);
-	const unsigned int n = RARRAY_LEN(tokens);
-	unsigned int i, j;
+static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
+	qrk_t *lbls = model->reader->lbl;
 	
-	VALUE tags = rb_ary_new2(n), tag;
-	mdl_t *model = get_model(self);
-
-	qrk_t *labels = model->reader->lbl;
-	const unsigned int Y = model->nlbl;
-	const unsigned int N = model->opt->nbest;
-
-	raw_t *raw = xmalloc(sizeof(raw_t) + sizeof(char *) * n);	
-
-	for (i = 0; i < n; ++i) {
-		VALUE token = rb_ary_entry(tokens, i);
-		Check_Type(token, T_STRING);
-		
-		raw->lines[i] = StringValueCStr(token);
-	}
-
-	raw->len = n;
-		
-	seq_t *seq = rdr_raw2seq(model->reader, raw, false);
+	const size_t Y = model->nlbl;
+	const size_t N = model->opt->nbest;
+	
+	printf("\n\n\ndecoding sequence with %d lines\n\n\n", raw->len);
+	seq_t *seq = rdr_raw2seq(model->reader, raw, model->opt->check);
+	
 	const int T = seq->len;
 	
 	size_t *out = xmalloc(sizeof(size_t) * T * N);
 	double *psc = xmalloc(sizeof(double) * T * N);
 	double *scs = xmalloc(sizeof(double) * N);
-	
+
+	VALUE result = rb_ary_new2(N), sequence, tokens;
+
 	if (N == 1) {
 		tag_viterbi(model, seq, (size_t*)out, scs, (double*)psc);
 	}
@@ -993,103 +980,110 @@ static VALUE decode_sequence_array(VALUE self, VALUE tokens) {
 		tag_nbviterbi(model, seq, N, (void*)out, scs, (void*)psc);
 	}
 	
-	for (i = 0; i < N; ++i) {
-		if (model->opt->outsc) {
-			// output scores scs
-		}
+	// Next we output the raw sequence with an aditional column for
+	// the predicted labels
+	for (size_t n = 0; n < N; n++) {
 
-		for (j = 0; j < T; ++j) {
-			tag = rb_ary_new2(N+1);
-
+		sequence = rb_ary_new();
+					
+		// if (model->opt->outsc)
+			// fprintf(fout, "# %d %f\n", (int)n, scs[n]);
+			
+		for (int t = 0; t < T; t++) {
+			tokens = rb_ary_new();
+			
 			if (!model->opt->label) {
-				rb_ary_push(tag, rb_str_new2(raw->lines[j]));
+				rb_ary_push(tokens, rb_str_new2(raw->lines[t]));
 			}
+			
+			size_t lbl = out[t * N + n];
+			rb_ary_push(tokens, rb_str_new2(qrk_id2str(lbls, lbl)));
 
-			size_t label = out[j * N + i];
-			rb_ary_push(tag, rb_str_new2(qrk_id2str(labels, label)));
+			// if (model->opt->outsc) {
+			// 	fprintf(fout, "\t%s", lblstr);
+			// 	fprintf(fout, "/%f", psc[t * N + n]);
+			// }
 			
-			if (model->opt->outsc) {
-				// output score psc
-			}
-			
-			rb_ary_push(tags, tag);
+			rb_ary_push(sequence, tokens);
 		}
-	}	
-	
-	xfree(out);
-	xfree(psc);
+		
+		rb_ary_push(result, sequence);
+	}
+
+	// Cleanup memory used for this sequence
 	xfree(scs);
+	xfree(psc);
+	xfree(out);
 	
 	rdr_freeseq(seq);
-	xfree(raw);
-			
-	return tags;
+	
+	return result;
 }
 
-static VALUE decode_sequence_file(VALUE self, FILE *file) {
-	mdl_t *model = get_model(self);
-	
-	qrk_t *lbls = model->reader->lbl;
-	const size_t Y = model->nlbl;
-	const size_t N = model->opt->nbest;
+static VALUE decode_sequence_array(VALUE self, VALUE array) {
+	Check_Type(array, T_ARRAY);
+	const unsigned int n = RARRAY_LEN(array);
 
-	VALUE result = rb_ary_new(), sequence, tokens;
+	mdl_t *model = get_model(self);
+	raw_t *raw;
+	
+	const unsigned int N = model->opt->nbest;
+	unsigned int i, j;
+	
+	VALUE result = rb_ary_new2(n * N), sequence;
+
+	for (i = 0; i < n; ++i) {
+		sequence = rb_ary_entry(array, i);
+		Check_Type(sequence, T_ARRAY);
+		
+		const unsigned int k = RARRAY_LEN(sequence);
+		raw = xmalloc(sizeof(raw_t) + sizeof(char*) * k);
+		raw->len = k;
+		
+		for (j = 0; j < k; ++j) {
+			VALUE line = rb_ary_entry(sequence, j);
+			Check_Type(line, T_STRING);
+		
+			raw->lines[j] = StringValueCStr(line);
+		}
+
+		rb_funcall(result, rb_intern("concat"), 1, decode_sequence(model, raw));
+
+		xfree(raw);
+	}
+			
+	return result;
+}
+
+static VALUE decode_sequence_file(VALUE self, VALUE path) {
+	Check_Type(path, T_STRING);
+	FILE *file;
+	
+	if (!(file = fopen(StringValueCStr(path), "r"))) {
+		rb_raise(cNativeError, "failed to label data: could not open file '%s'", StringValueCStr(path));
+	}
+	
+	mdl_t *model = get_model(self);
+	raw_t *raw;
+	
+	VALUE result = rb_ary_new();
+	
+	printf("\n\n\nfoo..\n\n\n");
 	
 	// Next read the input file sequence by sequence and label them, we have
 	// to take care of not discarding the raw input as we want to send it
 	// back to the output with the additional predicted labels.
 	while (!feof(file)) {
 		
+		printf("\n\n\ndecoding a sequence from file");
+		
 		// So, first read an input sequence keeping the raw_t object
 		// available, and label it with Viterbi.
-		raw_t *raw = rdr_readraw(model->reader, file);
-		if (raw == NULL)
+		if ((raw = rdr_readraw(model->reader, file)) == 0) {
 			break;
-					
-		seq_t *seq = rdr_raw2seq(model->reader, raw, model->opt->check);
-		const int T = seq->len;
-		size_t *out = xmalloc(sizeof(size_t) * T * N);
-		double *psc = xmalloc(sizeof(double) * T * N);
-		double *scs = xmalloc(sizeof(double) * N);
-		if (N == 1)
-			tag_viterbi(model, seq, (size_t*)out, scs, (double*)psc);
-		else
-			tag_nbviterbi(model, seq, N, (void*)out, scs, (void*)psc);
-		// Next we output the raw sequence with an aditional column for
-		// the predicted labels
-		for (size_t n = 0; n < N; n++) {
-
-			sequence = rb_ary_new();
-						
-			// if (model->opt->outsc)
-				// fprintf(fout, "# %d %f\n", (int)n, scs[n]);
-				
-			for (int t = 0; t < T; t++) {
-				tokens = rb_ary_new();
-				
-				if (!model->opt->label) {
-					rb_ary_push(tokens, rb_str_new2(raw->lines[t]));
-				}
-				
-				size_t lbl = out[t * N + n];
-				rb_ary_push(tokens, rb_str_new2(qrk_id2str(lbls, lbl)));
-
-				// if (model->opt->outsc) {
-				// 	fprintf(fout, "\t%s", lblstr);
-				// 	fprintf(fout, "/%f", psc[t * N + n]);
-				// }
-				
-				rb_ary_push(sequence, tokens);
-			}
-			
-			rb_ary_push(result, sequence);
 		}
-
-		// Cleanup memory used for this sequence
-		free(scs);
-		free(psc);
-		free(out);
-		rdr_freeseq(seq);
+		
+		rb_funcall(result, rb_intern("concat"), 1, decode_sequence(model, raw));
 		rdr_freeraw(raw);
 	}
 	
@@ -1106,7 +1100,7 @@ static VALUE model_label(VALUE self, VALUE data) {
 	switch (TYPE(data)) {
 		case T_STRING:
 			result = decode_sequence_file(self, data);
-			break;
+			break;			
 		case T_ARRAY:
 			result = decode_sequence_array(self, data);
 			break;

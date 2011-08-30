@@ -1004,6 +1004,11 @@ static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
 			// 	fprintf(fout, "/%f", psc[t * N + n]);
 			// }
 			
+			// yield token/label pair to block if given
+			if (rb_block_given_p()) {
+				tokens = rb_yield(tokens);
+			}
+			
 			rb_ary_push(sequence, tokens);
 		}
 		

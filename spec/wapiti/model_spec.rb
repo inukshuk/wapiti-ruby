@@ -131,7 +131,7 @@ module Wapiti
 					end
 					
 					it 'yields each token/label pair to the supplied block' do
-						labels = model.label(:input) do |token, label|
+						labels = model.label(input) do |token, label|
 				      [token.downcase, label.downcase]
 				    end
 						labels[0].map(&:last).should == %w{ b-np o b-np o }

@@ -129,8 +129,17 @@ module Wapiti
 						labels[0].map(&:first).should == input[0]
 						labels[0].map(&:last).should == %w{ B-NP O B-NP O }
 					end
+					
+					it 'yields each token/label pair to the supplied block' do
+						labels = model.label(:input) do |token, label|
+				      [token.downcase, label.downcase]
+				    end
+						labels[0].map(&:last).should == %w{ b-np o b-np o }
+				  end
+				
 				end
 
+				
 				context 'when passed a filename' do
 					let(:input) { File.expand_path('../../fixtures/chtest.txt', __FILE__) }
 					

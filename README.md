@@ -27,14 +27,81 @@ Quickstart
 Using a pattern and training data stored in a file:
 
     model = Wapiti.train('train.txt', :pattern => 'pattern.txt')
-		=> #<Wapiti::Model:0x0000010188f868>
-		model.labels
-		# => ["B-ADJP", "B-ADVP", "B-CONJP" ...]
-		model.save('ch.mod')
-		# => saves the model as 'ch.mod'
+    => #<Wapiti::Model:0x0000010188f868>
+    model.labels
+    => ["B-ADJP", "B-ADVP", "B-CONJP" ...]
+    model.save('ch.mod')
+    => # saves the model as 'ch.mod'
 
 Alternatively, you can pass in the training data as an array; the array
 should contain one array for each sequence of training data.
+
+    data = []
+    data << ['Confidence NN B-NP', 'in IN B-PP', 'the DT B-NP', 'pound NN I-NP', '. . O']
+    ...
+    model = Wapiti.train(data, options)
+
+You can consult the `Wapiti::Options` class for a list of supported
+configuration options and algorithms:
+
+    Wapiti::Options.attribute_names
+    => [:algorithm, :check, :compact, :convergence_window, :development_data,
+    :jobsize, :label, :max_iterations, :maxent, :pattern, :posterior, :rho1,
+    :rho2, :score, :sparse, :stop_epsilon, :stop_window, :threads]
+    Wapiti::Options.algorithms
+    => ["l-bfgs", "sgd-l1", "bcd", "rprop", "rprop+", "rprop-", "auto"]
+
+Use `#valid?` or `#validate` (which returns error messages) to make sure
+your configuration is supported by Wapiti.
+
+You can pass options either as an options hash or by adding a block to the
+method invocation:
+
+    model = Wapiti::Model.train(data) do |config|
+      config.pattern = 'pattern.txt'
+      threads = 4
+    end
+
+Before saving your model you can use `compact` to reduce the model's size:
+
+    model.save 'm1.mod'
+    => # m1.mod file size 1.8M
+    model.compact
+    model.save 'm2.mod'
+    => # m2.mod file size 471K
+
+### Loading existing Models
+
+    model = Wapiti::Model.load('m1.mod')
+
+### Labelling
+
+By calling `#label` on a Model instance you can add labels to your sequence
+data:
+
+    model = Waiti.load('m2.mod')
+    model.label('test.txt')
+    => [[["Confidence NN B-NP", "B-NP"], ["in IN B-PP", "B-PP"] ... ]
+
+The result is an array of sequence arrays; each sequence array consists of
+the original token and feature string (when using test data, the final
+feature is usually the expected label) and the label calculated by Wapiti.
+
+As with training data, you can pass in data either by filename or as
+a Ruby Array:
+
+    model.label [['Confidence NN', 'in IN', 'the DT', 'pound NN', '. .']]
+    => [[["Confidence NN", "B-NP"], ["in IN", "B-PP"], ["the DT", "B-NP"],
+    ["pound NN", "I-NP"], [". .", "O"]]]
+
+If you pass a block to `#label` Wapiti will yield each token and the
+corresponding label:
+
+    model.label [['Confidence NN', 'in IN', 'the DT', 'pound NN', '. .']] do |token, label|
+      [token.downcase, label.downcase]
+    end
+    => [[["confidence nn", "b-np"], ["in in", "b-pp"], ["the dt", "b-np"],
+    ["pound nn", "i-np"], [". .", "o"]]]
 
 
 Citing

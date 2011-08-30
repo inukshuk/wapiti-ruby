@@ -131,17 +131,6 @@ static VALUE initialize_options(int argc, VALUE *argv, VALUE self) {
 
 // Fixnum Accessors
 
-static VALUE options_mode(VALUE self) {
-	return INT2FIX(get_options(self)->mode);
-}
-
-static VALUE options_set_mode(VALUE self, VALUE rb_fixnum) {
-	Check_Type(rb_fixnum, T_FIXNUM);	
-	get_options(self)->mode = FIX2INT(rb_fixnum);
-	
-	return rb_fixnum;
-}
-
 static VALUE options_nbest(VALUE self) {
 	return INT2FIX(get_options(self)->nbest);
 }
@@ -421,30 +410,6 @@ static VALUE options_set_cutoff(VALUE self, VALUE rb_boolean) {
 
 // String Accessors
 
-static VALUE options_input(VALUE self) {
-	char *input = get_options(self)->input;
-	return rb_str_new2(input ? input : "");
-}
-
-static VALUE options_set_input(VALUE self, VALUE rb_string) {
-	opt_t *options = get_options(self);
-	copy_string(&(options->input), rb_string);
-
-	return rb_string;
-}
-
-static VALUE options_output(VALUE self) {
-	char *output = get_options(self)->output;
-	return rb_str_new2(output ? output : "");
-}
-
-static VALUE options_set_output(VALUE self, VALUE rb_string) {
-	opt_t *options = get_options(self);
-	copy_string(&(options->output), rb_string);
-	
-	return rb_string;
-}
-
 static VALUE options_pattern(VALUE self) {
 	char *pattern = get_options(self)->pattern;
 	return rb_str_new2(pattern ? pattern : "");
@@ -501,9 +466,6 @@ void Init_options() {
 	rb_define_method(cOptions, "initialize", initialize_options, -1);
 
 	// Option Accessors
-
-	rb_define_method(cOptions, "mode", options_mode, 0);
-	rb_define_method(cOptions, "mode=", options_set_mode, 1);
 
 	rb_define_method(cOptions, "stopwin", options_stopwin, 0);
 	rb_define_method(cOptions, "stopwin=", options_set_stopwin, 1);
@@ -587,15 +549,6 @@ void Init_options() {
 	rb_define_alias(cOptions, "score?", "outsc");
 	rb_define_alias(cOptions, "score=", "outsc=");
 
-	rb_define_method(cOptions, "input", options_input, 0);
-	rb_define_method(cOptions, "input=", options_set_input, 1);
-
-	rb_define_method(cOptions, "output", options_output, 0);	
-	rb_define_method(cOptions, "output=", options_set_output, 1);
-
-	rb_define_alias(cOptions, "out", "output");
-	rb_define_alias(cOptions, "out=", "output=");
-	
 	rb_define_method(cOptions, "pattern", options_pattern, 0);
 	rb_define_method(cOptions, "pattern=", options_set_pattern, 1);
 
@@ -785,20 +738,23 @@ static VALUE model_save(int argc, VALUE *argv, VALUE self) {
 			"wrong number of arguments (%d for 0..1)", argc);
 	}
 	
-	FILE *file = 0;
 	mdl_t *model = get_model(self);
 	
 	// save passed-in path in options
 	if (argc) {
-		rb_funcall(rb_ivar_get(self, rb_intern("@options")), rb_intern("model="), 1, argv[0]);
+		Check_Type(argv[0], T_STRING);
+		rb_ivar_set(self, rb_intern("@path"), argv[0]);
 	}
 
 	// open the output file
-	if (!model->opt->model) {
-		rb_raise(cNativeError, "failed to save model: no model file defined in options");
+	FILE *file = 0;
+	VALUE path = rb_ivar_get(self, rb_intern("@path"));
+	
+	if (NIL_P(path)) {
+		rb_raise(cNativeError, "failed to save model: no path given");
 	}
 	
-	if (!(file = fopen(model->opt->model, "w"))) {
+	if (!(file = fopen(StringValueCStr(path), "w"))) {
 		rb_raise(cNativeError, "failed to save model: failed to open model file");
 	}
 	
@@ -814,21 +770,24 @@ static VALUE model_load(int argc, VALUE *argv, VALUE self) {
 			"wrong number of arguments (%d for 0..1)", argc);
 	}
 	
-	FILE *file = 0;	
 	mdl_t *model = get_model(self);
 	
 	// save passed-in argument in options
 	if (argc) {
-		rb_funcall(rb_ivar_get(self, rb_intern("@options")), rb_intern("model="), 1, argv[0]);
+		Check_Type(argv[0], T_STRING);
+		rb_ivar_set(self, rb_intern("@path"), argv[0]);
 	}
 	
 	// open the model file
-	if (!model->opt->model) {
-		rb_raise(cNativeError, "failed to load model: no model file defined in options");
+	FILE *file = 0;
+	VALUE path = rb_ivar_get(self, rb_intern("@path"));
+	
+	if (NIL_P(path)) {
+		rb_raise(cNativeError, "failed to load model: no path given");
 	}
 	
-	if (!(file = fopen(model->opt->model, "r"))) {
-		rb_raise(cNativeError, "failed to load model: failed to open model file '%s'", model->opt->model);
+	if (!(file = fopen(StringValueCStr(path), "r"))) {
+		rb_raise(cNativeError, "failed to load model: failed to open model file");
 	}
 	
 	mdl_load(model, file);
@@ -837,11 +796,57 @@ static VALUE model_load(int argc, VALUE *argv, VALUE self) {
 	return self;
 }
 
-static VALUE model_train(int argc, VALUE *argv, VALUE self) {
-	if (argc > 1) {
-		rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")),
-			"wrong number of arguments (%d for 0..1)", argc);
+static dat_t *to_dat(rdr_t *reader, VALUE data, bool labelled) {
+	Check_Type(data, T_ARRAY);
+	
+	const unsigned int n = RARRAY_LEN(data);
+	unsigned int i, j, k;
+	
+	dat_t *dat = xmalloc(sizeof(dat_t));
+	dat->nseq = 0;
+	dat->mlen = 0;
+	dat->lbl = labelled;
+	dat->seq = xmalloc(sizeof(seq_t*) * n);
+
+	for (i = 0; i < n; ++i) {
+		VALUE sequence = rb_ary_entry(data, i);
+		Check_Type(sequence, T_ARRAY);
+		
+		k = RARRAY_LEN(sequence);
+		raw_t *raw = xmalloc(sizeof(raw_t) + sizeof(char*) * k);
+		
+		for (j = 0; j < k; ++j) {	
+			VALUE line = rb_ary_entry(sequence, j);
+			Check_Type(line, T_STRING);
+			raw->lines[j] = StringValueCStr(line);
+		}
+		
+		raw->len = k;
+	
+		seq_t *seq = rdr_raw2seq(reader, raw, labelled);
+		xfree(raw);
+
+		if (seq == 0) { break; }
+		
+		// and store the sequence
+		dat->seq[dat->nseq++] = seq;
+		dat->mlen = max(dat->mlen, seq->len);
+		
 	}
+	
+	// if no sequence was read, free memory
+	if (dat->nseq == 0) {
+		xfree(dat->seq);
+		xfree(dat);
+		
+		return 0;
+	}
+
+	return dat;
+}
+
+
+static VALUE model_train(VALUE self, VALUE data) {
 	
 	mdl_t* model = get_model(self);
 	
@@ -868,36 +873,32 @@ static VALUE model_train(int argc, VALUE *argv, VALUE self) {
 		rdr_loadpat(model->reader, file);
 		fclose(file);
 		qrk_lock(model->reader->obs, false);
-		
 	}
 	else {
 		rb_raise(cNativeError, "failed to train model: no pattern given");
 	}
 	
+	
 	// Load the training data. When this is done we lock the quarks as we
 	// don't want to put in the model, informations present only in the
 	// devlopment set.
-	if (argc) {
-		Check_Type(argv[0], T_STRING);
-		if (!(file = fopen(StringValuePtr(argv[0]), "r"))) {
-			rb_raise(cNativeError, "failed to train model: failed to open training data '%s", StringValuePtr(argv[0]));
-		}
-	}
-	else {
-		if (model->opt->input) {
-			if (!(file = fopen(model->opt->input, "r"))) {
-				rb_raise(cNativeError, "failed to train model: failed to open training data '%s", model->opt->input);
+	
+	switch (TYPE(data)) {
+		case T_STRING:
+			if (!(file = fopen(StringValuePtr(data), "r"))) {
+				rb_raise(cNativeError, "failed to train model: failed to open training data '%s", StringValuePtr(data));
 			}
-		}
-		else {
-			rb_raise(cNativeError, "failed to train model: no training data given");
-		}
-	}
 
-	model->train = rdr_readdat(model->reader, file, true);
+			model->train = rdr_readdat(model->reader, file, true);
+			fclose(file);
+			
+			break;
+		case T_ARRAY:
+			model->train = to_dat(model->reader, data, true);
 
-	if (model->opt->input) {
-		fclose(file);
+			break;
+		default:
+			rb_raise(cNativeError, "failed to train model: invalid training data type (expected instance of String or Array)");
 	}
 
 	qrk_lock(model->reader->lbl, true);
@@ -937,7 +938,7 @@ static VALUE model_train(int argc, VALUE *argv, VALUE self) {
 	return self;
 }
 
-// Returns all labels in the Model's label database.
+// Returns a sorted list of all labels in the Model's label database.
 static VALUE model_labels(VALUE self) {
 	mdl_t *model = get_model(self);
 	const size_t Y = model->nlbl;
@@ -950,16 +951,15 @@ static VALUE model_labels(VALUE self) {
 		rb_ary_push(labels, rb_str_new2(qrk_id2str(lp, i)));
 	}
 	
+	rb_funcall(labels, rb_intern("sort!"), 0);
+	
 	return labels;
 }
 
-// cal-seq:
-//   m.label(tokens)  # => array of labelled tokens
-//
-static VALUE model_label(VALUE self, VALUE tokens) {
-	
+static VALUE decode_sequence_array(VALUE self, VALUE tokens) {
 	Check_Type(tokens, T_ARRAY);
 	const unsigned int n = RARRAY_LEN(tokens);
+	unsigned int i, j;
 	
 	VALUE tags = rb_ary_new2(n), tag;
 	mdl_t *model = get_model(self);
@@ -970,7 +970,7 @@ static VALUE model_label(VALUE self, VALUE tokens) {
 
 	raw_t *raw = xmalloc(sizeof(raw_t) + sizeof(char *) * n);	
 
-	for (unsigned int i = 0; i < n; ++i) {
+	for (i = 0; i < n; ++i) {
 		VALUE token = rb_ary_entry(tokens, i);
 		Check_Type(token, T_STRING);
 		
@@ -993,12 +993,12 @@ static VALUE model_label(VALUE self, VALUE tokens) {
 		tag_nbviterbi(model, seq, N, (void*)out, scs, (void*)psc);
 	}
 	
-	for (unsigned int i = 0; i < N; ++i) {
+	for (i = 0; i < N; ++i) {
 		if (model->opt->outsc) {
 			// output scores scs
 		}
 
-		for (int j = 0; j < T; ++j) {
+		for (j = 0; j < T; ++j) {
 			tag = rb_ary_new2(N+1);
 
 			if (!model->opt->label) {
@@ -1026,6 +1026,97 @@ static VALUE model_label(VALUE self, VALUE tokens) {
 	return tags;
 }
 
+static VALUE decode_sequence_file(VALUE self, FILE *file) {
+	mdl_t *model = get_model(self);
+	
+	qrk_t *lbls = model->reader->lbl;
+	const size_t Y = model->nlbl;
+	const size_t N = model->opt->nbest;
+
+	VALUE result = rb_ary_new(), sequence, tokens;
+	
+	// Next read the input file sequence by sequence and label them, we have
+	// to take care of not discarding the raw input as we want to send it
+	// back to the output with the additional predicted labels.
+	while (!feof(file)) {
+		
+		// So, first read an input sequence keeping the raw_t object
+		// available, and label it with Viterbi.
+		raw_t *raw = rdr_readraw(model->reader, file);
+		if (raw == NULL)
+			break;
+					
+		seq_t *seq = rdr_raw2seq(model->reader, raw, model->opt->check);
+		const int T = seq->len;
+		size_t *out = xmalloc(sizeof(size_t) * T * N);
+		double *psc = xmalloc(sizeof(double) * T * N);
+		double *scs = xmalloc(sizeof(double) * N);
+		if (N == 1)
+			tag_viterbi(model, seq, (size_t*)out, scs, (double*)psc);
+		else
+			tag_nbviterbi(model, seq, N, (void*)out, scs, (void*)psc);
+		// Next we output the raw sequence with an aditional column for
+		// the predicted labels
+		for (size_t n = 0; n < N; n++) {
+
+			sequence = rb_ary_new();
+						
+			// if (model->opt->outsc)
+				// fprintf(fout, "# %d %f\n", (int)n, scs[n]);
+				
+			for (int t = 0; t < T; t++) {
+				tokens = rb_ary_new();
+				
+				if (!model->opt->label) {
+					rb_ary_push(tokens, rb_str_new2(raw->lines[t]));
+				}
+				
+				size_t lbl = out[t * N + n];
+				rb_ary_push(tokens, rb_str_new2(qrk_id2str(lbls, lbl)));
+
+				// if (model->opt->outsc) {
+				// 	fprintf(fout, "\t%s", lblstr);
+				// 	fprintf(fout, "/%f", psc[t * N + n]);
+				// }
+				
+				rb_ary_push(sequence, tokens);
+			}
+			
+			rb_ary_push(result, sequence);
+		}
+
+		// Cleanup memory used for this sequence
+		free(scs);
+		free(psc);
+		free(out);
+		rdr_freeseq(seq);
+		rdr_freeraw(raw);
+	}
+	
+	return result;
+}
+
+// cal-seq:
+//   m.label(tokens)  # => array of labelled tokens
+//   m.label(filename) # => array of labelled tokens
+//
+static VALUE model_label(VALUE self, VALUE data) {
+	VALUE result;
+	
+	switch (TYPE(data)) {
+		case T_STRING:
+			result = decode_sequence_file(self, data);
+			break;
+		case T_ARRAY:
+			result = decode_sequence_array(self, data);
+			break;
+		default:
+			rb_raise(cNativeError, "failed to label data: invalid data (expected type String or Array)");
+	}
+	
+	return result;
+}
+
 static void Init_model() {
 	cModel = rb_define_class_under(mWapiti, "Model", rb_cObject);
 	rb_define_alloc_func(cModel, allocate_model);
@@ -1050,7 +1141,7 @@ static void Init_model() {
 	rb_define_method(cModel, "save", model_save, -1);
 	rb_define_method(cModel, "load", model_load, -1);
 
-	rb_define_method(cModel, "train", model_train, -1);
+	rb_define_method(cModel, "train", model_train, 1);
 	rb_define_method(cModel, "label", model_label, 1);
 }
 

@@ -4,16 +4,14 @@ module Wapiti
 		
 		include Comparable
 		
-		MODE_NAME = [:train, :label, :dump].freeze
-		
 		class << self
 				
 			# Returns a sorted list of available option attributes.
 			def attribute_names
-				@attribute_names ||= %w{ mode stop_window convergence_window
-					max_iterations jobsize threads rho1 rho2 stop_epsilon input output
-					algorithm pattern development_data maxent compact sparse label check
-					posterior score }.sort.map(&:to_sym).freeze
+				@attribute_names ||= %w{ stop_window convergence_window posterior
+					max_iterations jobsize threads rho1 rho2 stop_epsilon score check
+					algorithm pattern development_data maxent compact sparse label
+					}.sort.map(&:to_sym).freeze
 			end
 			
 			# Returns the default options.
@@ -92,7 +90,6 @@ module Wapiti
 		
 		def validate
 			e = []
-			e << "unknown mode: #{mode}" if mode < 0 || mode > 2
 
 			%w{ threads jobsize alpha histsz maxls eta0 alpha nbest }.each do |name|
 				e << "invalid value for #{name}: #{send(name)}" unless send(name) > 0
@@ -106,29 +103,7 @@ module Wapiti
 			e << "BCD not supported for training maxent models" if maxent && algorithm == 'bcd'
 			e
 		end
-		
-		def mode_name
-			MODE_NAME[mode] || :unknown
-		end
-		
-		def training_mode?
-			mode == 0
-		end
-		
-		def training_mode!
-			self.mode = 0
-			self
-		end
-		
-		def label_mode?
-			mode == 1
-		end
-		
-		def label_mode!
-			self.mode = 1
-			self
-		end
-		
+				
 		def <=>(other)
 			other.respond_to?(:attributes) ? attributes <=> other.attributes : nil
 		end

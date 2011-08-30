@@ -37,22 +37,10 @@ module Wapiti
 		
 		describe '#update' do
 			it 'sets all option values according to the given hash' do
-				lambda { options.update( :mode => 1 ) }.should change { options.mode }.from(-1).to(1)
+				lambda { options.update( :threads => 2 ) }.should change { options.threads }.from(1).to(2)
 			end
 		end
 		
-		describe '#mode' do
-			it 'returns -1 by default' do
-				options.mode.should == -1
-			end
-		end
-
-		describe '#mode=' do
-			it 'sets the mode to the given value' do
-				lambda { options.mode = 1 }.should change { options.mode }.from(-1).to(1)
-			end
-		end
-
 		describe '#threads' do
 			it 'returns 1 by default' do
 				options.threads.should == 1
@@ -168,7 +156,7 @@ module Wapiti
 			end
 		end
 
-		%w{ input output pattern model algorithm devel }.each do |m|
+		%w{ pattern model algorithm devel }.each do |m|
 			describe "##{m}" do
 				it 'returns an empty string by default' do
 					options.send(m).should be_a(String)

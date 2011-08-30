@@ -3,15 +3,11 @@ module Wapiti
 		
 		describe '.train' do
 			context 'given sufficient options' do
-				let(:options) {
-					{ 
-						:pattern => File.expand_path('../../fixtures/chpattern.txt', __FILE__),
-						:input => File.expand_path('../../fixtures/chtrain.txt', __FILE__)
-					}
-				}
+				let(:pattern) { File.expand_path('../../fixtures/pattern.txt', __FILE__) }
+				let(:input) { File.expand_path('../../fixtures/train.txt', __FILE__) }
 				
 				it 'returns a valid model instance' do
-					# Model.train(options).nlbl.should == 17
+					Model.train(input, :pattern => pattern).labels.should == (1..6).map(&:to_s)
 				end
 				
 			end
@@ -98,6 +94,22 @@ module Wapiti
 		end
 
 		describe '#train' do
+			let(:model) { Model.new(:pattern => File.expand_path('../../fixtures/pattern.txt', __FILE__)) }
+			let(:data) { File.expand_path('../../fixtures/train.txt', __FILE__) }
+			
+			it 'accepts a filename as input' do
+				model.train(data).nlbl.should == 6
+			end
+			
+			it 'accepts a data array' do
+				# sequence = []
+				# File.open(data).each_line do |line|
+				# 	
+				# end
+				# 
+				# model.train([]).nlbl.should == 6
+			end
+			
 		end
 		
 		describe '#label' do
@@ -107,13 +119,25 @@ module Wapiti
 			end
 			
 			context 'given a trained model' do
-				
 				let(:model) { Model.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
 				
-				it 'returns an array of token-label pairs' do
-					model.sync
-					h = model.label(['Hello NN B-VP', ', , O', 'world NN B-NP', '! ! O'])
-					h.should == []
+				context 'when passed an array' do
+					let(:input) { ['Hello NN B-VP', ', , O', 'world NN B-NP', '! ! O'] }
+					
+					it 'returns an array of token-label pairs' do
+						labels = model.label(input)
+						labels.map(&:first).should == input
+						labels.map(&:last).should == %w{ B-NP O B-NP O }
+					end
+				end
+
+				context 'when passed a filename' do
+					let(:input) { File.expand_path('../../fixtures/chtest.txt', __FILE__) }
+					
+					it 'returns an array of token-label pairs' do
+						labels = model.label(input)
+						labels[0,3].should == []
+					end
 				end
 				
 			end
@@ -126,14 +150,12 @@ module Wapiti
 			end
 			
 			context 'given a trained model' do
-				
 				let(:model) { Model.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
 			
 				it 'returns a list of all known labels' do
 					model.labels.should have(model.nlbl).elements
 				end
 			end
-			
 		end
 		
 		

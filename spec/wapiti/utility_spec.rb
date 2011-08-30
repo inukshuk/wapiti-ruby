@@ -7,7 +7,7 @@ describe 'Utility Methods' do
 	
 	describe 'train' do
 		it 'creates a new model according to the parameters given in the options hash' do
-			# Wapiti.train(:pattern => pattern, :input => input).should be_valid_model
+			# Wapiti.train(input, :pattern => pattern).should be_valid_model
 		end
 
 		it 'creates a new model according to the options set in the block' do

@@ -4,37 +4,31 @@ module Wapiti
 		
 		class << self
 			
-			def train(options = {}, &block)
+			def train(data, options, &block)
 				config = Options.new(options, &block)
-				config.training_mode!
 				
 				# check configuration					
-				%w{ pattern input }.each do |data|
-					if config.send(data).empty?
-						raise ConfigurationError, "invalid options: no #{data} data specified"
-					end
+				if config.pattern.empty?
+					raise ConfigurationError, 'invalid options: no pattern specified'
 				end
 				
 				unless config.valid?
 					raise ConfigurationError, "invalid options: #{ config.validate.join('; ') }"
 				end				
 				
-				new(config).train
+				new(config).train(data)
 			end
 			
 			def load(filename)
-				new(:model => filename)
+				m = new
+				m.path = filename
+				m.load
+				m
 			end
-			
+
 		end
 
-		def path
-			options.model
-		end
-		
-		def path=(filename)
-			options.model = filename
-		end
+		attr_accessor :path
 		
 		def pattern
 			options.pattern
@@ -43,6 +37,8 @@ module Wapiti
 		def pattern=(filename)
 			options.pattern = filename
 		end
+		
+		private
 		
 		def tokenize(input)
 			input

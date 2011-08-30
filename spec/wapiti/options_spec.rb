@@ -9,7 +9,7 @@ module Wapiti
 	
 		describe '.defaults' do
 			it 'returns a hash with the default options' do
-				Options.defaults.keys.sort.should == Options.attribute_names
+				Options.defaults.keys.map(&:to_s).sort.should == Options.attribute_names.map(&:to_s)
 			end
 		end
 		

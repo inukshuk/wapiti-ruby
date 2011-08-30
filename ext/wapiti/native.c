@@ -7,6 +7,7 @@
 #include "model.h"
 #include "trainers.h"
 #include "quark.h"
+#include "tools.h"
 
 #include "native.h"
 
@@ -962,7 +963,6 @@ static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
 	const size_t Y = model->nlbl;
 	const size_t N = model->opt->nbest;
 	
-	printf("\n\n\ndecoding sequence with %d lines\n\n\n", raw->len);
 	seq_t *seq = rdr_raw2seq(model->reader, raw, model->opt->check);
 	
 	const int T = seq->len;
@@ -1068,14 +1068,10 @@ static VALUE decode_sequence_file(VALUE self, VALUE path) {
 	
 	VALUE result = rb_ary_new();
 	
-	printf("\n\n\nfoo..\n\n\n");
-	
 	// Next read the input file sequence by sequence and label them, we have
 	// to take care of not discarding the raw input as we want to send it
 	// back to the output with the additional predicted labels.
 	while (!feof(file)) {
-		
-		printf("\n\n\ndecoding a sequence from file");
 		
 		// So, first read an input sequence keeping the raw_t object
 		// available, and label it with Viterbi.

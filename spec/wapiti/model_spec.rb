@@ -136,7 +136,8 @@ module Wapiti
 					
 					it 'returns an array of token-label pairs' do
 						labels = model.label(input)
-						labels.should == []
+						labels.should have(77).elements
+						labels[0].take(5).map(&:last).should == %w{ B-NP B-PP B-NP I-NP B-VP }
 					end
 				end
 				

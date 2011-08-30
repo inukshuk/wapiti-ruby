@@ -67,7 +67,8 @@ void fatal(const char *msg, ...) {
 	va_list args;
 	va_start(args, msg);
 
-	VALUE message = rb_vsprintf(msg, args);
+	// VALUE message = rb_vsprintf(msg, args);
+	VALUE message = rb_str_new2(msg);
 
 	va_end(args);
 	
@@ -87,8 +88,9 @@ void pfatal(const char *msg, ...) {
 	va_list args;
 	va_start(args, msg);
 
-	VALUE message = rb_vsprintf(msg, args);
-	rb_str_catf(message, ": <%s>", err);
+	// VALUE message = rb_vsprintf(msg, args);
+	// rb_str_catf(message, ": <%s>", err);
+	VALUE message = rb_str_new2(msg);
 
 	va_end(args);
 
@@ -105,7 +107,8 @@ void warning(const char *msg, ...) {
 	va_list args;
 	va_start(args, msg);
 
-	(void)rb_funcall(cLogger, rb_intern("warn"), 1, rb_vsprintf(msg, args));
+	// (void)rb_funcall(cLogger, rb_intern("warn"), 1, rb_vsprintf(msg, args));
+	(void)rb_funcall(cLogger, rb_intern("warn"), 1, rb_str_new2(msg));
 
 	va_end(args);
 }
@@ -120,7 +123,8 @@ void info(const char *msg, ...) {
 	va_list args;
 	va_start(args, msg);
 
-	(void)rb_funcall(cLogger, rb_intern("info"), 1, rb_vsprintf(msg, args));
+	// (void)rb_funcall(cLogger, rb_intern("info"), 1, rb_vsprintf(msg, args));
+	(void)rb_funcall(cLogger, rb_intern("info"), 1, rb_str_new2(msg));
 
 	va_end(args);
 }

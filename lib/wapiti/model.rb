@@ -8,9 +8,9 @@ module Wapiti
 				config = Options.new(options, &block)
 				
 				# check configuration					
-				if config.pattern.empty?
-					raise ConfigurationError, 'invalid options: no pattern specified'
-				end
+				# if config.pattern.empty?
+				# 	raise ConfigurationError, 'invalid options: no pattern specified'
+				# end
 				
 				unless config.valid?
 					raise ConfigurationError, "invalid options: #{ config.validate.join('; ') }"

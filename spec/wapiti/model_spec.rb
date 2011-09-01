@@ -110,6 +110,12 @@ module Wapiti
 				# model.train([]).nlbl.should == 6
 			end
 			
+			context 'when called without a pattern' do
+				it 'fails because of wapiti' do
+					expect { Model.new.train(data).nlbl.should == 6 }.to raise_error(NativeError)
+				end
+			end
+			
 		end
 		
 		describe '#label' do

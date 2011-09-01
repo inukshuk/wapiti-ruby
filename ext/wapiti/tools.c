@@ -67,13 +67,9 @@ void fatal(const char *msg, ...) {
 	va_list args;
 	va_start(args, msg);
 
-	// VALUE message = rb_vsprintf(msg, args);
-	VALUE message = rb_str_new2(msg);
+	rb_raise(cNativeError, msg, args);
 
-	va_end(args);
-	
-	(void)rb_funcall(cLogger, rb_intern("fatal"), 1, message);
-	rb_raise(cNativeError, StringValuePtr(message));
+	va_end(args);	
 }
 
 /* pfatal:
@@ -90,12 +86,10 @@ void pfatal(const char *msg, ...) {
 
 	// VALUE message = rb_vsprintf(msg, args);
 	// rb_str_catf(message, ": <%s>", err);
-	VALUE message = rb_str_new2(msg);
+	rb_raise(cNativeError, msg, args);
 
 	va_end(args);
 
-	(void)rb_funcall(cLogger, rb_intern("fatal"), 1, message);
-	rb_raise(cNativeError, StringValuePtr(message));
 }
 
 /* warning:

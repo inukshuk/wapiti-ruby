@@ -873,11 +873,12 @@ static VALUE model_train(VALUE self, VALUE data) {
 
 		rdr_loadpat(model->reader, file);
 		fclose(file);
-		qrk_lock(model->reader->obs, false);
 	}
 	else {
-		rb_raise(cNativeError, "failed to train model: no pattern given");
+		// rb_raise(cNativeError, "failed to train model: no pattern given");
 	}
+
+	qrk_lock(model->reader->obs, false);
 	
 	
 	// Load the training data. When this is done we lock the quarks as we

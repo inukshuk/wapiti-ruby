@@ -30,6 +30,8 @@ module Wapiti
 
 		attr_accessor :path
 		
+		attr_reader :token_count, :token_errors, :sequence_count, :sequence_errors
+		
 		def pattern
 			options.pattern
 		end
@@ -44,6 +46,28 @@ module Wapiti
 			options.update(opts) unless opts.nil?
 			block_given? ? native_label(input, &Proc.new) : native_label(input)
 		end
+
+		def statistics
+			s = {}
+			s[:tokens] = {
+				:total => token_count, :errors => @token_errors,
+				:rate => token_errors / (token_count * 100.0)
+			}
+			s[:sequences] = {
+				:total => sequence_count, :errors => sequence_errors,
+				:rate => sequence_errors / (sequence_count * 100.0)
+			}
+			s
+		end
+
+		alias stats statistics
+		
+		def clear_counters
+			@token_count = @token_errors = @sequence_count = @sequence_errors = 0
+		end
+		
+		alias clear clear_counters
+		
 		
 		private
 		

@@ -680,7 +680,7 @@ static VALUE initialize_model(int argc, VALUE *argv, VALUE self) {
 		options = rb_funcall(cOptions, rb_intern("new"), 0);
 	}
 	
-	// yield self if block_given?
+	// yield options if block_given?
 	if (rb_block_given_p()) {
 	 	rb_yield(options);
 	}
@@ -691,6 +691,9 @@ static VALUE initialize_model(int argc, VALUE *argv, VALUE self) {
 	if (get_options(options)->model) {
 		rb_funcall(self, rb_intern("load"), 0);
 	}
+	
+	// initialize counters
+	rb_funcall(self, rb_intern("clear_counters"), 0);
 
 	return self;
 }
@@ -958,7 +961,7 @@ static VALUE model_labels(VALUE self) {
 	return labels;
 }
 
-static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
+static VALUE decode_sequence(VALUE self, mdl_t *model, raw_t *raw) {
 	qrk_t *lbls = model->reader->lbl;
 	
 	const unsigned int Y = model->nlbl;
@@ -967,7 +970,7 @@ static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
 	seq_t *seq = rdr_raw2seq(model->reader, raw, model->opt->check);
 	
 	const unsigned int T = seq->len;
-	unsigned int n, t;
+	unsigned int n, t, tcnt = 0, terr = 0, scnt = 0, serr = 0, stat[3][Y];
 	
 	size_t *out = xmalloc(sizeof(size_t) * T * N);
 	double *psc = xmalloc(sizeof(double) * T * N);
@@ -984,14 +987,14 @@ static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
 
 	sequence = rb_ary_new();
 
-	for (t = 0; t < T; t++) {
+	for (t = 0; t < T; ++t) {
 		tokens = rb_ary_new();
 		
 		if (!model->opt->label) {
 			rb_ary_push(tokens, rb_str_new2(raw->lines[t]));
 		}
 		
-		for (n = 0; n < N; n++) {
+		for (n = 0; n < N; ++n) {
 			
 			size_t lbl = out[t * N + n];
 			rb_ary_push(tokens, rb_str_new2(qrk_id2str(lbls, lbl)));
@@ -1014,6 +1017,38 @@ static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
 		// TODO output sequence score: scs[n] (float)		
 		
 	}
+
+	// Statistics
+	if (model->opt->check) {
+		int err = 0;
+		
+		for (t = 0; t < T; ++t) {
+			stat[0][seq->pos[t].lbl]++;
+			stat[1][out[t * N]]++;
+			
+			if (seq->pos[t].lbl != out[t * N]) {
+				terr++;
+				err = 1;
+			}
+			else {
+				stat[2][out[t * N]]++;
+			}
+		}
+		
+		tcnt = FIX2INT(rb_ivar_get(self, rb_intern("@token_count")));
+		rb_ivar_set(self, rb_intern("@token_count"), INT2FIX(tcnt + (unsigned int)T));
+
+		terr += FIX2INT(rb_ivar_get(self, rb_intern("@token_errors")));
+		rb_ivar_set(self, rb_intern("@token_errors"), INT2FIX(terr));
+
+		scnt = FIX2INT(rb_ivar_get(self, rb_intern("@sequence_count")));
+		rb_ivar_set(self, rb_intern("@sequence_count"), INT2FIX(++scnt));
+
+		serr = FIX2INT(rb_ivar_get(self, rb_intern("@sequence_errors")));
+		rb_ivar_set(self, rb_intern("@sequence_errors"), INT2FIX(serr + err));
+
+	}
+		
 
 	// Cleanup memory used for this sequence
 	xfree(scs);
@@ -1052,7 +1087,7 @@ static VALUE decode_sequence_array(VALUE self, VALUE array) {
 			raw->lines[j] = StringValueCStr(line);
 		}
 
-		rb_ary_push(result, decode_sequence(model, raw));
+		rb_ary_push(result, decode_sequence(self, model, raw));
 
 		xfree(raw);
 	}
@@ -1084,7 +1119,7 @@ static VALUE decode_sequence_file(VALUE self, VALUE path) {
 			break;
 		}
 		
-		rb_ary_push(result, decode_sequence(model, raw));
+		rb_ary_push(result, decode_sequence(self, model, raw));
 		rdr_freeraw(raw);
 	}
 	
@@ -1119,6 +1154,7 @@ static void Init_model() {
 	rb_define_method(cModel, "initialize", initialize_model, -1);
 
 	rb_define_attr(cModel, "options", 1, 0);
+
 	
 	rb_define_method(cModel, "nlbl", model_nlbl, 0);
 	rb_define_method(cModel, "labels", model_labels, 0);

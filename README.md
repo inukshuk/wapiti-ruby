@@ -115,10 +115,29 @@ Similarly, if you set the *:nbest* option to a value greater than one, Wapiti
 will append more label and, optionally, score values to each tuple.
 
     model.label [['Confidence NN']], :score => true, :nbest => 3, :skip_tokens => true
-		=> [[["B-NP", 4.642034838737357, "B-VP", 1.7040256847206927, "B-ADJP", 0.7636429298060177]]]
+    => [[["B-NP", 4.642034838737357, "B-VP", 1.7040256847206927, "B-ADJP", 0.7636429298060177]]]
 
 Note how we also suppressed the output of the token string using the
 *:skip_tokens* option.
+
+
+### Statistics
+
+By setting the *:check* option you can tell Wapiti to keep statistics during
+the labelling phase (for the statistics to be meaningful you obviously need
+to provide input data that is already labelled). Wapiti does not reset the
+counters during consecutive calls to `#label` to allow you to collect
+accumulative date; however, you can reset the counters at any time, by calling
+`#clear_counters`.
+
+After calling `#label` with the *:check* options set and appropriately labelled
+input, you can access the statistics via `#statistics` (the individual values
+are also available through the associated attribute readers).
+
+    model.label 'test.txt', :check => true
+    => {:tokens=>{:total=>1896, :errors=>137, :rate=>0.0007225738396624472},
+    :sequences=>{:total=>77, :errors=>50, :rate=>0.006493506493506494}}
+
 
 
 Citing

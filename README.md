@@ -103,7 +103,7 @@ corresponding label:
     => [[["confidence nn", "b-np"], ["in in", "b-pp"], ["the dt", "b-np"],
     ["pound nn", "i-np"], [". .", "o"]]]
 
-Note that if you set the +:score+ option (either in the Model's `#options` or
+Note that if you set the *:score* option (either in the Model's `#options` or
 when calling `#label`), the score for each label will be appended to
 each token/label tuple as a floating point number or passed as a third
 argument to the passed-in block.
@@ -111,14 +111,14 @@ argument to the passed-in block.
     model.label [['Confidence NN']], :score => true
     => [[["Confidence NN", "B-NP", 4.642034838737357]]]
 
-Similarly, if you set the +:nbest+ option to a value greater than one, Wapiti
+Similarly, if you set the *:nbest* option to a value greater than one, Wapiti
 will append more label and, optionally, score values to each tuple.
 
     model.label [['Confidence NN']], :score => true, :nbest => 3, :skip_tokens => true
 		=> [[["B-NP", 4.642034838737357, "B-VP", 1.7040256847206927, "B-ADJP", 0.7636429298060177]]]
 
 Note how we also suppressed the output of the token string using the
-+:skip_tokens+ option.
+*:skip_tokens* option.
 
 
 Citing

@@ -139,7 +139,7 @@ module Wapiti
 		end
 
 
-		%w{ maxent compact sparse label check score posterior }.each do |m|
+		%w{ maxent compact sparse skip_tokens check score posterior }.each do |m|
 			describe "##{m}" do
 				it 'returns false by default' do
 					options.send(m).should be false

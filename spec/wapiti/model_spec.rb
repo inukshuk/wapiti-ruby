@@ -150,6 +150,14 @@ module Wapiti
 							model.label(input)[0].map { |t,l,s| s.class }.uniq == [Float]
 						end
 					end
+
+					context 'with the :nbest option set to 2' do
+						before(:each) { model.options.nbest = 2 }
+
+						it 'returns an array of token-label-label tuples' do
+							model.label(input)[0][-1][1,2] == %w{ O O }
+						end
+					end
 				
 				end
 

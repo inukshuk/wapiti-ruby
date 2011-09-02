@@ -10,7 +10,7 @@ module Wapiti
 			def attribute_names
 				@attribute_names ||= %w{ stop_window convergence_window posterior
 					max_iterations jobsize threads rho1 rho2 stop_epsilon score check
-					algorithm pattern development_data maxent compact sparse label
+					algorithm pattern development_data maxent compact sparse skip_tokens
 					}.sort.map(&:to_sym).freeze
 			end
 			

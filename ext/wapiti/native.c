@@ -522,10 +522,10 @@ void Init_options() {
 
 	rb_define_alias(cOptions, "sparse?", "sparse");
 
-	rb_define_method(cOptions, "label", options_label, 0);
-	rb_define_method(cOptions, "label=", options_set_label, 1);
+	rb_define_method(cOptions, "skip_tokens", options_label, 0);
+	rb_define_method(cOptions, "skip_tokens=", options_set_label, 1);
 
-	rb_define_alias(cOptions, "label?", "label");
+	rb_define_alias(cOptions, "skip_tokens?", "skip_tokens");
 
 	rb_define_method(cOptions, "check", options_check, 0);
 	rb_define_method(cOptions, "check=", options_set_check, 1);
@@ -961,37 +961,37 @@ static VALUE model_labels(VALUE self) {
 static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
 	qrk_t *lbls = model->reader->lbl;
 	
-	const size_t Y = model->nlbl;
-	const size_t N = model->opt->nbest;
+	const unsigned int Y = model->nlbl;
+	const unsigned int N = model->opt->nbest;
 	
 	seq_t *seq = rdr_raw2seq(model->reader, raw, model->opt->check);
 	
-	const int T = seq->len;
+	const unsigned int T = seq->len;
+	unsigned int n, t;
 	
 	size_t *out = xmalloc(sizeof(size_t) * T * N);
 	double *psc = xmalloc(sizeof(double) * T * N);
 	double *scs = xmalloc(sizeof(double) * N);
 
-	VALUE result = rb_ary_new2(N), sequence, tokens;
+	VALUE sequence, tokens;
 
 	if (N == 1) {
 		tag_viterbi(model, seq, (size_t*)out, scs, (double*)psc);
 	}
 	else {
-		tag_nbviterbi(model, seq, N, (void*)out, scs, (void*)psc);
+		tag_nbviterbi(model, seq, N, (size_t*)out, scs, (double*)psc);
 	}
 
-	// TODO refactor to output multiple labels not the entire sequence multiple times
-	for (size_t n = 0; n < N; n++) {
+	sequence = rb_ary_new();
 
-		sequence = rb_ary_new();
-					
-		for (int t = 0; t < T; t++) {
-			tokens = rb_ary_new();
-			
-			if (!model->opt->label) {
-				rb_ary_push(tokens, rb_str_new2(raw->lines[t]));
-			}
+	for (t = 0; t < T; t++) {
+		tokens = rb_ary_new();
+		
+		if (!model->opt->label) {
+			rb_ary_push(tokens, rb_str_new2(raw->lines[t]));
+		}
+		
+		for (n = 0; n < N; n++) {
 			
 			size_t lbl = out[t * N + n];
 			rb_ary_push(tokens, rb_str_new2(qrk_id2str(lbls, lbl)));
@@ -1001,17 +1001,18 @@ static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
 				rb_ary_push(tokens, rb_float_new(psc[t * N + n]));
 			}
 			
-			// yield token/label pair to block if given
-			if (rb_block_given_p()) {
-				tokens = rb_yield(tokens);
-			}
-			
-			rb_ary_push(sequence, tokens);
+		}
+
+		// yield token/label pair to block if given
+		if (rb_block_given_p()) {
+			tokens = rb_yield(tokens);
 		}
 		
-		// TODO output sequence score: scs[n] (float)
+		rb_ary_push(sequence, tokens);
+
+
+		// TODO output sequence score: scs[n] (float)		
 		
-		rb_ary_push(result, sequence);
 	}
 
 	// Cleanup memory used for this sequence
@@ -1021,7 +1022,7 @@ static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
 	
 	rdr_freeseq(seq);
 	
-	return result;
+	return sequence;
 }
 
 static VALUE decode_sequence_array(VALUE self, VALUE array) {
@@ -1051,7 +1052,7 @@ static VALUE decode_sequence_array(VALUE self, VALUE array) {
 			raw->lines[j] = StringValueCStr(line);
 		}
 
-		rb_funcall(result, rb_intern("concat"), 1, decode_sequence(model, raw));
+		rb_ary_push(result, decode_sequence(model, raw));
 
 		xfree(raw);
 	}
@@ -1083,7 +1084,7 @@ static VALUE decode_sequence_file(VALUE self, VALUE path) {
 			break;
 		}
 		
-		rb_funcall(result, rb_intern("concat"), 1, decode_sequence(model, raw));
+		rb_ary_push(result, decode_sequence(model, raw));
 		rdr_freeraw(raw);
 	}
 	

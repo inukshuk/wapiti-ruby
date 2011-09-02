@@ -38,11 +38,6 @@ module Wapiti
 			options.pattern = filename
 		end
 		
-		def score(*arguments, &block)
-			options.score!
-			label(*arguments, &block)
-		end
-		
 		alias native_label label
 		
 		def label(input, opts = nil)

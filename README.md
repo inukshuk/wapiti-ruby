@@ -135,8 +135,8 @@ input, you can access the statistics via `#statistics` (the individual values
 are also available through the associated attribute readers).
 
     model.label 'test.txt', :check => true
-    => {:tokens=>{:total=>1896, :errors=>137, :rate=>0.0007225738396624472},
-    :sequences=>{:total=>77, :errors=>50, :rate=>0.006493506493506494}}
+    => {:tokens=>{:total=>1896, :errors=>137, :rate=>7.225738396624472},
+    :sequences=>{:total=>77, :errors=>50, :rate=>64.93506493506494}}
 
 
 

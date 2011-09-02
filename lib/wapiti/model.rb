@@ -51,11 +51,11 @@ module Wapiti
 			s = {}
 			s[:tokens] = {
 				:total => token_count, :errors => @token_errors,
-				:rate => token_errors / (token_count * 100.0)
+				:rate => token_errors.to_f / token_count.to_f * 100.0
 			}
 			s[:sequences] = {
 				:total => sequence_count, :errors => sequence_errors,
-				:rate => sequence_errors / (sequence_count * 100.0)
+				:rate => sequence_errors.to_f / sequence_count.to_f * 100.0
 			}
 			s
 		end

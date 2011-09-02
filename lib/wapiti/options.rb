@@ -103,7 +103,15 @@ module Wapiti
 			e << "BCD not supported for training maxent models" if maxent && algorithm == 'bcd'
 			e
 		end
-				
+		
+		%w{ maxent compact sparse label check score posterior }.each do |m|
+			writer = "#{m}=".to_sym
+			define_method("#{m}!") do
+				send(writer, true)
+				self
+			end
+		end
+		
 		def <=>(other)
 			other.respond_to?(:attributes) ? attributes <=> other.attributes : nil
 		end

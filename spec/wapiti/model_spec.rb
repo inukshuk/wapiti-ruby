@@ -143,6 +143,14 @@ module Wapiti
 						labels[0].map(&:last).should == %w{ b-np o b-np o }
 				  end
 				
+					context 'with the :score option set' do
+						before(:each) { model.options.score! }
+
+						it 'returns an array of token-label-score tuples' do
+							model.label(input)[0].map { |t,l,s| s.class }.uniq == [Float]
+						end
+					end
+				
 				end
 
 				
@@ -155,7 +163,7 @@ module Wapiti
 						labels[0].take(5).map(&:last).should == %w{ B-NP B-PP B-NP I-NP B-VP }
 					end
 				end
-				
+								
 			end
 			
 		end

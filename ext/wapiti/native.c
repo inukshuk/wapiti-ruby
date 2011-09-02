@@ -980,16 +980,12 @@ static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
 	else {
 		tag_nbviterbi(model, seq, N, (void*)out, scs, (void*)psc);
 	}
-	
-	// Next we output the raw sequence with an aditional column for
-	// the predicted labels
+
+	// TODO refactor to output multiple labels not the entire sequence multiple times
 	for (size_t n = 0; n < N; n++) {
 
 		sequence = rb_ary_new();
 					
-		// if (model->opt->outsc)
-			// fprintf(fout, "# %d %f\n", (int)n, scs[n]);
-			
 		for (int t = 0; t < T; t++) {
 			tokens = rb_ary_new();
 			
@@ -1000,10 +996,10 @@ static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
 			size_t lbl = out[t * N + n];
 			rb_ary_push(tokens, rb_str_new2(qrk_id2str(lbls, lbl)));
 
-			// if (model->opt->outsc) {
-			// 	fprintf(fout, "\t%s", lblstr);
-			// 	fprintf(fout, "/%f", psc[t * N + n]);
-			// }
+			// output individual score
+			if (model->opt->outsc) {
+				rb_ary_push(tokens, rb_float_new(psc[t * N + n]));
+			}
 			
 			// yield token/label pair to block if given
 			if (rb_block_given_p()) {
@@ -1012,6 +1008,8 @@ static VALUE decode_sequence(mdl_t *model, raw_t *raw) {
 			
 			rb_ary_push(sequence, tokens);
 		}
+		
+		// TODO output sequence score: scs[n] (float)
 		
 		rb_ary_push(result, sequence);
 	}
@@ -1093,8 +1091,8 @@ static VALUE decode_sequence_file(VALUE self, VALUE path) {
 }
 
 // cal-seq:
-//   m.label(tokens)  # => array of labelled tokens
-//   m.label(filename) # => array of labelled tokens
+//   m.label(tokens, options = {})  # => array of labelled tokens
+//   m.label(filename, options = {}) # => array of labelled tokens
 //
 static VALUE model_label(VALUE self, VALUE data) {
 	VALUE result;

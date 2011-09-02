@@ -103,6 +103,14 @@ corresponding label:
     => [[["confidence nn", "b-np"], ["in in", "b-pp"], ["the dt", "b-np"],
     ["pound nn", "i-np"], [". .", "o"]]]
 
+Note that if you set the `score` option (or call the method `score` which sets
+the option and calls `label`), the score for each label will be appended to
+each token/label tuple as a floating point number or passed as a third
+argument to the passed-in block.
+
+    model.label [['Confidence NN']], :score => true
+    => [[["Confidence NN", "B-NP", 4.642034838737357]]]
+
 
 Citing
 ------

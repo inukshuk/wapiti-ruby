@@ -11,7 +11,7 @@ module Wapiti
 				@attribute_names ||= %w{ stop_window convergence_window posterior
 					max_iterations jobsize threads rho1 rho2 stop_epsilon score check
 					algorithm pattern development_data maxent compact sparse skip_tokens
-					}.sort.map(&:to_sym).freeze
+					compress }.sort.map(&:to_sym).freeze
 			end
 			
 			# Returns the default options.
@@ -25,6 +25,10 @@ module Wapiti
 			end
 			
 		end
+		
+		attr_accessor :compress
+		
+		alias compress? compress
 		
 		# Returns the value of the attribute identified by +name+ or nil
 		# if there is no such attribute.
@@ -104,7 +108,7 @@ module Wapiti
 			e
 		end
 		
-		%w{ maxent compact sparse label check score posterior }.each do |m|
+		%w{ maxent compact sparse label check score posterior compress }.each do |m|
 			writer = "#{m}=".to_sym
 			define_method("#{m}!") do
 				send(writer, true)

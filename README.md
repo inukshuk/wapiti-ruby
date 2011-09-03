@@ -77,7 +77,6 @@ Before saving your model you can use `compact` to reduce the model's size:
     model.save 'm2.mod'
     => # m2.mod file size 471K
 
-TODO zipped models
 
 ### Loading existing Models
 

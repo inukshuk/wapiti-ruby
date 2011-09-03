@@ -41,11 +41,19 @@ module Wapiti
 		end
 		
 		alias native_label label
-		
+
 		def label(input, opts = nil)
 			options.update(opts) unless opts.nil?
 			block_given? ? native_label(input, &Proc.new) : native_label(input)
 		end
+
+		alias native_train train
+
+		def train(input, opts = nil)
+			options.update(opts) unless opts.nil?
+			block_given? ? native_train(input, &Proc.new) : native_train(input)
+		end
+
 
 		def statistics
 			s = {}
@@ -67,13 +75,10 @@ module Wapiti
 		end
 		
 		alias clear clear_counters
-		
-		
-		private
-		
-		def tokenize(input)
-			input
-		end
+
+		# alias native_save save
+
+		private :native_label, :native_train
 		
 	end
 	

@@ -10,8 +10,15 @@ Thomas Lavergne's awesome [wapiti](http://wapiti.limsi.fr/).
 Requirements
 ------------
 
-Wapiti-Ruby is written in C and Ruby and requires a compiler with C99
-support (e.g., gcc); the gem has been confirmed to work with MRI 1.9, 1.8.7,
+Wapiti is written in C and Ruby and requires a compiler with C99
+support (e.g., gcc); on GNU/Linux systems it will be fairly easy to install
+all necessary packages through your distribution; on Mac OS X you can either
+install Xcode or
+(osx-gcc-installer)[https://github.com/kennethreitz/osx-gcc-installer];
+on Windows you may want to install RubyInstaller's
+[DevKit](https://github.com/oneclick/rubyinstaller/wiki/development-kit).
+
+The Wapiti Ruby gem has been confirmed to work with MRI 1.9, 1.8.7,
 and Rubinius.
 
 
@@ -69,6 +76,8 @@ Before saving your model you can use `compact` to reduce the model's size:
     model.compact
     model.save 'm2.mod'
     => # m2.mod file size 471K
+
+TODO zipped models
 
 ### Loading existing Models
 

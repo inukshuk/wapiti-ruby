@@ -14,7 +14,7 @@ Wapiti is written in C and Ruby and requires a compiler with C99
 support (e.g., gcc); on GNU/Linux systems it will be fairly easy to install
 all necessary packages through your distribution; on Mac OS X you can either
 install Xcode or
-(osx-gcc-installer)[https://github.com/kennethreitz/osx-gcc-installer];
+[osx-gcc-installer](https://github.com/kennethreitz/osx-gcc-installer);
 on Windows you may want to install RubyInstaller's
 [DevKit](https://github.com/oneclick/rubyinstaller/wiki/development-kit).
 

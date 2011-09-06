@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 module Wapiti
 	describe 'Model' do
 		
@@ -128,14 +130,14 @@ module Wapiti
 				let(:model) { Model.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
 				
 				context 'when passed an array of arrays' do
-					let(:input) { [['Hello NN B-VP', ', , O', 'world NN B-NP', '! ! O']] }
+					let(:input) { [['Héllo NN B-VP', ', , O', 'world NN B-NP', '! ! O']] }
 					
 					it 'returns an array of token-label pairs' do
 						labels = model.label(input)
 						labels[0].map(&:first).should == input[0]
 						labels[0].map(&:last).should == %w{ B-NP O B-NP O }
 					end
-					
+										
 					it 'yields each token/label pair to the supplied block' do
 						labels = model.label(input) do |token, label|
 				      [token.downcase, label.downcase]

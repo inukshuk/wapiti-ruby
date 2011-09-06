@@ -991,7 +991,14 @@ static VALUE decode_sequence(VALUE self, mdl_t *model, raw_t *raw) {
 		tokens = rb_ary_new();
 		
 		if (!model->opt->label) {
-			rb_ary_push(tokens, rb_str_new2(raw->lines[t]));
+			VALUE token = rb_str_new2(raw->lines[t]);
+			
+			#ifdef HAVE_RUBY_ENCODING_H
+			int enc = rb_enc_find_index("UTF-8");
+			rb_enc_associate_index(token, enc);
+			#endif
+						
+			rb_ary_push(tokens, token);
 		}
 		
 		for (n = 0; n < N; ++n) {

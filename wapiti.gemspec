@@ -8,16 +8,22 @@ Gem::Specification.new do |s|
   s.name        = 'wapiti'
   s.version     = Wapiti::VERSION.dup
   s.platform    = Gem::Platform::RUBY
+
   s.authors     = ['Sylvester Keil']
   s.email       = ['http://sylvester.keil.or.at']
+
   s.homepage    = 'https://github.com/inukshuk/wapiti-ruby'
   s.summary     = 'Wicked fast Conditional Random Fields for Ruby.'
-  s.description = 'This gem provides a Ruby API for Conditional Random Fields (CRF). It is implemented as a C exstension and based on the wicked fast "wapiti" package.'
+  s.description =
+    """
+    This gem provides a Ruby API for Conditional Random Fields (CRF).
+    """
+
   s.license     = 'FreeBSD'
+  s.date        = Time.now.strftime('%Y-%m-%d')
 
   s.add_development_dependency('rake', '~>0.9')
   s.add_development_dependency('rake-compiler', '~>0.7')
-  s.add_development_dependency('ZenTest', '~>4.6')
   s.add_development_dependency('rspec', '~>2.6')  
 
   s.files        = `git ls-files`.split("\n")

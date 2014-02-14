@@ -3,3 +3,5 @@ Gemfile.lock
 *.bundle
 *.so
 *.rbc
+*.swp
+.ruby-version

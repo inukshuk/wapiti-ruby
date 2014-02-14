@@ -15,6 +15,7 @@ end
 
 group :extra do
   gem 'ZenTest'
+  gem 'pry'
 end
 
 group :osx do

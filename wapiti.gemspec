@@ -26,8 +26,16 @@ Gem::Specification.new do |s|
   s.add_development_dependency('rake-compiler', '~>0.7')
   s.add_development_dependency('rspec', '~>2.6')
 
-  s.files        = `git ls-files`.split("\n")
+  s.files        = `git ls-files`.split("\n") - %w{
+    vendor/wapiti
+    .coveralls.yml
+    .travis.yml
+    .gitmodules
+    .gitignore
+  }
+
   s.test_files   = `git ls-files -- {test,spec,features}/*`.split("\n")
+
   s.executables  = []
   s.require_path = 'lib'
 

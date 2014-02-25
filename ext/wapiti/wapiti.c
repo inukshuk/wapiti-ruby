@@ -34,12 +34,12 @@
 #include <string.h>
 
 #include "decoder.h"
-#include "model.h"
 #include "options.h"
 #include "progress.h"
 #include "quark.h"
 #include "reader.h"
 #include "sequence.h"
+#include "model.h"
 #include "tools.h"
 #include "trainers.h"
 #include "wapiti.h"
@@ -55,7 +55,7 @@ static const char *typ_lst[] = {
 static const uint32_t typ_cnt = sizeof(typ_lst) / sizeof(typ_lst[0]);
 
 static const struct {
-	char *name;
+	const char *name;
 	void (* train)(mdl_t *mdl);
 } trn_lst[] = {
 	{"l-bfgs", trn_lbfgs},
@@ -67,7 +67,7 @@ static const struct {
 };
 static const uint32_t trn_cnt = sizeof(trn_lst) / sizeof(trn_lst[0]);
 
-static void dotrain(mdl_t *mdl) {
+void dotrain(mdl_t *mdl) {
 	// Check if the user requested the type or trainer list. If this is not
 	// the case, search them in the lists.
 	if (!strcmp(mdl->opt->type, "list")) {
@@ -186,7 +186,7 @@ static void dotrain(mdl_t *mdl) {
 /*******************************************************************************
  * Labeling
  ******************************************************************************/
-static void dolabel(mdl_t *mdl) {
+void dolabel(mdl_t *mdl) {
 	// First, load the model provided by the user. This is mandatory to
 	// label new datas ;-)
 	if (mdl->opt->model == NULL)
@@ -286,7 +286,7 @@ static void dodump(mdl_t *mdl) {
 /*******************************************************************************
  * Updating
  ******************************************************************************/
-static void doupdt(mdl_t *mdl) {
+void doupdt(mdl_t *mdl) {
 	// Load input model file
 	info("* Load model\n");
 	if (mdl->opt->model == NULL)
@@ -389,7 +389,7 @@ static void doupdt(mdl_t *mdl) {
 /*******************************************************************************
  * Entry point
  ******************************************************************************/
-int main(int argc, char *argv[argc]) {
+int wapiti_main(int argc, char *argv[argc]) {
 	// We first parse command line switchs
 	opt_t opt = opt_defaults;
 	opt_parse(argc, argv, &opt);

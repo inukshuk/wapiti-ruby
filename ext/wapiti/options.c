@@ -142,8 +142,8 @@ const opt_t opt_defaults = {
  */
 struct {
 	int     mode;
-	char   *dshort;
-	char   *dlong;
+	const char   *dshort;
+	const char   *dlong;
 	char    kind;
 	size_t  offset;
 } opt_switch[] = {

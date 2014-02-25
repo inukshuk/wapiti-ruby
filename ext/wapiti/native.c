@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "wapiti.h"
 #include "options.h"
 #include "reader.h"
+#include "decoder.h"
 #include "model.h"
 #include "trainers.h"
+#include "progress.h"
 #include "quark.h"
 #include "tools.h"
+#include "wapiti.h"
 
 #include "native.h"
 
@@ -22,6 +24,15 @@ VALUE cConfigurationError;
 VALUE cLogger;
 
 
+/* --- Forward declarations --- */
+
+int wapiti_main(int argc, char *argv[argc]);
+
+void dolabel(mdl_t *mdl);
+void dotrain(mdl_t *mdl);
+void doupdt(mdl_t *mdl);
+
+
 /* --- Utilities --- */
 
 static void trn_auto(mdl_t *mdl) {
@@ -33,7 +44,7 @@ static void trn_auto(mdl_t *mdl) {
 }
 
 static const struct {
-  char *name;
+  const char *name;
   void (* train)(mdl_t *mdl);
 } trn_lst[] = {
   {"l-bfgs", trn_lbfgs},
@@ -80,9 +91,9 @@ static void deallocate_options(opt_t* options) {
   // free string options
   if (options->input) { free(options->input); }
   if (options->output) { free(options->output); }
-  if (options->algo) { free(options->algo); }
+  if (options->algo) { free((void*)options->algo); }
   if (options->devel) { free(options->devel); }
-  if (options->pattern) { free(options->pattern); }
+  if (options->pattern) { free((void*)options->pattern); }
 
   free(options);
   options = (opt_t*)0;
@@ -412,19 +423,19 @@ static VALUE options_set_cutoff(VALUE self, VALUE rb_boolean) {
 // String Accessors
 
 static VALUE options_pattern(VALUE self) {
-  char *pattern = get_options(self)->pattern;
+  const char *pattern = get_options(self)->pattern;
   return rb_str_new2(pattern ? pattern : "");
 }
 
 static VALUE options_set_pattern(VALUE self, VALUE rb_string) {
   opt_t *options = get_options(self);
-  copy_string(&(options->pattern), rb_string);
+  copy_string((char**)&(options->pattern), rb_string);
 
   return rb_string;
 }
 
 static VALUE options_model(VALUE self) {
-  char *model = get_options(self)->model;
+  const char *model = get_options(self)->model;
   return rb_str_new2(model ? model : "");
 }
 
@@ -436,13 +447,13 @@ static VALUE options_set_model(VALUE self, VALUE rb_string) {
 }
 
 static VALUE options_algorithm(VALUE self) {
-  char *algorithm = get_options(self)->algo;
+  const char *algorithm = get_options(self)->algo;
   return rb_str_new2(algorithm ? algorithm : "");
 }
 
 static VALUE options_set_algorithm(VALUE self, VALUE rb_string) {
   opt_t *options = get_options(self);
-  copy_string(&(options->algo), rb_string);
+  copy_string((char**)&(options->algo), rb_string);
 
   return rb_string;
 }
@@ -935,8 +946,6 @@ static VALUE model_train(VALUE self, VALUE data) {
 
   // If requested compact the model.
   if (model->opt->compact) {
-    const uint64_t O = model->nobs;
-    const uint64_t F = model->nftr;
     rb_funcall(self, rb_intern("compact"), 0);
   }
 
@@ -979,10 +988,10 @@ static VALUE decode_sequence(VALUE self, mdl_t *model, raw_t *raw) {
   VALUE sequence, tokens;
 
   if (N == 1) {
-    tag_viterbi(model, seq, (uint32_t*)out, scs, (double*)psc);
+    tag_viterbi(model, seq, out, scs, psc);
   }
   else {
-    tag_nbviterbi(model, seq, N, (uint32_t*)out, scs, (double*)psc);
+    tag_nbviterbi(model, seq, N, (void*)out, scs, (void*)psc);
   }
 
   sequence = rb_ary_new();
@@ -1207,6 +1216,7 @@ static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {
   return Qnil;
 }
 
+#if defined EXTRA
 static VALUE dump(VALUE self __attribute__((__unused__)), VALUE rb_options) {
   if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
     rb_raise(cNativeError, "argument must be a native options instance");
@@ -1260,6 +1270,7 @@ static VALUE wapiti(VALUE self __attribute__((__unused__)), VALUE arguments) {
 
   return INT2FIX(result);
 }
+#endif
 
 /* --- Wapiti Extension Entry Point --- */
 
@@ -1272,7 +1283,7 @@ void Init_native() {
   cLogger = rb_funcall(mWapiti, rb_intern("log"), 0);
 
   rb_define_singleton_method(mNative, "label", label, 1);
-  rb_define_singleton_method(mNative, "wapiti", wapiti, 1);
+  // rb_define_singleton_method(mNative, "wapiti", wapiti, 1);
 
   rb_define_const(mNative, "VERSION", rb_str_new2(VERSION));
 

@@ -69,7 +69,7 @@ void fatal(const char *msg, ...) {
 
 	rb_raise(cNativeError, msg, args);
 
-	va_end(args);	
+	va_end(args);
 }
 
 /* pfatal:
@@ -80,7 +80,7 @@ void fatal(const char *msg, ...) {
  *   calling pfatal.
  */
 void pfatal(const char *msg, ...) {
-	const char *err = strerror(errno);
+	// const char *err = strerror(errno);
 	va_list args;
 	va_start(args, msg);
 

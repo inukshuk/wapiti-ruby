@@ -16,12 +16,12 @@ require 'wapiti/version'
 
 Rake::ExtensionTask.new do |ext|
   ext.name = 'native'
-  
+
   ext.ext_dir = 'ext/wapiti'
   ext.lib_dir = 'lib/wapiti'
-  
+
   CLEAN.include("#{ext.lib_dir}/native.*")
-  CLEAN.include("#{ext.tmp_dir}")  
+  CLEAN.include("#{ext.tmp_dir}")
 end
 
 require 'rspec/core'

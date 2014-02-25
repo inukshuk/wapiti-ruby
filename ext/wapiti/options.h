@@ -42,8 +42,8 @@ struct opt_s {
 	char     *input,  *output;
 	bool      maxent;
 	// Options for training
-	char     *type;
-	char     *algo,   *pattern;
+	const char     *type;
+	const char     *algo,   *pattern;
 	char     *model,  *devel;
 	char     *rstate, *sstate;
 	bool      compact, sparse;

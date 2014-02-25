@@ -32,10 +32,10 @@
 #include <stdint.h>
 #include <sys/time.h>
 
-#include "wapiti.h"
 #include "options.h"
 #include "sequence.h"
 #include "reader.h"
+#include "wapiti.h"
 
 typedef struct timeval tms_t;
 

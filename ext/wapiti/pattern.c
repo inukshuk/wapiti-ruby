@@ -310,8 +310,8 @@ pat_t *pat_comp(char *p) {
  *   not needed anymore.
  */
 char *pat_exec(const pat_t *pat, const tok_t *tok, uint32_t at) {
-	static char *bval[] = {"_x-1", "_x-2", "_x-3", "_x-4", "_x-#"};
-	static char *eval[] = {"_x+1", "_x+2", "_x+3", "_x+4", "_x+#"};
+	static const char *bval[] = {"_x-1", "_x-2", "_x-3", "_x-4", "_x-#"};
+	static const char *eval[] = {"_x+1", "_x+2", "_x+3", "_x+4", "_x+#"};
 	const uint32_t T = tok->len;
 	// Prepare the buffer who will hold the result
 	uint32_t size = 16, pos = 0;
@@ -319,7 +319,7 @@ char *pat_exec(const pat_t *pat, const tok_t *tok, uint32_t at) {
 	// And loop over the compiled items
 	for (uint32_t it = 0; it < pat->nitems; it++) {
 		const pat_item_t *item = &(pat->items[it]);
-		char *value = NULL;
+		const char *value = NULL;
 		uint32_t len = 0;
 		// First, if needed, we retrieve the token at the referenced
 		// position in the sequence. We store it in value and let the

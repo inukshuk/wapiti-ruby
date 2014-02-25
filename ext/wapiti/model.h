@@ -1,7 +1,7 @@
 /*
  *      Wapiti - A linear-chain CRF tool
  *
- * Copyright (c) 2009-2011  CNRS
+ * Copyright (c) 2009-2013  CNRS
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,14 +29,15 @@
 #define model_h
 
 #include <stddef.h>
-#include <sys/times.h>
+#include <stdint.h>
+#include <sys/time.h>
 
 #include "wapiti.h"
 #include "options.h"
 #include "sequence.h"
 #include "reader.h"
 
-typedef struct tms tms_t;
+typedef struct timeval tms_t;
 
 /* mdl_t:
  *   Represent a linear-chain CRF model. The model contain both unigram and
@@ -60,34 +61,35 @@ typedef struct tms tms_t;
  */
 typedef struct mdl_s mdl_t;
 struct mdl_s {
-	opt_t   *opt;     //       options for training
+	opt_t    *opt;     //       options for training
+	int       type;    //       model type
 
 	// Size of various model parameters
-	size_t   nlbl;    //   Y   number of labels
-	size_t   nobs;    //   O   number of observations
-	size_t   nftr;    //   F   number of features
+	uint32_t  nlbl;    //   Y   number of labels
+	uint64_t  nobs;    //   O   number of observations
+	uint64_t  nftr;    //   F   number of features
 
 	// Informations about observations
-	char    *kind;    //  [O]  observations type
-	size_t  *uoff;    //  [O]  unigram weights offset
-	size_t  *boff;    //  [O]  bigram weights offset
+	char     *kind;    //  [O]  observations type
+	uint64_t *uoff;    //  [O]  unigram weights offset
+	uint64_t *boff;    //  [O]  bigram weights offset
 
 	// The model itself
-	double  *theta;   //  [F]  features weights
+	double   *theta;   //  [F]  features weights
 
 	// Datasets
-	dat_t   *train;   //       training dataset
-	dat_t   *devel;   //       development dataset
-	rdr_t   *reader;
+	dat_t    *train;   //       training dataset
+	dat_t    *devel;   //       development dataset
+	rdr_t    *reader;
 
 	// Stoping criterion
-	double  *werr;    //       Window of error rate of last iters
-	int      wcnt;    //       Number of iters in the window
-	int      wpos;    //       Position for the next iter
+	double   *werr;    //       Window of error rate of last iters
+	uint32_t  wcnt;    //       Number of iters in the window
+	uint32_t  wpos;    //       Position for the next iter
 
 	// Timing
-	tms_t    timer;   //       start time of last iter
-	double   total;   //       total training time
+	tms_t     timer;   //       start time of last iter
+	double    total;   //       total training time
 };
 
 mdl_t *mdl_new(rdr_t *rdr);

@@ -1,7 +1,7 @@
 /*
  *      Wapiti - A linear-chain CRF tool
  *
- * Copyright (c) 2009-2011  CNRS
+ * Copyright (c) 2009-2013  CNRS
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,11 +24,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "quark.h"
@@ -47,7 +48,7 @@
  *   Information Coded in Alphanumeric, Journal of the ACM 15 (4): pp. 514--534,
  *   1968. DOI:10.1145/321479.321481
  *
- *   This code is copyright 2002-2011 Thomas Lavergne and licenced under the BSD
+ *   This code is copyright 2002-2013 Thomas Lavergne and licenced under the BSD
  *   Licence like the remaining of Wapiti.
  ******************************************************************************/
 
@@ -68,8 +69,6 @@ struct qrk_s {
 	uint64_t size;
 };
 
-#define qrk_none ((uint64_t)-1)
-
 #define qrk_lf2nd(lf)  ((node_t *)((intptr_t)(lf) |  1))
 #define qrk_nd2lf(nd)  ((leaf_t *)((intptr_t)(nd) & ~1))
 #define qrk_isleaf(nd) ((intptr_t)(nd) & 1)
@@ -86,7 +85,7 @@ qrk_t *qrk_new(void) {
 	qrk->count = 0;
 	qrk->lock  = false;
 	qrk->size  = size;
-	qrk->leafs = wapiti_xmalloc(sizeof(leaf_t) * size);
+	qrk->leafs = wapiti_xmalloc(sizeof(leaf_t *) * size);
 	return qrk;
 }
 
@@ -96,10 +95,10 @@ qrk_t *qrk_new(void) {
  *   qrk_unmap become invalid and must not be used anymore.
  */
 void qrk_free(qrk_t *qrk) {
-	const size_t stkmax = 1024;
+	const uint32_t stkmax = 1024;
 	if (qrk->count != 0) {
 		node_t *stk[stkmax];
-		int cnt = 0;
+		uint32_t cnt = 0;
 		stk[cnt++] = qrk->root;
 		while (cnt != 0) {
 			node_t *nd = stk[--cnt];
@@ -122,7 +121,7 @@ void qrk_free(qrk_t *qrk) {
  *   pair inside the quark. This function is not thread safe and should not be
  *   called on the same map from different thread without locking.
  */
-size_t qrk_str2id(qrk_t *qrk, const char *key) {
+uint64_t qrk_str2id(qrk_t *qrk, const char *key) {
 	const uint8_t *raw = (void *)key;
 	const size_t   len = strlen(key);
 	// We first take care of the empty trie case so later we can safely
@@ -213,7 +212,7 @@ size_t qrk_str2id(qrk_t *qrk, const char *key) {
  *    remain valid only for the life time of the quark, a call to qrk_free will
  *    make this pointer invalid.
  */
-const char *qrk_id2str(const qrk_t *qrk, size_t id) {
+const char *qrk_id2str(const qrk_t *qrk, uint64_t id) {
 	if (id >= qrk->count)
 		fatal("invalid identifier");
 	return qrk->leafs[id]->key;
@@ -225,7 +224,7 @@ const char *qrk_id2str(const qrk_t *qrk, size_t id) {
  *   number correspond to the id.
  */
 void qrk_save(const qrk_t *qrk, FILE *file) {
-	if (fprintf(file, "#qrk#%zu\n", (size_t)qrk->count) < 0)
+	if (fprintf(file, "#qrk#%"PRIu64"\n", qrk->count) < 0)
 		pfatal("cannot write to file");
 	if (qrk->count == 0)
 		return;
@@ -240,13 +239,13 @@ void qrk_save(const qrk_t *qrk, FILE *file) {
  *   initilay empty, this will load a map exactly as saved by qrk_save.
  */
 void qrk_load(qrk_t *qrk, FILE *file) {
-	size_t cnt = 0;
-	if (fscanf(file, "#qrk#%zu\n", &cnt) != 1) {
+	uint64_t cnt = 0;
+	if (fscanf(file, "#qrk#%"SCNu64"\n", &cnt) != 1) {
 		if (ferror(file) != 0)
 			pfatal("cannot read from file");
 		pfatal("invalid format");
 	}
-	for (size_t n = 0; n < cnt; ++n) {
+	for (uint64_t n = 0; n < cnt; ++n) {
 		char *str = ns_readstr(file);
 		qrk_str2id(qrk, str);
 		free(str);
@@ -256,7 +255,7 @@ void qrk_load(qrk_t *qrk, FILE *file) {
 /* qrk_count:
  *   Return the number of mappings stored in the quark.
  */
-size_t qrk_count(const qrk_t *qrk) {
+uint64_t qrk_count(const qrk_t *qrk) {
 	return qrk->count;
 }
 
@@ -268,5 +267,4 @@ bool qrk_lock(qrk_t *qrk, bool lock) {
 	qrk->lock = lock;
 	return old;
 }
-
 

@@ -1,7 +1,7 @@
 /*
  *      Wapiti - A linear-chain CRF tool
  *
- * Copyright (c) 2009-2011  CNRS
+ * Copyright (c) 2009-2013  CNRS
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,16 +45,16 @@
  */
 typedef struct rdr_s rdr_t;
 struct rdr_s {
-	bool    maxent;     //      Is this a maxent reader
-	int     npats;      //  P   Total number of patterns
-	int     nuni, nbi;  //      Number of unigram and bigram patterns
-	int     ntoks;      //      Expected number of tokens in input
-	pat_t **pats;       // [P]  List of precompiled patterns
-	qrk_t  *lbl;        //      Labels database
-	qrk_t  *obs;        //      Observation database
+	bool       autouni;    //      Automatically add 'u' prefix
+	uint32_t   npats;      //  P   Total number of patterns
+	uint32_t   nuni, nbi;  //      Number of unigram and bigram patterns
+	uint32_t   ntoks;      //      Expected number of tokens in input
+	pat_t    **pats;       // [P]  List of precompiled patterns
+	qrk_t     *lbl;        //      Labels database
+	qrk_t     *obs;        //      Observation database
 };
 
-rdr_t *rdr_new(bool maxent);
+rdr_t *rdr_new(bool autouni);
 void rdr_free(rdr_t *rdr);
 void rdr_freeraw(raw_t *raw);
 void rdr_freeseq(seq_t *seq);
@@ -68,6 +68,8 @@ dat_t *rdr_readdat(rdr_t *rdr, FILE *file, bool lbl);
 
 void rdr_load(rdr_t *rdr, FILE *file);
 void rdr_save(const rdr_t *rdr, FILE *file);
+
+char *rdr_readline(FILE *file);
 
 #endif
 

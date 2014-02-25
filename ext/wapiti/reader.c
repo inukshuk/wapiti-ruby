@@ -1,7 +1,7 @@
 /*
  *      Wapiti - A linear-chain CRF tool
  *
- * Copyright (c) 2009-2011  CNRS
+ * Copyright (c) 2009-2013  CNRS
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <ctype.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -59,12 +60,14 @@
  ******************************************************************************/
 
 /* rdr_new:
- *   Create a new empty reader object. You mut load patterns in it or a
- *   previously saved reader if you want to use it for reading sequences.
+ *   Create a new empty reader object. If no patterns are loaded before you
+ *   start using the reader the input data are assumed to be already prepared
+ *   list of features. They must either start with a prefix 'u', 'b', or '*', or
+ *   you must set autouni to true in order to automatically add a 'u' prefix.
  */
-rdr_t *rdr_new(bool maxent) {
+rdr_t *rdr_new(bool autouni) {
 	rdr_t *rdr = wapiti_xmalloc(sizeof(rdr_t));
-	rdr->maxent = maxent;
+	rdr->autouni = autouni;
 	rdr->npats = rdr->nuni = rdr->nbi = 0;
 	rdr->ntoks = 0;
 	rdr->pats = NULL;
@@ -78,7 +81,7 @@ rdr_t *rdr_new(bool maxent) {
  *   any string returned by them must not be used after this call.
  */
 void rdr_free(rdr_t *rdr) {
-	for (int i = 0; i < rdr->npats; i++)
+	for (uint32_t i = 0; i < rdr->npats; i++)
 		pat_free(rdr->pats[i]);
 	free(rdr->pats);
 	qrk_free(rdr->lbl);
@@ -90,7 +93,7 @@ void rdr_free(rdr_t *rdr) {
  *   Free all memory used by a raw_t object.
  */
 void rdr_freeraw(raw_t *raw) {
-	for (int t = 0; t < raw->len; t++)
+	for (uint32_t t = 0; t < raw->len; t++)
 		free(raw->lines[t]);
 	free(raw);
 }
@@ -107,7 +110,7 @@ void rdr_freeseq(seq_t *seq) {
  *   Free all memory used by a dat_t object.
  */
 void rdr_freedat(dat_t *dat) {
-	for (size_t i = 0; i < dat->nseq; i++)
+	for (uint32_t i = 0; i < dat->nseq; i++)
 		rdr_freeseq(dat->seq[i]);
 	free(dat->seq);
 	free(dat);
@@ -118,11 +121,11 @@ void rdr_freedat(dat_t *dat) {
  *   available memory, a buffer large enough is allocated and returned. The
  *   caller is responsible to free it. On end-of-file, NULL is returned.
  */
-static char *rdr_readline(FILE *file) {
+char *rdr_readline(FILE *file) {
 	if (feof(file))
 		return NULL;
 	// Initialize the buffer
-	int len = 0, size = 16;
+	uint32_t len = 0, size = 16;
 	char *buffer = wapiti_xmalloc(size);
 	// We read the line chunk by chunk until end of line, file or error
 	while (!feof(file)) {
@@ -203,7 +206,7 @@ raw_t *rdr_readraw(rdr_t *rdr, FILE *file) {
 	if (feof(file))
 		return NULL;
 	// Prepare the raw sequence object
-	int size = 32, cnt = 0;
+	uint32_t size = 32, cnt = 0;
 	raw_t *raw = wapiti_xmalloc(sizeof(raw_t) + sizeof(char *) * size);
 	// And read the next sequence in the file, this will skip any blank line
 	// before reading the sequence stoping at end of file or on a new blank
@@ -232,9 +235,9 @@ raw_t *rdr_readraw(rdr_t *rdr, FILE *file) {
 			                + sizeof(char *) * size);
 		}
 		raw->lines[cnt++] = line;
-		// In maxent mode, we only have to load one line for each sample
-		// so we can stop here.
-		if (rdr->maxent)
+		// In autouni mode, there will be only unigram features so we
+		// can use small sequences to improve multi-theading.
+		if (rdr->autouni)
 			break;
 	}
 	// If no lines was read, we just free allocated memory and return NULL
@@ -251,13 +254,12 @@ raw_t *rdr_readraw(rdr_t *rdr, FILE *file) {
 
 /* rdr_mapobs:
  *   Map an observation to its identifier, automatically adding a 'u' prefix in
- *   pure maxent mode.
+ *   'autouni' mode.
  */
-static size_t rdr_mapobs(rdr_t *rdr, const char *str) {
-	if (!rdr->maxent)
+static uint64_t rdr_mapobs(rdr_t *rdr, const char *str) {
+	if (!rdr->autouni)
 		return qrk_str2id(rdr->obs, str);
-	size_t len = strlen(str) + 2;
-	char tmp[len];
+	char tmp[strlen(str) + 2];
 	tmp[0] = 'u';
 	strcpy(tmp + 1, str);
 	return qrk_str2id(rdr->obs, tmp);
@@ -268,13 +270,13 @@ static size_t rdr_mapobs(rdr_t *rdr, const char *str) {
  *   applying patterns.
  */
 static seq_t *rdr_rawtok2seq(rdr_t *rdr, const tok_t *tok) {
-	const int T = tok->len;
-	int size = 0;
-	if (rdr->maxent) {
+	const uint32_t T = tok->len;
+	uint32_t size = 0;
+	if (rdr->autouni) {
 		size = tok->cnts[0];
 	} else {
-		for (int t = 0; t < T; t++) {
-			for (int n = 0; n < tok->cnts[t]; n++) {
+		for (uint32_t t = 0; t < T; t++) {
+			for (uint32_t n = 0; n < tok->cnts[t]; n++) {
 				const char *o = tok->toks[t][n];
 				switch (o[0]) {
 					case 'u': size += 1; break;
@@ -287,30 +289,30 @@ static seq_t *rdr_rawtok2seq(rdr_t *rdr, const tok_t *tok) {
 		}
 	}
 	seq_t *seq = wapiti_xmalloc(sizeof(seq_t) + sizeof(pos_t) * T);
-	seq->raw = wapiti_xmalloc(sizeof(size_t) * size);
+	seq->raw = wapiti_xmalloc(sizeof(uint64_t) * size);
 	seq->len = T;
-	size_t *raw = seq->raw;
-	for (int t = 0; t < T; t++) {
-		seq->pos[t].lbl = none;
+	uint64_t *raw = seq->raw;
+	for (uint32_t t = 0; t < T; t++) {
+		seq->pos[t].lbl = (uint32_t)-1;
 		seq->pos[t].ucnt = 0;
 		seq->pos[t].uobs = raw;
-		for (int n = 0; n < tok->cnts[t]; n++) {
-			if (tok->toks[t][n][0] == 'b')
+		for (uint32_t n = 0; n < tok->cnts[t]; n++) {
+			if (!rdr->autouni && tok->toks[t][n][0] == 'b')
 				continue;
-			size_t id = rdr_mapobs(rdr, tok->toks[t][n]);
+			uint64_t id = rdr_mapobs(rdr, tok->toks[t][n]);
 			if (id != none) {
 				(*raw++) = id;
 				seq->pos[t].ucnt++;
 			}
 		}
 		seq->pos[t].bcnt = 0;
-		if (rdr->maxent)
+		if (rdr->autouni)
 			continue;
 		seq->pos[t].bobs = raw;
-		for (int n = 0; n < tok->cnts[t]; n++) {
+		for (uint32_t n = 0; n < tok->cnts[t]; n++) {
 			if (tok->toks[t][n][0] == 'u')
 				continue;
-			size_t id = rdr_mapobs(rdr, tok->toks[t][n]);
+			uint64_t id = rdr_mapobs(rdr, tok->toks[t][n]);
 			if (id != none) {
 				(*raw++) = id;
 				seq->pos[t].bcnt++;
@@ -319,9 +321,9 @@ static seq_t *rdr_rawtok2seq(rdr_t *rdr, const tok_t *tok) {
 	}
 	// And finally, if the user specified it, populate the labels
 	if (tok->lbl != NULL) {
-		for (int t = 0; t < T; t++) {
+		for (uint32_t t = 0; t < T; t++) {
 			const char *lbl = tok->lbl[t];
-			size_t id = qrk_str2id(rdr->lbl, lbl);
+			uint64_t id = qrk_str2id(rdr->lbl, lbl);
 			seq->pos[t].lbl = id;
 		}
 	}
@@ -332,35 +334,35 @@ static seq_t *rdr_rawtok2seq(rdr_t *rdr, const tok_t *tok) {
  *   Convert a tok_t to a seq_t object by applying the patterns of the reader.
  */
 static seq_t *rdr_pattok2seq(rdr_t *rdr, const tok_t *tok) {
-	const int T = tok->len;
+	const uint32_t T = tok->len;
 	// So now the tok object is ready, we can start building the seq_t
 	// object by appling patterns. First we allocate the seq_t object. The
 	// sequence itself as well as the sub array are allocated in one time.
 	seq_t *seq = wapiti_xmalloc(sizeof(seq_t) + sizeof(pos_t) * T);
-	seq->raw = wapiti_xmalloc(sizeof(size_t) * (rdr->nuni + rdr->nbi) * T);
+	seq->raw = wapiti_xmalloc(sizeof(uint64_t) * (rdr->nuni + rdr->nbi) * T);
 	seq->len = T;
-	size_t *tmp = seq->raw;
-	for (int t = 0; t < T; t++) {
-		seq->pos[t].lbl  = none;
+	uint64_t *tmp = seq->raw;
+	for (uint32_t t = 0; t < T; t++) {
+		seq->pos[t].lbl  = (uint32_t)-1;
 		seq->pos[t].uobs = tmp; tmp += rdr->nuni;
 		seq->pos[t].bobs = tmp; tmp += rdr->nbi;
 	}
 	// Next, we can build the observations list by applying the patterns on
 	// the tok_t sequence.
-	for (int t = 0; t < T; t++) {
+	for (uint32_t t = 0; t < T; t++) {
 		pos_t *pos = &seq->pos[t];
 		pos->ucnt = 0;
 		pos->bcnt = 0;
-		for (int x = 0; x < rdr->npats; x++) {
+		for (uint32_t x = 0; x < rdr->npats; x++) {
 			// Get the observation and map it to an identifier
 			char *obs = pat_exec(rdr->pats[x], tok, t);
-			size_t id = rdr_mapobs(rdr, obs);
+			uint64_t id = rdr_mapobs(rdr, obs);
 			if (id == none) {
 				free(obs);
 				continue;
 			}
 			// If the observation is ok, add it to the lists
-			int kind = 0;
+			char kind = 0;
 			switch (obs[0]) {
 				case 'u': kind = 1; break;
 				case 'b': kind = 2; break;
@@ -375,9 +377,9 @@ static seq_t *rdr_pattok2seq(rdr_t *rdr, const tok_t *tok) {
 	}
 	// And finally, if the user specified it, populate the labels
 	if (tok->lbl != NULL) {
-		for (int t = 0; t < T; t++) {
+		for (uint32_t t = 0; t < T; t++) {
 			const char *lbl = tok->lbl[t];
-			size_t id = qrk_str2id(rdr->lbl, lbl);
+			uint64_t id = qrk_str2id(rdr->lbl, lbl);
 			seq->pos[t].lbl = id;
 		}
 	}
@@ -390,11 +392,11 @@ static seq_t *rdr_pattok2seq(rdr_t *rdr, const tok_t *tok) {
  *   interned also.
  */
 seq_t *rdr_raw2seq(rdr_t *rdr, const raw_t *raw, bool lbl) {
-	const int T = raw->len;
+	const uint32_t T = raw->len;
 	// Allocate the tok_t object, the label array is allocated only if they
 	// are requested by the user.
 	tok_t *tok = wapiti_xmalloc(sizeof(tok_t) + T * sizeof(char **));
-	tok->cnts = wapiti_xmalloc(sizeof(size_t) * T);
+	tok->cnts = wapiti_xmalloc(sizeof(uint32_t) * T);
 	tok->lbl = NULL;
 	if (lbl == true)
 		tok->lbl = wapiti_xmalloc(sizeof(char *) * T);
@@ -402,16 +404,15 @@ seq_t *rdr_raw2seq(rdr_t *rdr, const raw_t *raw, bool lbl) {
 	// tokens. To reduce memory fragmentation, the raw line is copied and
 	// his reference is kept by the first tokens, next tokens are pointer to
 	// this copy.
-	for (int t = 0; t < T; t++) {
+	for (uint32_t t = 0; t < T; t++) {
 		// Get a copy of the raw line skiping leading space characters
 		const char *src = raw->lines[t];
 		while (isspace(*src))
 			src++;
 		char *line = xstrdup(src);
 		// Split it in tokens
-		const int len = strlen(line);
-		char *toks[len / 2];
-		int cnt = 0;
+		char *toks[strlen(line) / 2 + 1];
+		uint32_t cnt = 0;
 		while (*line != '\0') {
 			toks[cnt++] = line;
 			while (*line != '\0' && !isspace(*line))
@@ -441,7 +442,7 @@ seq_t *rdr_raw2seq(rdr_t *rdr, const raw_t *raw, bool lbl) {
 	else
 		seq = rdr_pattok2seq(rdr, tok);
 	// Before returning the sequence, we have to free the tok_t
-	for (int t = 0; t < T; t++) {
+	for (uint32_t t = 0; t < T; t++) {
 		if (tok->cnts[t] == 0)
 			continue;
 		free(tok->toks[t][0]);
@@ -477,7 +478,7 @@ seq_t *rdr_readseq(rdr_t *rdr, FILE *file, bool lbl) {
  */
 dat_t *rdr_readdat(rdr_t *rdr, FILE *file, bool lbl) {
 	// Prepare dataset
-	size_t size = 1000;
+	uint32_t size = 1000;
 	dat_t *dat = wapiti_xmalloc(sizeof(dat_t));
 	dat->nseq = 0;
 	dat->mlen = 0;
@@ -498,7 +499,7 @@ dat_t *rdr_readdat(rdr_t *rdr, FILE *file, bool lbl) {
 		dat->seq[dat->nseq++] = seq;
 		dat->mlen = max(dat->mlen, seq->len);
 		if (dat->nseq % 1000 == 0)
-			info("%7d sequences loaded\n", dat->nseq);
+			info("%7"PRIu32" sequences loaded\n", dat->nseq);
 	}
 	// If no sequence readed, cleanup and repport
 	if (dat->nseq == 0) {
@@ -520,18 +521,30 @@ dat_t *rdr_readdat(rdr_t *rdr, FILE *file, bool lbl) {
  */
 void rdr_load(rdr_t *rdr, FILE *file) {
 	const char *err = "broken file, invalid reader format";
-	if (fscanf(file, "#rdr#%d/%d\n", &rdr->npats, &rdr->ntoks) != 2)
-		fatal(err);
+	int autouni = rdr->autouni;
+	fpos_t pos;
+	fgetpos(file, &pos);
+	if (fscanf(file, "#rdr#%"PRIu32"/%"PRIu32"/%d\n",
+			&rdr->npats, &rdr->ntoks, &autouni) != 3) {
+		// This for compatibility with previous file format
+		fsetpos(file, &pos);
+		if (fscanf(file, "#rdr#%"PRIu32"/%"PRIu32"\n",
+				&rdr->npats, &rdr->ntoks) != 2)
+			fatal(err);
+	}
+	rdr->autouni = autouni;
 	rdr->nuni = rdr->nbi = 0;
-	rdr->pats = wapiti_xmalloc(sizeof(pat_t *) * rdr->npats);
-	for (int p = 0; p < rdr->npats; p++) {
-		char *pat = ns_readstr(file);
-		rdr->pats[p] = pat_comp(pat);
-		switch (tolower(pat[0])) {
-			case 'u': rdr->nuni++; break;
-			case 'b': rdr->nbi++;  break;
-			case '*': rdr->nuni++;
-			          rdr->nbi++;  break;
+	if (rdr->npats != 0) {
+		rdr->pats = wapiti_xmalloc(sizeof(pat_t *) * rdr->npats);
+		for (uint32_t p = 0; p < rdr->npats; p++) {
+			char *pat = ns_readstr(file);
+			rdr->pats[p] = pat_comp(pat);
+			switch (tolower(pat[0])) {
+				case 'u': rdr->nuni++; break;
+				case 'b': rdr->nbi++;  break;
+				case '*': rdr->nuni++;
+				          rdr->nbi++;  break;
+			}
 		}
 	}
 	qrk_load(rdr->lbl, file);
@@ -543,9 +556,10 @@ void rdr_load(rdr_t *rdr, FILE *file) {
  *   is plain text and portable accros computers.
  */
 void rdr_save(const rdr_t *rdr, FILE *file) {
-	if(fprintf(file, "#rdr#%d/%d\n", rdr->npats, rdr->ntoks) < 0)
+	if (fprintf(file, "#rdr#%"PRIu32"/%"PRIu32"/%d\n",
+			rdr->npats, rdr->ntoks, rdr->autouni) < 0)
 		pfatal("cannot write to file");
-	for (int p = 0; p < rdr->npats; p++)
+	for (uint32_t p = 0; p < rdr->npats; p++)
 		ns_writestr(file, rdr->pats[p]->src);
 	qrk_save(rdr->lbl, file);
 	qrk_save(rdr->obs, file);

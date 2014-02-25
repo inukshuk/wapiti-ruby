@@ -1,7 +1,7 @@
 /*
  *      Wapiti - A linear-chain CRF tool
  *
- * Copyright (c) 2009-2011  CNRS
+ * Copyright (c) 2009-2013  CNRS
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,9 +24,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <inttypes.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -58,12 +61,11 @@
  ******************************************************************************/
 
 void trn_lbfgs(mdl_t *mdl) {
-	const size_t F  = mdl->nftr;
-	const int    K  = mdl->opt->maxiter;
-	const int    C  = mdl->opt->objwin;
-	const int    M  = mdl->opt->lbfgs.histsz;
-	const size_t W  = mdl->opt->nthread;
-	const bool   l1 = mdl->opt->rho1 != 0.0;
+	const uint64_t F  = mdl->nftr;
+	const uint32_t K  = mdl->opt->maxiter;
+	const uint32_t C  = mdl->opt->objwin;
+	const uint32_t M  = mdl->opt->lbfgs.histsz;
+	const bool     l1 = mdl->opt->rho1 != 0.0;
 	double *x, *xp; // Current and previous value of the variables
 	double *g, *gp; // Current and previous value of the gradient
 	double *pg;     // The pseudo-gradient (only for owl-qn)
@@ -72,7 +74,6 @@ void trn_lbfgs(mdl_t *mdl) {
 	double *y[M];   // History value y_k = Δ(g,pg)
 	double  p[M];   // ρ_k
 	double  fh[C];  // f(x) history
-	grd_t  *grds[W];
 	// Initialization: Here, we have to allocate memory on the heap as we
 	// cannot request so much memory on the stack as this will have a too
 	// big impact on performance and will be refused by the system on non-
@@ -80,22 +81,50 @@ void trn_lbfgs(mdl_t *mdl) {
 	x  = mdl->theta;
 	xp = xvm_new(F); g = xvm_new(F);
 	gp = xvm_new(F); d = xvm_new(F);
-	for (int m = 0; m < M; m++) {
+	for (uint32_t m = 0; m < M; m++) {
 		s[m] = xvm_new(F);
 		y[m] = xvm_new(F);
 	}
 	pg = l1 ? xvm_new(F) : NULL;
-	grds[0] = grd_new(mdl, g);
-	for (size_t w = 1; w < W; w++)
-		grds[w] = grd_new(mdl, xvm_new(F));
+	grd_t *grd = grd_new(mdl, g);
+	// Restore a saved state if user specified one.
+	if (mdl->opt->rstate != NULL) {
+		const char *err = "invalid state file";
+		FILE *file = fopen(mdl->opt->rstate, "r");
+		if (file == NULL)
+			fatal("failed to open input state file");
+		int type, histsz;
+		uint64_t nftr;
+		if (fscanf(file, "#state#%d#%d#%"SCNu64"\n", &type, &histsz,
+				&nftr) != 3)
+			fatal("0 %s", err);
+		if (type != 0 || histsz != (int)M)
+			fatal("state is not compatible");
+		for (uint64_t i = 0; i < nftr; i++) {
+			uint64_t f;
+			if (fscanf(file, "%"PRIu64, &f) != 1)
+				fatal("1 %s", err);
+			if (fscanf(file, "%la %la", &xp[f], &gp[f]) != 2)
+				fatal("2 %s", err);
+			for (uint32_t m = 0; m < M; m++) {
+				if (fscanf(file, "%la", &s[m][f]) != 1)
+					fatal("3 %s", err);
+				if (fscanf(file, "%la", &y[m][f]) != 1)
+					fatal("4 %s", err);
+			}
+		}
+		for (uint32_t m = 0; m < M; m++)
+			p[m] = 1.0 / xvm_dot(y[m], s[m], F);
+		fclose(file);
+	}
 	// Minimization: This is the heart of the function. (a big heart...) We
 	// will perform iterations until one these conditions is reached
 	//   - the maximum iteration count is reached
 	//   - we have converged (upto numerical precision)
 	//   - the report function return false
 	//   - an error happen somewhere
-	double fx = grd_gradient(mdl, g, grds);
-	for (int k = 0; !uit_stop && k < K; k++) {
+	double fx = grd_gradient(grd);
+	for (uint32_t k = 0; !uit_stop && k < K; k++) {
 		// We first compute the pseudo-gradient of f for owl-qn. It is
 		// defined in [3, pp 335(4)]
 		//              | ∂_i^- f(x)   if ∂_i^- f(x) > 0
@@ -106,7 +135,7 @@ void trn_lbfgs(mdl_t *mdl) {
 		//                              | ±C      if x_i = 0
 		if (l1) {
 			const double rho1 = mdl->opt->rho1;
-			for (unsigned f = 0; f < F; f++) {
+			for (uint64_t f = 0; f < F; f++) {
 				if (x[f] < 0.0)
 					pg[f] = g[f] - rho1;
 				else if (x[f] > 0.0)
@@ -130,13 +159,13 @@ void trn_lbfgs(mdl_t *mdl) {
 		// gradient instead of the true one.
 		xvm_neg(d, l1 ? pg : g, F);
 		if (k != 0) {
-			const int km = k % M;
-			const int bnd = (k <= M) ? k : M;
+			const uint32_t km = k % M;
+			const uint32_t bnd = (k <= M) ? k : M;
 			double alpha[M], beta;
 			// α_i = ρ_j s_j^T q_{i+1}
 			// q_i = q_{i+1} - α_i y_i
-			for (int i = bnd; i > 0; i--) {
-				const int j = (k - i + M + 1) % M;
+			for (uint32_t i = bnd; i > 0; i--) {
+				const uint32_t j = (M + 1 + k - i) % M;
 				alpha[i - 1] = p[j] * xvm_dot(s[j], d, F);
 				xvm_axpy(d, -alpha[i - 1], y[j], d, F);
 			}
@@ -147,12 +176,12 @@ void trn_lbfgs(mdl_t *mdl) {
 			//                    = I * 1 / ρ_k ||y_k||²
 			const double y2 = xvm_dot(y[km], y[km], F);
 			const double v = 1.0 / (p[km] * y2);
-			for (size_t f = 0; f < F; f++)
+			for (uint64_t f = 0; f < F; f++)
 				d[f] *= v;
 			// β_j     = ρ_j y_j^T r_i
 			// r_{i+1} = r_i + s_j (α_i - β_i)
-			for (int i = 0; i < bnd; i++) {
-				const int j = (k - i + M) % M;
+			for (uint32_t i = 0; i < bnd; i++) {
+				const uint32_t j = (M + k - i) % M;
 				beta = p[j] * xvm_dot(y[j], d, F);
 				xvm_axpy(d, alpha[i] - beta, s[j], d, F);
 			}
@@ -163,7 +192,7 @@ void trn_lbfgs(mdl_t *mdl) {
 		//   d^k = π(d^k ; v^k)
 		//       = π(d^k ; -◇f(x^k))
 		if (l1)
-			for (size_t f = 0; f < F; f++)
+			for (uint64_t f = 0; f < F; f++)
 				if (d[f] * pg[f] >= 0.0)
 					d[f] = 0.0;
 		// 2nd step: we perform a linesearch in the computed direction,
@@ -184,7 +213,7 @@ void trn_lbfgs(mdl_t *mdl) {
 		double gd  = l1 ? 0.0 : xvm_dot(g, d, F); // gd = g_k^T d_k
 		double fi  = fx;
 		bool err = false;
-		for (int ls = 1; !uit_stop; ls++, stp *= sc) {
+		for (uint32_t ls = 1; !uit_stop; ls++, stp *= sc) {
 			// We compute the new point using the current step and
 			// search direction
 			xvm_axpy(x, stp, d, xp, F);
@@ -192,7 +221,7 @@ void trn_lbfgs(mdl_t *mdl) {
 			// current orthant [3, pp 35]
 			//   x^{k+1} = π(x^k + αp^k ; ξ)
 			if (l1) {
-				for (size_t f = 0; f < F; f++) {
+				for (uint64_t f = 0; f < F; f++) {
 					double or = xp[f];
 					if (or == 0.0)
 						or = -pg[f];
@@ -202,7 +231,7 @@ void trn_lbfgs(mdl_t *mdl) {
 			}
 			// And we ask for the value of the objective function
 			// and its gradient.
-			fx = grd_gradient(mdl, g, grds);
+			fx = grd_gradient(grd);
 			// Now we check if the step satisfy the conditions. For
 			// l-bfgs, we check the classical decrease and curvature
 			// known as the Wolfe conditions [2, pp 506]
@@ -221,7 +250,7 @@ void trn_lbfgs(mdl_t *mdl) {
 					break;
 			} else {
 				double vp = 0.0;
-				for (size_t f = 0; f < F; f++)
+				for (uint64_t f = 0; f < F; f++)
 					vp += (x[f] - xp[f]) * d[f];
 				if (fx < fi + vp * 1e-4)
 					break;
@@ -249,7 +278,7 @@ void trn_lbfgs(mdl_t *mdl) {
 		//   s_k = x_{k+1} - x_k
 		//   y_k = g_{k+1} - g_k
 		//   ρ_k = 1 / y_k^T s_k
-		const int kn = (k + 1) % M;
+		const uint32_t kn = (k + 1) % M;
 		xvm_sub(s[kn], x, xp, F);
 		xvm_sub(y[kn], g, gp, F);
 		p[kn] = 1.0 / xvm_dot(y[kn], s[kn], F);
@@ -277,18 +306,30 @@ void trn_lbfgs(mdl_t *mdl) {
 				break;
 		}
 	}
+	// Save the optimizer state if requested by the user
+	if (mdl->opt->sstate != NULL) {
+		FILE *file = fopen(mdl->opt->sstate, "w");
+		if (file == NULL)
+			fatal("failed to open output state file");
+		fprintf(file, "#state#0#%"PRIu32"#%"PRIu64"\n", M, F);
+		for (uint64_t f = 0; f < F; f++) {
+			fprintf(file, "%"PRIu64, f);
+			fprintf(file, " %la %la", xp[f], gp[f]);
+			for (uint32_t m = 0; m < M; m++)
+				fprintf(file, " %la %la", s[m][f], y[m][f]);
+			fprintf(file, "\n");
+		}
+		fclose(file);
+	}
 	// Cleanup: We free all the vectors we have allocated.
 	xvm_free(xp); xvm_free(g);
 	xvm_free(gp); xvm_free(d);
-	for (int m = 0; m < M; m++) {
+	for (uint32_t m = 0; m < M; m++) {
 		xvm_free(s[m]);
 		xvm_free(y[m]);
 	}
 	if (l1)
 		xvm_free(pg);
-	for (size_t w = 1; w < W; w++)
-		xvm_free(grds[w]->g);
-	for (size_t w = 0; w < W; w++)
-		grd_free(grds[w]);
+	grd_free(grd);
 }
 

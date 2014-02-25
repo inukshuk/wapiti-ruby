@@ -1,7 +1,7 @@
 /*
  *      Wapiti - A linear-chain CRF tool
  *
- * Copyright (c) 2009-2011  CNRS
+ * Copyright (c) 2009-2013  CNRS
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,9 +25,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -54,13 +56,16 @@ static void opt_help(const char *pname) {
 		"\t-h | --help      display this help message\n"
 		"\t   | --version   display version information\n"
 		"\n"
-		"Training mode:\n"
+		"Train mode:\n"
 		"    %1$s train [options] [input data] [model file]\n"
 		"\t   | --me               force maxent mode\n"
+		"\t-T | --type     STRING  type of model to train\n"
 		"\t-a | --algo     STRING  training algorithm to use\n"
 		"\t-p | --pattern  FILE    patterns for extracting features\n"
 		"\t-m | --model    FILE    model file to preload\n"
 		"\t-d | --devel    FILE    development dataset\n"
+		"\t   | --rstate   FILE    optimizer state to restore\n"
+		"\t   | --sstate   FILE    optimizer state to save\n"
 		"\t-c | --compact          compact model after training\n"
 		"\t-t | --nthread  INT     number of worker threads\n"
 		"\t-j | --jobsize  INT     job size for worker threads\n"
@@ -83,7 +88,7 @@ static void opt_help(const char *pname) {
 		"\t   | --stpdec   FLOAT   (rprop)  step decrement factor\n"
 		"\t   | --cutoff           (rprop)  alternate projection\n"
 		"\n"
-		"Labelling mode:\n"
+		"Label mode:\n"
 		"    %1$s label [options] [input data] [output data]\n"
 		"\t   | --me               force maxent mode\n"
 		"\t-m | --model    FILE    model file to load\n"
@@ -92,9 +97,18 @@ static void opt_help(const char *pname) {
 		"\t-s | --score            add scores to output\n"
 		"\t-p | --post             label using posteriors\n"
 		"\t-n | --nbest    INT     output n-best list\n"
+		"\t   | --force            use forced decoding\n"
 		"\n"
-		"Dumping mode\n"
-		"    %1$s dump [input model] [output text]\n";
+		"Dump mode\n"
+		"    %1$s dump [options] [input model] [output text]\n"
+		"\t-p | --prec     INT     set weights precision\n"
+		"\t   | --all              also output 0 weights\n"
+		"\n"
+		"Update mode\n"
+		"    %1$s update [options] [patch file] [output model]\n"
+		"\t-m | --model    FILE    model file to load\n"
+		"\t-c | --compact          compact model after training\n"
+	;
 	fprintf(stderr, msg, pname);
 }
 
@@ -104,8 +118,10 @@ static void opt_help(const char *pname) {
 const opt_t opt_defaults = {
 	.mode    = -1,
 	.input   = NULL,     .output  = NULL,
+	.type    = "crf",
 	.maxent  = false,
 	.algo    = "l-bfgs", .pattern = NULL,  .model   = NULL, .devel   = NULL,
+	.rstate  = NULL,     .sstate  = NULL,
 	.compact = false,    .sparse  = false,
 	.nthread = 1,        .jobsize = 64,    .maxiter = 0,
 	.rho1    = 0.5,      .rho2    = 0.0001,
@@ -116,7 +132,8 @@ const opt_t opt_defaults = {
 	.rprop = {.stpmin = 1e-8, .stpmax = 50.0, .stpinc = 1.2, .stpdec = 0.5,
 	          .cutoff = false},
 	.label   = false,    .check   = false, .outsc = false,
-	.lblpost = false,    .nbest = 1
+	.lblpost = false,    .nbest   = 1,     .force = false,
+	.prec    = 5,        .all     = false,
 };
 
 /* opt_switch:
@@ -130,24 +147,27 @@ struct {
 	char    kind;
 	size_t  offset;
 } opt_switch[] = {
+	{0, "-T", "--type",    'S', offsetof(opt_t, type        )},
 	{0, "##", "--me",      'B', offsetof(opt_t, maxent      )},
 	{0, "-a", "--algo",    'S', offsetof(opt_t, algo        )},
 	{0, "-p", "--pattern", 'S', offsetof(opt_t, pattern     )},
 	{0, "-m", "--model",   'S', offsetof(opt_t, model       )},
 	{0, "-d", "--devel",   'S', offsetof(opt_t, devel       )},
+	{0, "##", "--rstate",  'S', offsetof(opt_t, rstate      )},
+	{0, "##", "--sstate",  'S', offsetof(opt_t, sstate      )},
 	{0, "-c", "--compact", 'B', offsetof(opt_t, compact     )},
 	{0, "-s", "--sparse",  'B', offsetof(opt_t, sparse      )},
-	{0, "-t", "--nthread", 'I', offsetof(opt_t, nthread     )},
-	{0, "-j", "--josize",  'I', offsetof(opt_t, jobsize     )},
-	{0, "-i", "--maxiter", 'I', offsetof(opt_t, maxiter     )},
+	{0, "-t", "--nthread", 'U', offsetof(opt_t, nthread     )},
+	{0, "-j", "--jobsize", 'U', offsetof(opt_t, jobsize     )},
+	{0, "-i", "--maxiter", 'U', offsetof(opt_t, maxiter     )},
 	{0, "-1", "--rho1",    'F', offsetof(opt_t, rho1        )},
 	{0, "-2", "--rho2",    'F', offsetof(opt_t, rho2        )},
-	{0, "-o", "--objsz",   'I', offsetof(opt_t, objwin      )},
-	{0, "-w", "--stopwin", 'I', offsetof(opt_t, stopwin     )},
+	{0, "-o", "--objwin",  'U', offsetof(opt_t, objwin      )},
+	{0, "-w", "--stopwin", 'U', offsetof(opt_t, stopwin     )},
 	{0, "-e", "--stopeps", 'F', offsetof(opt_t, stopeps     )},
 	{0, "##", "--clip",    'B', offsetof(opt_t, lbfgs.clip  )},
-	{0, "##", "--histsz",  'I', offsetof(opt_t, lbfgs.histsz)},
-	{0, "##", "--maxls",   'I', offsetof(opt_t, lbfgs.maxls )},
+	{0, "##", "--histsz",  'U', offsetof(opt_t, lbfgs.histsz)},
+	{0, "##", "--maxls",   'U', offsetof(opt_t, lbfgs.maxls )},
 	{0, "##", "--eta0",    'F', offsetof(opt_t, sgdl1.eta0  )},
 	{0," ##", "--alpha",   'F', offsetof(opt_t, sgdl1.alpha )},
 	{0, "##", "--kappa",   'F', offsetof(opt_t, bcd.kappa   )},
@@ -162,7 +182,12 @@ struct {
 	{1, "-c", "--check",   'B', offsetof(opt_t, check       )},
 	{1, "-s", "--score",   'B', offsetof(opt_t, outsc       )},
 	{1, "-p", "--post",    'B', offsetof(opt_t, lblpost     )},
-	{1, "-n", "--nbest",   'I', offsetof(opt_t, nbest       )},
+	{1, "-n", "--nbest",   'U', offsetof(opt_t, nbest       )},
+	{1, "##", "--force",   'B', offsetof(opt_t, force       )},
+	{2, "-p", "--prec",    'U', offsetof(opt_t, prec        )},
+	{2, "##", "--all",     'B', offsetof(opt_t, all         )},
+	{3, "-m", "--model",   'S', offsetof(opt_t, model       )},
+	{3, "-c", "--compact", 'B', offsetof(opt_t, compact     )},
 	{-1, NULL, NULL, '\0', 0}
 };
 
@@ -195,6 +220,8 @@ void opt_parse(int argc, char *argv[argc], opt_t *opt) {
 		opt->mode = 1;
 	} else if (!strcmp(argv[0], "d") || !strcmp(argv[0], "dump")) {
 		opt->mode = 2;
+	} else if (!strcmp(argv[0], "u") || !strcmp(argv[0], "update")) {
+		opt->mode = 3;
 	} else {
 		fatal("unknown mode <%s>", argv[0]);
 	}
@@ -204,7 +231,7 @@ void opt_parse(int argc, char *argv[argc], opt_t *opt) {
 	opt->output = NULL;
 	while (argc > 0) {
 		const char *arg = argv[0];
-		int idx;
+		uint32_t idx;
 		// Check if this argument is a filename or an option
 		if (arg[0] != '-') {
 			if (opt->input == NULL)
@@ -237,8 +264,9 @@ void opt_parse(int argc, char *argv[argc], opt_t *opt) {
 				*((char **)ptr) = argv[1];
 				argc -= 2, argv += 2;
 				break;
-			case 'I':
-				if (sscanf(argv[1], "%d", (int *)ptr) != 1)
+			case 'U':
+				if (sscanf(argv[1], "%"SCNu32,
+						(uint32_t *)ptr) != 1)
 					fatal(err_badval, arg);
 				argc -= 2, argv += 2;
 				break;
@@ -272,7 +300,11 @@ void opt_parse(int argc, char *argv[argc], opt_t *opt) {
 	argchecksub("--alpha",   opt->sgdl1.alpha  >  0.0);
 	argchecksub("--nbest",   opt->nbest        >  0  );
 	#undef argchecksub
-	if (opt->maxent && !strcmp(opt->algo, "bcd"))
+	if ((opt->maxent || !strcmp(opt->type, "maxent")) && !strcmp(opt->algo, "bcd"))
 		fatal("BCD not supported for training maxent models");
+	if (!strcmp(opt->type, "memm") && !strcmp(opt->algo, "bcd"))
+		fatal("BCD not supported for training MEMM models");
+	if (opt->check && opt->force)
+		fatal("--check and --force cannot be used together");
 }
 

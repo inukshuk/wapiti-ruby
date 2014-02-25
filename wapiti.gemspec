@@ -22,20 +22,20 @@ Gem::Specification.new do |s|
   s.license     = 'FreeBSD'
   s.date        = Time.now.strftime('%Y-%m-%d')
 
-  s.add_development_dependency('rake', '~>0.9')
+  s.add_development_dependency('rake', '~>10.0')
   s.add_development_dependency('rake-compiler', '~>0.7')
-  s.add_development_dependency('rspec', '~>2.6')  
+  s.add_development_dependency('rspec', '~>2.6')
 
   s.files        = `git ls-files`.split("\n")
   s.test_files   = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables  = []
   s.require_path = 'lib'
-  
+
   s.extensions << 'ext/wapiti/extconf.rb'
 
   s.rdoc_options      = %w{--line-numbers --inline-source --title "Wapiti-Ruby" --main README.md --webcvs=http://github.com/inukshuk/wapiti-ruby/tree/master/}
   s.extra_rdoc_files  = %w{README.md LICENSE}
-  
+
 end
 
 # vim: syntax=ruby

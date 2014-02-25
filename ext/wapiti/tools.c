@@ -123,7 +123,7 @@ void info(const char *msg, ...) {
 	va_end(args);
 }
 
-/* wapiti_xmalloc:
+/*  wapiti_xmalloc:
  *   A simple wrapper around malloc who violently fail if memory cannot be
  *   allocated, so it will never return NULL.
  */
@@ -134,8 +134,8 @@ void *wapiti_xmalloc(size_t size) {
 	return ptr;
 }
 
-/* wapiti_xrealloc:
- *   As wapiti_xmalloc, this is a simple wrapper around realloc who fail on memory
+/*  wapiti_xrealloc:
+ *   As  wapiti_xmalloc, this is a simple wrapper around realloc who fail on memory
  *   error and so never return NULL.
  */
 void *wapiti_xrealloc(void *ptr, size_t size) {
@@ -151,7 +151,7 @@ void *wapiti_xrealloc(void *ptr, size_t size) {
  */
 char *xstrdup(const char *str) {
 	const int len = strlen(str) + 1;
-	char *res = wapiti_xmalloc(sizeof(char) * len);
+	char *res =  wapiti_xmalloc(sizeof(char) * len);
 	memcpy(res, str, len);
 	return res;
 }
@@ -175,7 +175,7 @@ char *ns_readstr(FILE *file) {
 	int len;
 	if (fscanf(file, "%d:", &len) != 1)
 		pfatal("cannot read from file");
-	char *buf = wapiti_xmalloc(len + 1);
+	char *buf =  wapiti_xmalloc(len + 1);
 	if (fread(buf, len, 1, file) != 1)
 		pfatal("cannot read from file");
 	if (fgetc(file) != ',')

@@ -1,7 +1,7 @@
 /*
  *      Wapiti - A linear-chain CRF tool
  *
- * Copyright (c) 2009-2011  CNRS
+ * Copyright (c) 2009-2013  CNRS
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -51,8 +52,8 @@
  *       the AFNLP, pages 477-485, August 2009
  ******************************************************************************/
 typedef struct sgd_idx_s {
-	size_t *uobs;
-	size_t *bobs;
+	uint64_t *uobs;
+	uint64_t *bobs;
 } sgd_idx_t;
 
 /* applypenalty:
@@ -75,11 +76,11 @@ typedef struct sgd_idx_s {
  *   Add the <new> value in the array <obs> of size <cnt>. If the value is
  *   already present, we do nothing, else we add it.
  */
-static void sgd_add(size_t *obs, size_t *cnt, size_t new) {
+static void sgd_add(uint64_t *obs, uint32_t *cnt, uint64_t new) {
 	// First check if value is already in the array, we do a linear probing
 	// as it is simpler and since these array will be very short in
 	// practice, it's efficient enough.
-	for (size_t p = 0; p < *cnt; p++)
+	for (uint32_t p = 0; p < *cnt; p++)
 		if (obs[p] == new)
 			return;
 	// Insert the new value at the end since we have not found it.
@@ -91,13 +92,13 @@ static void sgd_add(size_t *obs, size_t *cnt, size_t new) {
  *   Train the model with the SGD-l1 algorithm described by tsurukoa et al.
  */
 void trn_sgdl1(mdl_t *mdl) {
-	const size_t  Y = mdl->nlbl;
-	const size_t  F = mdl->nftr;
-	const int     U = mdl->reader->nuni;
-	const int     B = mdl->reader->nbi;
-	const int     S = mdl->train->nseq;
-	const int     K = mdl->opt->maxiter;
-	      double *w = mdl->theta;
+	const uint64_t  Y = mdl->nlbl;
+	const uint64_t  F = mdl->nftr;
+	const uint32_t  U = mdl->reader->nuni;
+	const uint32_t  B = mdl->reader->nbi;
+	const uint32_t  S = mdl->train->nseq;
+	const uint32_t  K = mdl->opt->maxiter;
+	      double   *w = mdl->theta;
 	// First we have to build and index who hold, for each sequences, the
 	// list of actives observations.
 	// The index is a simple table indexed by sequences number. Each entry
@@ -105,24 +106,25 @@ void trn_sgdl1(mdl_t *mdl) {
 	// unigrams obss and one for bigrams obss.
 	info("    - Build the index\n");
 	sgd_idx_t *idx  = wapiti_xmalloc(sizeof(sgd_idx_t) * S);
-	for (int s = 0; s < S; s++) {
+	for (uint32_t s = 0; s < S; s++) {
 		const seq_t *seq = mdl->train->seq[s];
-		const int T = seq->len;
-		size_t uobs[U * T + 1], ucnt = 0;
-		size_t bobs[B * T + 1], bcnt = 0;
-		for (int t = 0; t < seq->len; t++) {
+		const uint32_t T = seq->len;
+		uint64_t uobs[U * T + 1];
+		uint64_t bobs[B * T + 1];
+		uint32_t ucnt = 0, bcnt = 0;
+		for (uint32_t t = 0; t < seq->len; t++) {
 			const pos_t *pos = &seq->pos[t];
-			for (size_t p = 0; p < pos->ucnt; p++)
+			for (uint32_t p = 0; p < pos->ucnt; p++)
 				sgd_add(uobs, &ucnt, pos->uobs[p]);
-			for (size_t p = 0; p < pos->bcnt; p++)
+			for (uint32_t p = 0; p < pos->bcnt; p++)
 				sgd_add(bobs, &bcnt, pos->bobs[p]);
 		}
 		uobs[ucnt++] = none;
 		bobs[bcnt++] = none;
-		idx[s].uobs = wapiti_xmalloc(sizeof(size_t) * ucnt);
-		idx[s].bobs = wapiti_xmalloc(sizeof(size_t) * bcnt);
-		memcpy(idx[s].uobs, uobs, ucnt * sizeof(size_t));
-		memcpy(idx[s].bobs, bobs, bcnt * sizeof(size_t));
+		idx[s].uobs = wapiti_xmalloc(sizeof(uint64_t) * ucnt);
+		idx[s].bobs = wapiti_xmalloc(sizeof(uint64_t) * bcnt);
+		memcpy(idx[s].uobs, uobs, ucnt * sizeof(uint64_t));
+		memcpy(idx[s].bobs, bobs, bcnt * sizeof(uint64_t));
 	}
 	info("      Done\n");
 	// We will process sequences in random order in each iteration, so we
@@ -137,34 +139,34 @@ void trn_sgdl1(mdl_t *mdl) {
 	// time.
 	// We also need an aditional vector named <q> who hold the penalty
 	// already applied to each features.
-	int *perm = wapiti_xmalloc(sizeof(int) * S);
-	for (int s = 0; s < S; s++)
+	uint32_t *perm = wapiti_xmalloc(sizeof(uint32_t) * S);
+	for (uint32_t s = 0; s < S; s++)
 		perm[s] = s;
 	double *g = wapiti_xmalloc(sizeof(double) * F);
 	double *q = wapiti_xmalloc(sizeof(double) * F);
-	for (size_t f = 0; f < F; f++)
+	for (uint64_t f = 0; f < F; f++)
 		g[f] = q[f] = 0.0;
 	// We can now start training the model, we perform the requested number
 	// of iteration, each of these going through all the sequences. For
 	// computing the decay, we will need to keep track of the number of
 	// already processed sequences, this is tracked by the <i> variable.
 	double u = 0.0;
-	grd_t *grd = grd_new(mdl, g);
-	for (int k = 0, i = 0; k < K && !uit_stop; k++) {
+	grd_st_t *grd_st = grd_stnew(mdl, g);
+	for (uint32_t k = 0, i = 0; k < K && !uit_stop; k++) {
 		// First we shuffle the sequence by making a lot of random swap
 		// of entry in the permutation index.
-		for (int s = 0; s < S; s++) {
-			const int a = rand() % S;
-			const int b = rand() % S;
-			const int t = perm[a];
+		for (uint32_t s = 0; s < S; s++) {
+			const uint32_t a = rand() % S;
+			const uint32_t b = rand() % S;
+			const uint32_t t = perm[a];
 			perm[a] = perm[b];
 			perm[b] = t;
 		}
 		// And so, we can process sequence in a random order
-		for (int sp = 0; sp < S && !uit_stop; sp++, i++) {
-			const int s = perm[sp];
+		for (uint32_t sp = 0; sp < S && !uit_stop; sp++, i++) {
+			const uint32_t s = perm[sp];
 			const seq_t *seq = mdl->train->seq[s];
-			grd_dospl(grd, seq);
+			grd_dospl(grd_st, seq);
 			// Before applying the gradient, we have to compute the
 			// learning rate to apply to this sequence. For this we
 			// use an exponential decay [1, pp 481(5)]
@@ -180,17 +182,17 @@ void trn_sgdl1(mdl_t *mdl) {
 			// observations actives in the current sequence. We must
 			// not forget to clear the gradient for the next
 			// sequence.
-			for (size_t n = 0; idx[s].uobs[n] != none; n++) {
-				size_t f = mdl->uoff[idx[s].uobs[n]];
-				for (size_t y = 0; y < Y; y++, f++) {
+			for (uint32_t n = 0; idx[s].uobs[n] != none; n++) {
+				uint64_t f = mdl->uoff[idx[s].uobs[n]];
+				for (uint32_t y = 0; y < Y; y++, f++) {
 					w[f] -= nk * g[f];
 					applypenalty(f);
 					g[f] = 0.0;
 				}
 			}
-			for (size_t n = 0; idx[s].bobs[n] != none; n++) {
-				size_t f = mdl->boff[idx[s].bobs[n]];
-				for (size_t d = 0; d < Y * Y; d++, f++) {
+			for (uint32_t n = 0; idx[s].bobs[n] != none; n++) {
+				uint64_t f = mdl->boff[idx[s].bobs[n]];
+				for (uint32_t d = 0; d < Y * Y; d++, f++) {
 					w[f] -= nk * g[f];
 					applypenalty(f);
 					g[f] = 0.0;
@@ -203,9 +205,9 @@ void trn_sgdl1(mdl_t *mdl) {
 		if (!uit_progress(mdl, k + 1, -1.0))
 			break;
 	}
-	grd_free(grd);
+	grd_stfree(grd_st);
 	// Cleanup allocated memory before returning
-	for (int s = 0; s < S; s++) {
+	for (uint32_t s = 0; s < S; s++) {
 		free(idx[s].uobs);
 		free(idx[s].bobs);
 	}

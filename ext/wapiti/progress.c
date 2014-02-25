@@ -1,7 +1,7 @@
 /*
  *      Wapiti - A linear-chain CRF tool
  *
- * Copyright (c) 2009-2011  CNRS
+ * Copyright (c) 2009-2013  CNRS
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,14 +24,16 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <inttypes.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include <unistd.h>
-#include <sys/times.h>
+#include <sys/time.h>
 #include <sys/resource.h>
 
 #include "wapiti.h"
@@ -89,7 +91,7 @@ void uit_setup(mdl_t *mdl) {
 	uit_stop = false;
 	if (signal(SIGINT, uit_signal) == SIG_ERR)
 		warning("failed to set signal handler, no clean early stop");
-	times(&mdl->timer);
+	gettimeofday(&mdl->timer, NULL);
 	if (mdl->opt->stopwin != 0)
 		mdl->werr = wapiti_xmalloc(sizeof(double) * mdl->opt->stopwin);
 	mdl->wcnt = mdl->wpos = 0;
@@ -116,28 +118,27 @@ void uit_cleanup(mdl_t *mdl) {
  *   and false if he must stop, so this is were we will implement the trainer
  *   independant stoping criterion.
  */
-bool uit_progress(mdl_t *mdl, int it, double obj) {
+bool uit_progress(mdl_t *mdl, uint32_t it, double obj) {
 	// First we just compute the error rate on devel or train data
 	double te, se;
 	tag_eval(mdl, &te, &se);
 	// Next, we compute the number of active features
-	size_t act = 0;
-	for (size_t f = 0; f < mdl->nftr; f++)
+	uint64_t act = 0;
+	for (uint64_t f = 0; f < mdl->nftr; f++)
 		if (mdl->theta[f] != 0.0)
 			act++;
 	// Compute timings. As some training algorithms are multi-threaded, we
 	// cannot use ansi/c function and must rely on posix one to sum time
 	// spent in main thread and in child ones.
-	tms_t now; times(&now);
-	double tm = (now.tms_utime  - mdl->timer.tms_utime )
-	          + (now.tms_cutime - mdl->timer.tms_cutime);
-	tm /= sysconf(_SC_CLK_TCK);
+	tms_t now; gettimeofday(&now, NULL);
+	double tm = (now.tv_sec        + (double)now.tv_usec        * 1.0e-6)
+	          - (mdl->timer.tv_sec + (double)mdl->timer.tv_usec * 1.0e-6);
 	mdl->total += tm;
 	mdl->timer  = now;
 	// And display progress report
-	info("  [%4d]", it);
+	info("  [%4"PRIu32"]", it);
 	info(obj >= 0.0 ? " obj=%-10.2f" : " obj=NA", obj);
-	info(" act=%-8zu", act);
+	info(" act=%-8"PRIu64, act);
 	info(" err=%5.2f%%/%5.2f%%", te, se);
 	info(" time=%.2fs/%.2fs", tm, mdl->total);
 	info("\n");
@@ -150,7 +151,7 @@ bool uit_progress(mdl_t *mdl, int it, double obj) {
 		mdl->wcnt++;
 		if (mdl->wcnt >= mdl->opt->stopwin) {
 			double emin = 200.0, emax = -100.0;
-			for (int i = 0; i < mdl->opt->stopwin; i++) {
+			for (uint32_t i = 0; i < mdl->opt->stopwin; i++) {
 				emin = min(emin, mdl->werr[i]);
 				emax = max(emax, mdl->werr[i]);
 			}

@@ -1,7 +1,7 @@
 /*
  *      Wapiti - A linear-chain CRF tool
  *
- * Copyright (c) 2009-2011  CNRS
+ * Copyright (c) 2009-2013  CNRS
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,8 +24,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <ctype.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -44,13 +47,12 @@
 /*******************************************************************************
  * Training
  ******************************************************************************/
-static void trn_auto(mdl_t *mdl) {
-	const int maxiter = mdl->opt->maxiter;
-	mdl->opt->maxiter = 3;
-	trn_sgdl1(mdl);
-	mdl->opt->maxiter = maxiter;
-	trn_lbfgs(mdl);
-}
+static const char *typ_lst[] = {
+	"maxent",
+	"memm",
+	"crf"
+};
+static const uint32_t typ_cnt = sizeof(typ_lst) / sizeof(typ_lst[0]);
 
 static const struct {
 	char *name;
@@ -62,20 +64,31 @@ static const struct {
 	{"rprop",  trn_rprop},
 	{"rprop+", trn_rprop},
 	{"rprop-", trn_rprop},
-	{"auto",   trn_auto }
 };
-static const int trn_cnt = sizeof(trn_lst) / sizeof(trn_lst[0]);
+static const uint32_t trn_cnt = sizeof(trn_lst) / sizeof(trn_lst[0]);
 
-void dotrain(mdl_t *mdl) {
-	// Check if the user requested the trainer list. If this is not the
-	// case, search the trainer.
+static void dotrain(mdl_t *mdl) {
+	// Check if the user requested the type or trainer list. If this is not
+	// the case, search them in the lists.
+	if (!strcmp(mdl->opt->type, "list")) {
+		info("Available types of models:\n");
+		for (uint32_t i = 0; i < typ_cnt; i++)
+			info("\t%s\n", typ_lst[i]);
+		exit(EXIT_SUCCESS);
+	}
 	if (!strcmp(mdl->opt->algo, "list")) {
 		info("Available training algorithms:\n");
-		for (int i = 0; i < trn_cnt; i++)
+		for (uint32_t i = 0; i < trn_cnt; i++)
 			info("\t%s\n", trn_lst[i].name);
 		exit(EXIT_SUCCESS);
 	}
-	int trn;
+	uint32_t typ, trn;
+	for (typ = 0; typ < typ_cnt; typ++)
+		if (!strcmp(mdl->opt->type, typ_lst[typ]))
+			break;
+	if (typ == typ_cnt)
+		fatal("unknown model type '%s'", mdl->opt->type);
+	mdl->type = typ;
 	for (trn = 0; trn < trn_cnt; trn++)
 		if (!strcmp(mdl->opt->algo, trn_lst[trn].name))
 			break;
@@ -136,12 +149,12 @@ void dotrain(mdl_t *mdl) {
 	mdl_sync(mdl);
 	// Display some statistics as we all love this.
 	info("* Summary\n");
-	info("    nb train:    %d\n", mdl->train->nseq);
+	info("    nb train:    %"PRIu32"\n", mdl->train->nseq);
 	if (mdl->devel != NULL)
-		info("    nb devel:    %d\n", mdl->devel->nseq);
-	info("    nb labels:   %zu\n", mdl->nlbl);
-	info("    nb blocks:   %zu\n", mdl->nobs);
-	info("    nb features: %zu\n", mdl->nftr);
+		info("    nb devel:    %"PRIu32"\n", mdl->devel->nseq);
+	info("    nb labels:   %"PRIu32"\n", mdl->nlbl);
+	info("    nb blocks:   %"PRIu64"\n", mdl->nobs);
+	info("    nb features: %"PRIu64"\n", mdl->nftr);
 	// And train the model...
 	info("* Train the model with %s\n", mdl->opt->algo);
 	uit_setup(mdl);
@@ -149,12 +162,12 @@ void dotrain(mdl_t *mdl) {
 	uit_cleanup(mdl);
 	// If requested compact the model.
 	if (mdl->opt->compact) {
-		const size_t O = mdl->nobs;
-		const size_t F = mdl->nftr;
+		const uint64_t O = mdl->nobs;
+		const uint64_t F = mdl->nftr;
 		info("* Compacting the model\n");
 		mdl_compact(mdl);
-		info("    %8zu observations removed\n", O - mdl->nobs);
-		info("    %8zu features removed\n", F - mdl->nftr);
+		info("    %8"PRIu64" observations removed\n", O - mdl->nobs);
+		info("    %8"PRIu64" features removed\n", F - mdl->nftr);
 	}
 	// And save the trained model
 	info("* Save the model\n");
@@ -173,7 +186,7 @@ void dotrain(mdl_t *mdl) {
 /*******************************************************************************
  * Labeling
  ******************************************************************************/
-void dolabel(mdl_t *mdl) {
+static void dolabel(mdl_t *mdl) {
 	// First, load the model provided by the user. This is mandatory to
 	// label new datas ;-)
 	if (mdl->opt->model == NULL)
@@ -209,7 +222,7 @@ void dolabel(mdl_t *mdl) {
 /*******************************************************************************
  * Dumping
  ******************************************************************************/
-void dodump(mdl_t *mdl) {
+static void dodump(mdl_t *mdl) {
 	// Load input model file
 	info("* Load model\n");
 	FILE *fin = stdin;
@@ -230,32 +243,35 @@ void dodump(mdl_t *mdl) {
 	}
 	// Dump model
 	info("* Dump model\n");
-	const size_t Y = mdl->nlbl;
-	const size_t O = mdl->nobs;
+	const uint32_t Y = mdl->nlbl;
+	const uint64_t O = mdl->nobs;
 	const qrk_t *Qlbl = mdl->reader->lbl;
 	const qrk_t *Qobs = mdl->reader->obs;
-	for (size_t o = 0; o < O; o++) {
+	char fmt[16];
+	sprintf(fmt, "%%.%df\n", mdl->opt->prec);
+	for (uint64_t o = 0; o < O; o++) {
 		const char *obs = qrk_id2str(Qobs, o);
 		bool empty = true;
 		if (mdl->kind[o] & 1) {
 			const double *w = mdl->theta + mdl->uoff[o];
-			for (size_t y = 0; y < Y; y++) {
-				if (w[y] == 0.0)
+			for (uint32_t y = 0; y < Y; y++) {
+				if (!mdl->opt->all && w[y] == 0.0)
 					continue;
 				const char *ly = qrk_id2str(Qlbl, y);
-				fprintf(fout, "%s\t#\t%s\t%f\n", obs, ly, w[y]);
+				fprintf(fout, "%s\t#\t%s\t", obs, ly);
+				fprintf(fout, fmt, w[y]);
 				empty = false;
 			}
 		}
 		if (mdl->kind[o] & 2) {
 			const double *w = mdl->theta + mdl->boff[o];
-			for (size_t d = 0; d < Y * Y; d++) {
-				if (w[d] == 0.0)
+			for (uint32_t d = 0; d < Y * Y; d++) {
+				if (!mdl->opt->all && w[d] == 0.0)
 					continue;
 				const char *ly  = qrk_id2str(Qlbl, d % Y);
 				const char *lyp = qrk_id2str(Qlbl, d / Y);
-				fprintf(fout, "%s\t%s\t%s\t%f\n", obs, lyp, ly,
-				       w[d]);
+				fprintf(fout, "%s\t%s\t%s\t", obs, lyp, ly);
+				fprintf(fout, fmt, w[d]);
 				empty = false;
 			}
 		}
@@ -266,10 +282,114 @@ void dodump(mdl_t *mdl) {
 		fclose(fout);
 }
 
+
+/*******************************************************************************
+ * Updating
+ ******************************************************************************/
+static void doupdt(mdl_t *mdl) {
+	// Load input model file
+	info("* Load model\n");
+	if (mdl->opt->model == NULL)
+		fatal("no model file provided");
+	FILE *Min = fopen(mdl->opt->model, "r");
+	if (Min == NULL)
+		pfatal("cannot open model file %s", mdl->opt->model);
+	mdl_load(mdl, Min);
+	fclose(Min);
+	// Open patch file
+	info("* Update model\n");
+	FILE *fin = stdin;
+	if (mdl->opt->input != NULL) {
+		fin = fopen(mdl->opt->input, "r");
+		if (fin == NULL)
+			pfatal("cannot open update file");
+	}
+	int nline = 0;
+	while (!feof(fin)) {
+		char *raw = rdr_readline(fin);
+		if (raw == NULL)
+			break;
+		char *line = raw;
+		nline++;
+		// First we split the line in space separated tokens. We expect
+		// four of them and skip empty lines.
+		char *toks[4];
+		int ntoks = 0;
+		while (ntoks < 4) {
+			while (isspace(*line))
+				line++;
+			if (*line == '\0')
+				break;
+			toks[ntoks++] = line;
+			while (*line != '\0' && !isspace(*line))
+				line++;
+			if (*line == '\0')
+				break;
+			*line++ = '\0';
+		}
+		if (ntoks == 0) {
+			free(raw);
+			continue;
+		} else if (ntoks != 4) {
+			fatal("invalid line at %d", nline);
+		}
+		// Parse the tokens, the first three should be string maping to
+		// observations and labels and the last should be the weight.
+		uint64_t obs = none, yp = none, y = none;
+		obs = qrk_str2id(mdl->reader->obs, toks[0]);
+		if (obs == none)
+			fatal("bad on observation on line %d", nline);
+		if (strcmp(toks[1], "#")) {
+			yp = qrk_str2id(mdl->reader->lbl, toks[1]);
+			if (yp == none)
+				fatal("bad label <%s> line %d", toks[1], nline);
+		}
+		y = qrk_str2id(mdl->reader->lbl, toks[2]);
+		if (y == none)
+			fatal("bad label <%s> line %d", toks[2], nline);
+		double wgh = 0.0;
+		if (sscanf(toks[3], "%lf", &wgh) != 1)
+			fatal("bad weight on line %d", nline);
+
+		const uint32_t Y = mdl->nlbl;
+		if (yp == none) {
+			double *w = mdl->theta + mdl->uoff[obs];
+			w[y] = wgh;
+		} else {
+			double *w = mdl->theta + mdl->boff[obs];
+			w[yp * Y + y] = wgh;
+		}
+		free(raw);
+	}
+	if (mdl->opt->input != NULL)
+		fclose(fin);
+	// If requested compact the model.
+	if (mdl->opt->compact) {
+		const uint64_t O = mdl->nobs;
+		const uint64_t F = mdl->nftr;
+		info("* Compacting the model\n");
+		mdl_compact(mdl);
+		info("    %8"PRIu64" observations removed\n", O - mdl->nobs);
+		info("    %8"PRIu64" features removed\n", F - mdl->nftr);
+	}
+	// And save the updated model
+	info("* Save the model\n");
+	FILE *file = stdout;
+	if (mdl->opt->output != NULL) {
+		file = fopen(mdl->opt->output, "w");
+		if (file == NULL)
+			pfatal("cannot open output model");
+	}
+	mdl_save(mdl, file);
+	if (mdl->opt->output != NULL)
+		fclose(file);
+	info("* Done\n");
+}
+
 /*******************************************************************************
  * Entry point
  ******************************************************************************/
-int wapiti_main(int argc, char *argv[argc]) {
+int main(int argc, char *argv[argc]) {
 	// We first parse command line switchs
 	opt_t opt = opt_defaults;
 	opt_parse(argc, argv, &opt);
@@ -280,9 +400,11 @@ int wapiti_main(int argc, char *argv[argc]) {
 	switch (opt.mode) {
 		case 0: dotrain(mdl); break;
 		case 1: dolabel(mdl); break;
-		case 2: dodump(mdl); break;
+		case 2: dodump(mdl);  break;
+		case 3: doupdt(mdl);  break;
 	}
 	// And cleanup
 	mdl_free(mdl);
 	return EXIT_SUCCESS;
 }
+

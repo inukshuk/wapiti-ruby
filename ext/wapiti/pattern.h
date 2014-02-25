@@ -1,7 +1,7 @@
 /*
  *      Wapiti - A linear-chain CRF tool
  *
- * Copyright (c) 2009-2011  CNRS
+ * Copyright (c) 2009-2013  CNRS
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,27 +29,28 @@
 #define pattern_h
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "sequence.h"
 
 typedef struct pat_s pat_t;
 typedef struct pat_item_s pat_item_t;
 struct pat_s {
-	char *src;
-	int   ntoks;
-	int   nitems;
+	char     *src;
+	uint32_t  ntoks;
+	uint32_t  nitems;
 	struct pat_item_s {
-		char  type;
-		bool  caps;
-		char *value;
-		bool  absolute;
-		int   offset;
-		int   column;
+		char      type;
+		bool      caps;
+		char     *value;
+		bool      absolute;
+		int32_t   offset;
+		uint32_t  column;
 	} items[];
 };
 
 pat_t *pat_comp(char *p);
-char *pat_exec(const pat_t *pat, const tok_t *tok, int at);
+char *pat_exec(const pat_t *pat, const tok_t *tok, uint32_t at);
 void pat_free(pat_t *pat);
 
 #endif

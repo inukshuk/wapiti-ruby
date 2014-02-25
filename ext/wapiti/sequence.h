@@ -1,7 +1,7 @@
 /*
  *      Wapiti - A linear-chain CRF tool
  *
- * Copyright (c) 2009-2011  CNRS
+ * Copyright (c) 2009-2013  CNRS
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 #define sequence_h
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include "wapiti.h"
 
@@ -72,8 +73,8 @@
  */
 typedef struct raw_s raw_t;
 struct raw_s {
-	int   len;      //   T     Sequence length
-	char *lines[];  //  [T]    Raw lines directly from file
+	uint32_t  len;      //   T     Sequence length
+	char     *lines[];  //  [T]    Raw lines directly from file
 };
 
 /* tok_t:
@@ -91,10 +92,10 @@ struct raw_s {
  */
 typedef struct tok_s tok_t;
 struct tok_s {
-	int    len;     //   T     Sequence length
-	char **lbl;     //  [T]    List of labels strings
-	int   *cnts;    //  [T]    Length of tokens lists
-	char **toks[];  //  [T][]  Tokens lists
+	uint32_t   len;     //   T     Sequence length
+	char     **lbl;     //  [T]    List of labels strings
+	uint32_t  *cnts;    //  [T]    Length of tokens lists
+	char     **toks[];  //  [T][]  Tokens lists
 };
 
 /* seq_t:
@@ -121,12 +122,12 @@ struct tok_s {
 typedef struct pos_s pos_t;
 typedef struct seq_s seq_t;
 struct seq_s {
-	int     len;
-	size_t *raw;
+	uint32_t  len;
+	uint64_t *raw;
 	struct pos_s {
-		size_t  lbl;
-		size_t  ucnt,  bcnt;
-		size_t *uobs, *bobs;
+		uint32_t  lbl;
+		uint32_t  ucnt,  bcnt;
+		uint64_t *uobs, *bobs;
 	} pos[];
 };
 
@@ -139,10 +140,10 @@ struct seq_s {
  */
 typedef struct dat_s dat_t;
 struct dat_s {
-	bool     lbl;   //         True iff sequences are labelled
-	int      mlen;  //         Length of the longest sequence in the set
-	size_t   nseq;  //   S     Number of sequences in the set
-	seq_t  **seq;   //  [S]    List of sequences
+	bool       lbl;   //         True iff sequences are labelled
+	uint32_t   mlen;  //         Length of the longest sequence in the set
+	uint32_t   nseq;  //   S     Number of sequences in the set
+	seq_t    **seq;   //  [S]    List of sequences
 };
 
 #endif

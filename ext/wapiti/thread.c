@@ -1,7 +1,7 @@
 /*
  *      Wapiti - A linear-chain CRF tool
  *
- * Copyright (c) 2009-2011  CNRS
+ * Copyright (c) 2009-2013  CNRS
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <stdint.h>
 
 #include "model.h"
 #include "tools.h"
@@ -51,10 +53,10 @@
  ******************************************************************************/
 #ifdef MTH_ANSI
 struct job_s {
-	size_t size;
+	uint32_t size;
 };
 
-bool mth_getjob(job_t *job, size_t *cnt, size_t *pos) {
+bool mth_getjob(job_t *job, uint32_t *cnt, uint32_t *pos) {
 	if (job->size == 0)
 		return false;
 	*cnt = job->size;
@@ -63,7 +65,7 @@ bool mth_getjob(job_t *job, size_t *cnt, size_t *pos) {
 	return true;
 }
 
-void mth_spawn(func_t *f, int W, void *ud[W], size_t size, size_t batch) {
+void mth_spawn(func_t *f, uint32_t W, void *ud[W], uint32_t size, uint32_t batch) {
 	unused(batch);
 	if (size == 0) {
 		f(NULL, 0, 1, ud[0]);
@@ -78,19 +80,19 @@ void mth_spawn(func_t *f, int W, void *ud[W], size_t size, size_t batch) {
 #include <pthread.h>
 
 struct job_s {
-	size_t size;
-	size_t send;
-	size_t batch;
+	uint32_t size;
+	uint32_t send;
+	uint32_t batch;
 	pthread_mutex_t lock;
 };
 
 typedef struct mth_s mth_t;
 struct mth_s {
-	job_t  *job;
-	int     id;
-	int     cnt;
-	func_t *f;
-	void   *ud;
+	job_t    *job;
+	uint32_t  id;
+	uint32_t  cnt;
+	func_t   *f;
+	void     *ud;
 };
 
 /* mth_getjob:
@@ -100,7 +102,7 @@ struct mth_s {
  *   This function use a lock to ensure thread safety as it will be called by
  *   the multiple workers threads.
  */
-bool mth_getjob(job_t *job, size_t *cnt, size_t *pos) {
+bool mth_getjob(job_t *job, uint32_t *cnt, uint32_t *pos) {
 	if (job == NULL)
 		return false;
 	if (job->send == job->size)
@@ -124,7 +126,7 @@ static void *mth_stub(void *ud) {
  *   will get a unique identifier between 0 and W-1 and a user data from the
  *   'ud' array.
  */
-void mth_spawn(func_t *f, int W, void *ud[W], size_t size, size_t batch) {
+void mth_spawn(func_t *f, uint32_t W, void *ud[W], uint32_t size, uint32_t batch) {
 	// First prepare the jobs scheduler
 	job_t job, *pjob = NULL;
 	if (size != 0) {
@@ -144,7 +146,7 @@ void mth_spawn(func_t *f, int W, void *ud[W], size_t size, size_t batch) {
 	// We prepare the parameters structures that will be send to the threads
 	// with informations for calling the user function.
 	mth_t p[W];
-	for (int w = 0; w < W; w++) {
+	for (uint32_t w = 0; w < W; w++) {
 		p[w].job = pjob;
 		p[w].id  = w;
 		p[w].cnt = W;
@@ -159,10 +161,10 @@ void mth_spawn(func_t *f, int W, void *ud[W], size_t size, size_t batch) {
 	pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 	pthread_t th[W];
-	for (int w = 0; w < W; w++)
+	for (uint32_t w = 0; w < W; w++)
 		if (pthread_create(&th[w], &attr, &mth_stub, &p[w]) != 0)
 			fatal("failed to create thread");
-	for (int w = 0; w < W; w++)
+	for (uint32_t w = 0; w < W; w++)
 		if (pthread_join(th[w], NULL) != 0)
 			fatal("failed to join thread");
 	pthread_attr_destroy(&attr);

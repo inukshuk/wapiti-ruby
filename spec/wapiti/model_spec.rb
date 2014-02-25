@@ -12,6 +12,10 @@ module Wapiti
           Model.train(input, :pattern => pattern).labels.should == (1..6).map(&:to_s)
         end
 
+        it 'is also exposed as Wapiti.train' do
+          Wapiti.train(input, :pattern => pattern).labels.should == (1..6).map(&:to_s)
+        end
+
       end
     end
 
@@ -120,6 +124,38 @@ module Wapiti
 
     end
 
+    describe '#statistics' do
+      context 'given an empty model' do
+        it 'returns zeroes' do
+          s = Model.new.statistics
+
+          s[:sequences][:total].should == 0
+          s[:sequences][:errors].should == 0
+          s[:sequences][:rate].should == 0
+          s[:tokens][:total].should == 0
+          s[:tokens][:errors].should == 0
+          s[:tokens][:rate].should == 0
+        end
+      end
+
+      context 'given a trained model' do
+        let(:model) { Wapiti.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
+        let(:input) { [['Héllo NN B-VP', ', , O', 'world NN B-NP', '! ! O']] }
+
+        it 'returns token and sequcence counts and errors' do
+          model.statistics[:tokens][:total].should == 0
+          model.label input
+          model.statistics[:tokens][:total].should == 0
+
+          model.options.check = true
+          model.label input
+
+          model.statistics[:tokens][:total].should == input.map(&:length).reduce(&:+)
+          model.statistics[:sequences][:total].should == input.length
+        end
+      end
+    end
+
     describe '#label' do
 
       context 'given an empty model' do
@@ -127,7 +163,7 @@ module Wapiti
       end
 
       context 'given a trained model' do
-        let(:model) { Model.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
+        let(:model) { Wapiti.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
 
         context 'when passed an array of arrays' do
           let(:input) { [['Héllo NN B-VP', ', , O', 'world NN B-NP', '! ! O']] }

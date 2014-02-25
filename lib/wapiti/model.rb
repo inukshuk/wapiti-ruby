@@ -58,12 +58,10 @@ module Wapiti
     def statistics
       s = {}
       s[:tokens] = {
-        :total => token_count, :errors => @token_errors,
-        :rate => token_errors.to_f / token_count.to_f * 100.0
+        :total => token_count, :errors => token_errors, :rate => token_error_rate
       }
       s[:sequences] = {
-        :total => sequence_count, :errors => sequence_errors,
-        :rate => sequence_errors.to_f / sequence_count.to_f * 100.0
+        :total => sequence_count, :errors => sequence_errors, :rate => sequence_error_rate
       }
       s
     end
@@ -75,6 +73,16 @@ module Wapiti
     end
 
     alias clear clear_counters
+
+    def token_error_rate
+      return 0 if token_errors.zero?
+      token_errors / token_count.to_f * 100.0
+    end
+
+    def sequence_error_rate
+      return 0 if sequence_errors.zero?
+      sequence_errors / sequence_count.to_f * 100.0
+    end
 
     # alias native_save save
 

@@ -1,24 +1,20 @@
 Wapiti-Ruby
 ===========
-
 The Wapiti-Ruby gem provides a wicked fast linear-chain CRF
 ([Conditional Random Fields](http://en.wikipedia.org/wiki/Conditional_random_field))
-API for sequence segmentation and labelling; it is based on the codebase of
-Thomas Lavergne's awesome [wapiti](http://wapiti.limsi.fr/).
+API for sequence segmentation and labelling; it is based on the
+codebase of [wapiti](http://wapiti.limsi.fr/).
 
+[![Build Status](https://secure.travis-ci.org/inukshuk/wapiti-ruby.png)](http://travis-ci.org/inukshuk/wapiti-ruby)
+[![Coverage Status](https://coveralls.io/repos/inukshuk/wapiti-ruby/badge.png?branch=master)](https://coveralls.io/r/inukshuk/wapiti-ruby?branch=master)
 
 Requirements
 ------------
-
 Wapiti is written in C and Ruby and requires a compiler with C99
 support (e.g., gcc); on GNU/Linux systems it will be fairly easy to install
-all necessary packages through your distribution; on Mac OS X you can either
-install Xcode or
-[osx-gcc-installer](https://github.com/kennethreitz/osx-gcc-installer);
-on Windows you may want to install RubyInstaller's
-[DevKit](https://github.com/oneclick/rubyinstaller/wiki/development-kit).
+all necessary packages through your distribution.
 
-The Wapiti Ruby gem has been confirmed to work with MRI 1.9, 1.8.7,
+The Wapiti Ruby gem has been confirmed to work with MRI 2.x, 1.9.x, 1.8.7,
 and Rubinius.
 
 
@@ -80,7 +76,7 @@ Before saving your model you can use `compact` to reduce the model's size:
 
 ### Loading existing Models
 
-    model = Wapiti::Model.load('m1.mod')
+    model = Wapiti.load('m1.mod')
 
 ### Labelling
 
@@ -150,7 +146,6 @@ are also available through the associated attribute readers).
 
 Citing
 ------
-
 If you're using Wapiti-Ruby for research purposes, please use the following
 citation of the original wapiti package:
 
@@ -174,7 +169,6 @@ welcome to also refer back to the
 
 Contributing
 ------------
-
 The Wapiti-Ruby source code is
 [hosted on GitHub](http://github.com/inukshuk/wapiti-ruby/).
 You can check out a copy of the latest code using Git:
@@ -189,9 +183,8 @@ example, fix the bug and submit a pull request.
 
 License
 -------
+Copyright 2011-2014 Sylvester Keil. All rights reserved.
 
-Copyright 2011 Sylvester Keil. All rights reserved.
-
-Copyright 2009-2011 CNRS. All rights reserved.
+Copyright 2009-2013 CNRS. All rights reserved.
 
 Wapiti-Ruby is distributed under a BSD-style license. See LICENSE for details.

@@ -29,19 +29,9 @@ VALUE cLogger;
 int wapiti_main(int argc, char *argv[argc]);
 
 void dolabel(mdl_t *mdl);
-void dotrain(mdl_t *mdl);
-void doupdt(mdl_t *mdl);
 
 
 /* --- Utilities --- */
-
-static void trn_auto(mdl_t *mdl) {
-  const int maxiter = mdl->opt->maxiter;
-  mdl->opt->maxiter = 3;
-  trn_sgdl1(mdl);
-  mdl->opt->maxiter = maxiter;
-  trn_lbfgs(mdl);
-}
 
 static const struct {
   const char *name;
@@ -52,10 +42,9 @@ static const struct {
   {"bcd",    trn_bcd  },
   {"rprop",  trn_rprop},
   {"rprop+", trn_rprop},
-  {"rprop-", trn_rprop},
-  {"auto",   trn_auto }
+  {"rprop-", trn_rprop}
 };
-static const int trn_cnt = sizeof(trn_lst) / sizeof(trn_lst[0]);
+static const uint32_t trn_cnt = sizeof(trn_lst) / sizeof(trn_lst[0]);
 
 
 /* --- Options Class --- */
@@ -865,13 +854,14 @@ static VALUE model_train(VALUE self, VALUE data) {
 
   mdl_t* model = get_model(self);
 
-  int trn;
+  uint32_t trn;
   for (trn = 0; trn < trn_cnt; trn++) {
     if (!strcmp(model->opt->algo, trn_lst[trn].name)) break;
   }
 
   if (trn == trn_cnt) {
-    rb_raise(cNativeError, "failed to train model: unknown algorithm '%s'", model->opt->algo);
+    rb_raise(cNativeError,
+        "failed to train model: unknown algorithm '%s'", model->opt->algo);
   }
 
   FILE *file;
@@ -882,22 +872,20 @@ static VALUE model_train(VALUE self, VALUE data) {
     file = fopen(model->opt->pattern, "r");
 
     if (!file) {
-      rb_raise(cNativeError, "failed to train model: failed to load pattern file '%s'", model->opt->pattern);
+      rb_raise(cNativeError,
+          "failed to train model: failed to load pattern file '%s'", model->opt->pattern);
     }
 
     rdr_loadpat(model->reader, file);
     fclose(file);
-  }
-  else {
-    // rb_raise(cNativeError, "failed to train model: no pattern given");
-  }
 
-  qrk_lock(model->reader->obs, false);
+    qrk_lock(model->reader->obs, false);
+  }
 
 
   // Load the training data. When this is done we lock the quarks as we
   // don't want to put in the model, informations present only in the
-  // devlopment set.
+  // development set.
 
   switch (TYPE(data)) {
     case T_STRING:
@@ -928,7 +916,8 @@ static VALUE model_train(VALUE self, VALUE data) {
   // the training dataset will be used instead.
   if (model->opt->devel) {
     if (!(file = fopen(model->opt->devel, "r"))) {
-      rb_raise(cNativeError, "failed to train model: cannot open development file '%s'", model->opt->devel);
+      rb_raise(cNativeError,
+          "failed to train model: cannot open development file '%s'", model->opt->devel);
     }
 
     model->devel = rdr_readdat(model->reader, file, true);
@@ -937,7 +926,8 @@ static VALUE model_train(VALUE self, VALUE data) {
 
   // Initialize the model. If a previous model was loaded, this will be
   // just a resync, else the model structure will be created.
-  rb_funcall(self, rb_intern("sync"), 0);
+  // rb_funcall(self, rb_intern("sync"), 0);
+	mdl_sync(model);
 
   // Train the model.
   uit_setup(model);
@@ -946,7 +936,8 @@ static VALUE model_train(VALUE self, VALUE data) {
 
   // If requested compact the model.
   if (model->opt->compact) {
-    rb_funcall(self, rb_intern("compact"), 0);
+    // rb_funcall(self, rb_intern("compact"), 0);
+		mdl_compact(model);
   }
 
   return self;

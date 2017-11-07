@@ -5,4 +5,5 @@ Gemfile.lock
 *.rbc
 *.swp
 .ruby-version
+bin
 coverage

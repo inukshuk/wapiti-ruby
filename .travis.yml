@@ -1,13 +1,36 @@
 language: ruby
-bundler_args: --without debug extra osx
-script: bundle exec rake test_with_coveralls
-rvm:
-  - 2.1.0
-  - 2.0.0
-  - 1.9.3
-  - rbx
+matrix:
+  include:
+  - rvm: 2.4
+    env: WITH_COVERALLS=true
+  - rvm: 2.3
+    env: WITH_COVERALLS=false
+  - rvm: 2.2
+    env: WITH_COVERALLS=false
+  - rvm: 2.1
+    env: WITH_COVERALLS=false
+  - rvm: 2.0
+    env: WITH_COVERALLS=false
+  - rvm: rbx-2
+    env: WITH_COVERALLS=false
+before_install:
+  - gem update --system
+  - gem update bundler
+install:
+  - if [[ $WITH_COVERALLS = "true" ]]; then
+      bundle install --without debug development osx;
+    else
+      bundle install --without debug development osx coverage;
+    fi
+script:
+  - if [[ $WITH_COVERALLS = "true" ]]; then
+      bundle exec rake test_with_coveralls;
+    else
+      bundle exec rake;
+    fi
 notifications:
   email:
-    - sylvester@keil.or.at
-  on_success: change
-  on_failure: always
+    recipients:
+      - sylvester@keil.or.at
+    on_success: change
+    on_failure: change

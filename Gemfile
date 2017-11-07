@@ -3,8 +3,8 @@ gemspec
 
 group :debug do
   gem 'byebug', :require => false, :platform => :mri
-  gem 'rubinius-compiler', '~>2.0', :require => false, :platform => :rbx
-  gem 'rubinius-debugger', '~>2.0', :require => false, :platform => :rbx
+  gem 'rubinius-compiler', :require => false, :platform => :rbx
+  gem 'rubinius-debugger', :require => false, :platform => :rbx
 end
 
 group :coverage do
@@ -24,7 +24,7 @@ group :extra do
 end
 
 platform :rbx do
-  gem 'rubysl', '~>2.0'
+  gem 'rubysl'
   gem 'racc'
   gem 'json'
 end

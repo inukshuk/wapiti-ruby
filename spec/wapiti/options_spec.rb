@@ -3,13 +3,13 @@ module Wapiti
 
     let(:options) { Options.new }
 
-    it { Options.should be_an_instance_of(Class) }
+    it { expect(Options).to be_an_instance_of(Class) }
 
-    it { options.should_not be nil }
+    it { expect(options).not_to be nil }
 
     describe '.defaults' do
       it 'returns a hash with the default options' do
-        Options.defaults.keys.map(&:to_s).sort.should == Options.attribute_names.map(&:to_s)
+        expect(Options.defaults.keys.map(&:to_s).sort).to eq(Options.attribute_names.map(&:to_s))
       end
     end
 
@@ -24,127 +24,127 @@ module Wapiti
       end
 
       it 'should set defaults according to the supplied hash' do
-        Options.new(:compact => true).should be_compact
+        expect(Options.new(:compact => true)).to be_compact
       end
 
       it 'should accept and execute a self-yielding block' do
         opt = Options.new(:compact => true) { |o| o.sparse = true }
-        opt.should be_compact
-        opt.should be_sparse
+        expect(opt).to be_compact
+        expect(opt).to be_sparse
       end
 
     end
 
     describe 'array accessors' do
       it 'are supported' do
-        lambda { options[:threads] = 2 }.should change { options[:threads] }.from(1).to(2)
+        expect { options[:threads] = 2 }.to change { options[:threads] }.from(1).to(2)
       end
 
       it 'fail for unknown attribute names' do
-        lambda { options[:unknown] = 2 }.should raise_error(ArgumentError)
+        expect { options[:unknown] = 2 }.to raise_error(ArgumentError)
       end
     end
 
     describe '#update' do
       it 'sets all option values according to the given hash' do
-        lambda { options.update( :threads => 2 ) }.should change { options.threads }.from(1).to(2)
+        expect { options.update( :threads => 2 ) }.to change { options.threads }.from(1).to(2)
       end
     end
 
     describe '#threads' do
       it 'returns 1 by default' do
-        options.threads.should == 1
+        expect(options.threads).to eq(1)
       end
     end
 
     describe '#threads=' do
       it 'sets threads to the given value' do
-        lambda { options.threads = 2 }.should change { options.threads }.from(1).to(2)
+        expect { options.threads = 2 }.to change { options.threads }.from(1).to(2)
       end
     end
 
     describe '#jobsize' do
       it 'returns 64 by default' do
-        options.jobsize.should == 64
+        expect(options.jobsize).to eq(64)
       end
     end
 
     describe '#jobsize=' do
       it 'sets jobsize to the given value' do
-        lambda { options.jobsize = 128 }.should change { options.jobsize }.by(64)
+        expect { options.jobsize = 128 }.to change { options.jobsize }.by(64)
       end
     end
 
     describe '#maxiter' do
       it 'returns a large number by default' do
-        options.maxiter.should > 0
+        expect(options.maxiter).to be > 0
       end
     end
 
     describe '#maxiter=' do
       it 'sets maxiter to the given value' do
-        lambda { options.maxiter = 20 }.should change { options.maxiter }.to(20)
+        expect { options.maxiter = 20 }.to change { options.maxiter }.to(20)
       end
     end
 
     describe '#stop_window' do
       it 'returns 5 by default' do
-        options.stop_window.should == 5
+        expect(options.stop_window).to eq(5)
       end
     end
 
     describe '#stop_window=' do
       it 'sets stop_window to the given value' do
-        lambda { options.stop_window = 20 }.should change { options.stop_window }.by(15)
+        expect { options.stop_window = 20 }.to change { options.stop_window }.by(15)
       end
     end
 
     describe '#convergence_window' do
       it 'returns 5 by default' do
-        options.convergence_window.should == 5
+        expect(options.convergence_window).to eq(5)
       end
     end
 
     describe '#convergence_window=' do
       it 'sets convergence_window to the given value' do
-        lambda { options.convergence_window = 20 }.should change { options.convergence_window }.by(15)
+        expect { options.convergence_window = 20 }.to change { options.convergence_window }.by(15)
       end
     end
 
 
     describe '#stop_epsilon' do
       it 'returns 0.02 by default' do
-        options.stop_epsilon.should == 0.02
+        expect(options.stop_epsilon).to eq(0.02)
       end
     end
 
     describe '#stop_epsilon=' do
       it 'sets stop_epsilon to the given value' do
-        lambda { options.stop_epsilon = 0.35 }.should change { options.stop_epsilon }
+        expect { options.stop_epsilon = 0.35 }.to change { options.stop_epsilon }
       end
     end
 
     describe '#rho1' do
       it 'returns 0.5 by default' do
-        options.rho1.should == 0.5
+        expect(options.rho1).to eq(0.5)
       end
     end
 
     describe '#rho1=' do
       it 'sets rho1 to the given value' do
-        lambda { options.rho1 = 2.5 }.should change { options.rho1 }.by(2)
+        expect { options.rho1 = 2.5 }.to change { options.rho1 }.by(2)
       end
     end
 
     describe '#rho2' do
       it 'returns 0.0001 by default' do
-        options.rho2.should == 0.0001
+        expect(options.rho2).to eq(0.0001)
       end
     end
 
     describe '#rho2=' do
       it 'sets rho2 to the given value' do
-        lambda { options.rho2 = 0.0002 }.should change { options.rho2 }.by(0.0001)
+        expect { options.rho2 = 0.0002 }.to change { options.rho2 }.by(0.0001)
       end
     end
 
@@ -152,16 +152,16 @@ module Wapiti
     %w{ maxent compact sparse skip_tokens check score posterior }.each do |m|
       describe "##{m}" do
         it 'returns false by default' do
-          options.send(m).should be false
+          expect(options.send(m)).to be false
         end
       end
 
       describe "##{m}=" do
         it "sets #{m} to the given value" do
-          lambda { options.send("#{m}=", true) }.should change { options.send(m) }.from(false).to(true)
-          lambda { options.send("#{m}=", false) }.should change { options.send(m) }.from(true).to(false)
-          lambda { options.send("#{m}=", 123) }.should change { options.send(m) }.from(false).to(true)
-          lambda { options.send("#{m}=", nil) }.should change { options.send(m) }.from(true).to(false)
+          expect { options.send("#{m}=", true) }.to change { options.send(m) }.from(false).to(true)
+          expect { options.send("#{m}=", false) }.to change { options.send(m) }.from(true).to(false)
+          expect { options.send("#{m}=", 123) }.to change { options.send(m) }.from(false).to(true)
+          expect { options.send("#{m}=", nil) }.to change { options.send(m) }.from(true).to(false)
         end
       end
     end
@@ -169,13 +169,13 @@ module Wapiti
     %w{ pattern model algorithm devel }.each do |m|
       describe "##{m}" do
         it 'returns an empty string by default' do
-          options.send(m).should be_a(String)
+          expect(options.send(m)).to be_a(String)
         end
       end
 
       describe "##{m}=" do
         it 'sets the input string to the given value' do
-          lambda { options.send("#{m}=", 'foo') }.should change { options.send(m) }.to('foo')
+          expect { options.send("#{m}=", 'foo') }.to change { options.send(m) }.to('foo')
         end
       end
     end

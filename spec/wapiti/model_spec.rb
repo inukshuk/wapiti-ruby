@@ -9,11 +9,11 @@ module Wapiti
         let(:input) { File.expand_path('../../fixtures/train.txt', __FILE__) }
 
         it 'returns a valid model instance' do
-          Model.train(input, :pattern => pattern).labels.should == (1..6).map(&:to_s)
+          expect(Model.train(input, :pattern => pattern).labels).to eq((1..6).map(&:to_s))
         end
 
         it 'is also exposed as Wapiti.train' do
-          Wapiti.train(input, :pattern => pattern).labels.should == (1..6).map(&:to_s)
+          expect(Wapiti.train(input, :pattern => pattern).labels).to eq((1..6).map(&:to_s))
         end
 
       end
@@ -24,10 +24,10 @@ module Wapiti
       context 'when passed no arguments' do
         it 'creates a new model with default options' do
           m = Model.new
-          m.should_not be nil
-          m.options.should be_instance_of(Options)
-          m.nlbl.should == 0
-          m.nobs.should == 0
+          expect(m).not_to be nil
+          expect(m.options).to be_instance_of(Options)
+          expect(m.nlbl).to eq(0)
+          expect(m.nobs).to eq(0)
         end
       end
 
@@ -41,7 +41,7 @@ module Wapiti
         let(:options) { { :threads => 42 } }
 
         it 'should create the options from the hash' do
-          Model.new(options).options[:threads].should == 42
+          expect(Model.new(options).options[:threads]).to eq(42)
         end
       end
 
@@ -49,7 +49,7 @@ module Wapiti
         let(:options) { Options.new(:threads => 42) }
 
         it 'should create the options from the hash' do
-          Model.new(options).options[:threads].should == 42
+          expect(Model.new(options).options[:threads]).to eq(42)
         end
       end
 
@@ -64,38 +64,38 @@ module Wapiti
 
       context 'when called with a block' do
         it 'should pass the options instance to the block' do
-          Model.new(:threads => 42) { |o| o.threads = 23 }.options.threads.should == 23
+          expect(Model.new(:threads => 42) { |o| o.threads = 23 }.options.threads).to eq(23)
         end
       end
     end
 
     describe '#options' do
       it 'returns the options for training' do
-        Model.new.options.should be_instance_of(Options)
+        expect(Model.new.options).to be_instance_of(Options)
       end
     end
 
     describe '#labels' do
       it 'returns the number of labels (0 by default)' do
-        Model.new.nlbl.should == 0
+        expect(Model.new.nlbl).to eq(0)
       end
     end
 
     describe '#observations' do
       it 'returns the number of observations (0 by default)' do
-        Model.new.observations.should == 0
+        expect(Model.new.observations).to eq(0)
       end
     end
 
     describe '#features' do
       it 'returns the number of features (0 by default)' do
-        Model.new.features.should == 0
+        expect(Model.new.features).to eq(0)
       end
     end
 
     describe '#total' do
       it 'returns the total training time (0.0 by default)' do
-        Model.new.total.should == 0.0
+        expect(Model.new.total).to eq(0.0)
       end
     end
 
@@ -104,7 +104,7 @@ module Wapiti
       let(:data) { File.expand_path('../../fixtures/train.txt', __FILE__) }
 
       it 'accepts a filename as input' do
-        model.train(data).nlbl.should == 6
+        expect(model.train(data).nlbl).to eq(6)
       end
 
       it 'accepts a data array' do
@@ -118,7 +118,7 @@ module Wapiti
 
       context 'when called without a pattern' do
         it 'fails because of wapiti' do
-          expect { Model.new.train(data).nlbl.should == 6 }.to raise_error(NativeError)
+          expect { expect(Model.new.train(data).nlbl).to eq(6) }.to raise_error(NativeError)
         end
       end
 
@@ -129,12 +129,12 @@ module Wapiti
         it 'returns zeroes' do
           s = Model.new.statistics
 
-          s[:sequences][:total].should == 0
-          s[:sequences][:errors].should == 0
-          s[:sequences][:rate].should == 0
-          s[:tokens][:total].should == 0
-          s[:tokens][:errors].should == 0
-          s[:tokens][:rate].should == 0
+          expect(s[:sequences][:total]).to eq(0)
+          expect(s[:sequences][:errors]).to eq(0)
+          expect(s[:sequences][:rate]).to eq(0)
+          expect(s[:tokens][:total]).to eq(0)
+          expect(s[:tokens][:errors]).to eq(0)
+          expect(s[:tokens][:rate]).to eq(0)
         end
       end
 
@@ -143,15 +143,15 @@ module Wapiti
         let(:input) { [['Héllo NN B-VP', ', , O', 'world NN B-NP', '! ! O']] }
 
         it 'returns token and sequcence counts and errors' do
-          model.statistics[:tokens][:total].should == 0
+          expect(model.statistics[:tokens][:total]).to eq(0)
           model.label input
-          model.statistics[:tokens][:total].should == 0
+          expect(model.statistics[:tokens][:total]).to eq(0)
 
           model.options.check = true
           model.label input
 
-          model.statistics[:tokens][:total].should == input.map(&:length).reduce(&:+)
-          model.statistics[:sequences][:total].should == input.length
+          expect(model.statistics[:tokens][:total]).to eq(input.map(&:length).reduce(&:+))
+          expect(model.statistics[:sequences][:total]).to eq(input.length)
         end
       end
     end
@@ -170,15 +170,15 @@ module Wapiti
 
           it 'returns an array of token-label pairs' do
             labels = model.label(input)
-            labels[0].map(&:first).should == input[0]
-            labels[0].map(&:last).should == %w{ B-NP O B-NP O }
+            expect(labels[0].map(&:first)).to eq(input[0])
+            expect(labels[0].map(&:last)).to eq(%w{ B-NP O B-NP O })
           end
 
           it 'yields each token/label pair to the supplied block' do
             labels = model.label(input) do |token, label|
               [token.downcase, label.downcase]
             end
-            labels[0].map(&:last).should == %w{ b-np o b-np o }
+            expect(labels[0].map(&:last)).to eq(%w{ b-np o b-np o })
           end
 
           context 'with the :score option set' do
@@ -205,8 +205,8 @@ module Wapiti
 
           it 'returns an array of token-label pairs' do
             labels = model.label(input)
-            labels.should have(77).elements
-            labels[0].take(5).map(&:last).should == %w{ B-NP B-PP B-NP I-NP B-VP }
+            expect(labels.size).to eq(77)
+            expect(labels[0].take(5).map(&:last)).to eq(%w{ B-NP B-PP B-NP I-NP B-VP })
           end
         end
 
@@ -216,14 +216,14 @@ module Wapiti
 
     describe '#labels' do
       it 'returns an empty list by default' do
-        Model.new.labels.should be_empty
+        expect(Model.new.labels).to be_empty
       end
 
       context 'given a trained model' do
         let(:model) { Model.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
 
         it 'returns a list of all known labels' do
-          model.labels.should have(model.nlbl).elements
+          expect(model.labels.size).to eq(model.nlbl)
         end
       end
     end

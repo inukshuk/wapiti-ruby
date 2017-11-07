@@ -44,9 +44,13 @@ task :check_warnings do
   puts Wapiti::VERSION
 end
 
-require 'coveralls/rake/task'
-Coveralls::RakeTask.new
-task :test_with_coveralls => [:compile, :spec, 'coveralls:push']
+begin
+  require 'coveralls/rake/task'
+  Coveralls::RakeTask.new
+  task :test_with_coveralls => [:compile, :spec, 'coveralls:push']
+rescue LoadError
+  # ignore
+end
 
 task :default => [:compile, :spec]
 

@@ -31,9 +31,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifndef _WIN32
-#include <sys/time.h>
-#endif
+#include <ruby.h>
 
 #include "options.h"
 #include "sequence.h"

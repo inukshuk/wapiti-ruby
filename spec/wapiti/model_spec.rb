@@ -33,7 +33,7 @@ module Wapiti
 
       context 'when passed more than one argument' do
         it 'should raise an error' do
-          expect { Model.new(1,2) }.to raise_error
+          expect { Model.new(1, 2) }.to raise_error(ArgumentError)
         end
       end
 
@@ -55,10 +55,10 @@ module Wapiti
 
       context 'when passed something other than a hash or an options instance' do
         it 'should raise an error' do
-          expect { Model.new(1) }.to raise_error
-          expect { Model.new(nil) }.to raise_error
-          expect { Model.new(true) }.to raise_error
-          expect { Model.new('foo') }.to raise_error
+          expect { Model.new(1) }.to raise_error(NativeError)
+          expect { Model.new(nil) }.to raise_error(NativeError)
+          expect { Model.new(true) }.to raise_error(NativeError)
+          expect { Model.new('foo') }.to raise_error(NativeError)
         end
       end
 

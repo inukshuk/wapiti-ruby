@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency('rake', '~>10.0')
   s.add_development_dependency('rake-compiler', '~>1.0')
-  s.add_development_dependency('rspec', '~>2.6')
+  s.add_development_dependency('rspec', '~>3.7')
 
   s.files        = `git ls-files`.split("\n") - %w{
     vendor/wapiti

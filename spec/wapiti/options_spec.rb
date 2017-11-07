@@ -16,11 +16,11 @@ module Wapiti
     describe '#initialize' do
 
       it 'should fail if called with more than one parameter' do
-        expect { Options.new(1,2) }.to raise_error
+        expect { Options.new(1, 2) }.to raise_error(ArgumentError)
       end
 
       it 'should fail if called with a parameter that is no hash' do
-        expect { Options.new([]) }.to raise_error
+        expect { Options.new([]) }.to raise_error(TypeError)
       end
 
       it 'should set defaults according to the supplied hash' do

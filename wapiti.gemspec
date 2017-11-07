@@ -19,11 +19,11 @@ Gem::Specification.new do |s|
     This gem provides a Ruby API for Conditional Random Fields (CRF).
     """
 
-  s.license     = 'FreeBSD'
+  s.license     = 'BSD-2-Clause'
   s.date        = Time.now.strftime('%Y-%m-%d')
 
   s.add_development_dependency('rake', '~>10.0')
-  s.add_development_dependency('rake-compiler', '~>0.7')
+  s.add_development_dependency('rake-compiler', '~>1.0')
   s.add_development_dependency('rspec', '~>2.6')
 
   s.files        = `git ls-files`.split("\n") - %w{

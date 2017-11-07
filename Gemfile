@@ -14,12 +14,13 @@ group :coverage do
 end
 
 group :development do
-  gem 'ZenTest'
-  gem 'pry'
+  gem 'rake'
+  gem 'rake-compiler'
+  gem 'rspec'
 end
 
-group :osx do
- gem 'autotest-fsevent', :require => false
+group :extra do
+  gem 'pry'
 end
 
 platform :rbx do

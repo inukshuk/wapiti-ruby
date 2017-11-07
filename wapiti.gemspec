@@ -22,10 +22,6 @@ Gem::Specification.new do |s|
   s.license     = 'BSD-2-Clause'
   s.date        = Time.now.strftime('%Y-%m-%d')
 
-  s.add_development_dependency('rake', '~>12.0')
-  s.add_development_dependency('rake-compiler', '~>1.0')
-  s.add_development_dependency('rspec', '~>3.7')
-
   s.files        = `git ls-files`.split("\n") - %w{
     vendor/wapiti
     .coveralls.yml

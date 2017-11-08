@@ -1,7 +1,7 @@
 skip_tags: true
 
 environment:
-  - RUBY_VERSION: 24-x64
+  RUBY_VERSION: 24-x64
 
 init:
   - git config --global core.autocrlf true

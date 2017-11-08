@@ -714,10 +714,6 @@ static VALUE model_nftr(VALUE self) {
   return INT2FIX(get_model(self)->nftr);
 }
 
-static VALUE model_total(VALUE self) {
-  return rb_float_new(get_model(self)->total);
-}
-
 
 // Instance methods
 
@@ -1172,8 +1168,6 @@ static void Init_model() {
 
   rb_define_method(cModel, "nftr", model_nftr, 0);
   rb_define_alias(cModel, "features", "nftr");
-
-  rb_define_method(cModel, "total", model_total, 0);
 
   rb_define_method(cModel, "sync", model_sync, 0);
   rb_define_method(cModel, "compact", model_compact, 0);

@@ -24,23 +24,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+
 #include <inttypes.h>
-#include <signal.h>
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <signal.h>
 #include <unistd.h>
-#include <sys/time.h>
-#include <sys/resource.h>
 
-#include "wapiti.h"
-#include "decoder.h"
-#include "model.h"
-#include "options.h"
 #include "progress.h"
+#include "decoder.h"
+#include "options.h"
 #include "tools.h"
 
 /*******************************************************************************
@@ -74,7 +69,7 @@ bool uit_stop = false;
 /* uit_signal:
  *   Signal handler to catch interupt signal. When a signal is received, the
  *   trainer is aksed to stop as soon as possible leaving the model in a clean
- *   state. We don't reinstall the handler so if user send a second interupt
+ *   state. We don't reinstall the handler so if user send a second interrupt
  *   signal, the program will stop imediatly. (to cope with BSD system, we even
  *   reinstall explicitly the default handler)
  */
@@ -85,15 +80,17 @@ static void uit_signal(int sig) {
 
 /* uit_setup:
  *   Install the signal handler for clean early stop from the user if possible
- *   and start the timer.
  */
 void uit_setup(mdl_t *mdl) {
 	uit_stop = false;
-	if (signal(SIGINT, uit_signal) == SIG_ERR)
+	if (signal(SIGINT, uit_signal) == SIG_ERR) {
 		warning("failed to set signal handler, no clean early stop");
-	gettimeofday(&mdl->timer, NULL);
-	if (mdl->opt->stopwin != 0)
+  }
+
+	if (mdl->opt->stopwin != 0) {
 		mdl->werr = wapiti_xmalloc(sizeof(double) * mdl->opt->stopwin);
+  }
+
 	mdl->wcnt = mdl->wpos = 0;
 }
 
@@ -107,14 +104,15 @@ void uit_cleanup(mdl_t *mdl) {
 		free(mdl->werr);
 		mdl->werr = NULL;
 	}
+
 	signal(SIGINT, SIG_DFL);
 }
 
 /* uit_progress:
- *   Display a progress repport to the user consisting of some informations
+ *   Display a progress report to the user consisting of information
  *   provided by the trainer: iteration count and objective function value, and
- *   some informations computed here on the current model performances.
- *   This function return true if the trainer have to keep training the model
+ *   some information computed here on the current model performance.
+ *   This function returns true if the trainer have to keep training the model
  *   and false if he must stop, so this is were we will implement the trainer
  *   independant stoping criterion.
  */
@@ -122,26 +120,7 @@ bool uit_progress(mdl_t *mdl, uint32_t it, double obj) {
 	// First we just compute the error rate on devel or train data
 	double te, se;
 	tag_eval(mdl, &te, &se);
-	// Next, we compute the number of active features
-	uint64_t act = 0;
-	for (uint64_t f = 0; f < mdl->nftr; f++)
-		if (mdl->theta[f] != 0.0)
-			act++;
-	// Compute timings. As some training algorithms are multi-threaded, we
-	// cannot use ansi/c function and must rely on posix one to sum time
-	// spent in main thread and in child ones.
-	tms_t now; gettimeofday(&now, NULL);
-	double tm = (now.tv_sec        + (double)now.tv_usec        * 1.0e-6)
-	          - (mdl->timer.tv_sec + (double)mdl->timer.tv_usec * 1.0e-6);
-	mdl->total += tm;
-	mdl->timer  = now;
-	// And display progress report
-	info("  [%4"PRIu32"]", it);
-	info(obj >= 0.0 ? " obj=%-10.2f" : " obj=NA", obj);
-	info(" act=%-8"PRIu64, act);
-	info(" err=%5.2f%%/%5.2f%%", te, se);
-	info(" time=%.2fs/%.2fs", tm, mdl->total);
-	info("\n");
+
 	// If requested, check the error rate stoping criterion. We check if the
 	// error rate is stable enought over a few iterations.
 	bool res = true;
@@ -159,10 +138,6 @@ bool uit_progress(mdl_t *mdl, uint32_t it, double obj) {
 				res = false;
 		}
 	}
-	// And return
-	if (uit_stop)
-		return false;
-	return res;
+
+	return (uit_stop) ? false : res;
 }
-
-

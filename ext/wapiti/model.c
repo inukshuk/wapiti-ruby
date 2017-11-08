@@ -74,7 +74,6 @@ mdl_t *mdl_new(rdr_t *rdr) {
 	mdl->train  = mdl->devel = NULL;
 	mdl->reader = rdr;
 	mdl->werr   = NULL;
-	mdl->total  = 0.0;
 	return mdl;
 }
 

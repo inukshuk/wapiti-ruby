@@ -93,12 +93,6 @@ module Wapiti
       end
     end
 
-    describe '#total' do
-      it 'returns the total training time (0.0 by default)' do
-        expect(Model.new.total).to eq(0.0)
-      end
-    end
-
     describe '#train' do
       let(:model) {
         Model.new(

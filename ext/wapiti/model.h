@@ -31,16 +31,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifndef _WIN32
-#include <sys/time.h>
-#endif
-
 #include "options.h"
 #include "sequence.h"
 #include "reader.h"
 #include "wapiti.h"
-
-typedef struct timeval tms_t;
 
 /* mdl_t:
  *   Represent a linear-chain CRF model. The model contain both unigram and
@@ -89,10 +83,6 @@ struct mdl_s {
 	double   *werr;    //       Window of error rate of last iters
 	uint32_t  wcnt;    //       Number of iters in the window
 	uint32_t  wpos;    //       Position for the next iter
-
-	// Timing
-	tms_t     timer;   //       start time of last iter
-	double    total;   //       total training time
 };
 
 mdl_t *mdl_new(rdr_t *rdr);

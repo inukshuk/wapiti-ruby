@@ -55,10 +55,10 @@ module Wapiti
 
       context 'when passed something other than a hash or an options instance' do
         it 'should raise an error' do
-          expect { Model.new(1) }.to raise_error(NativeError)
-          expect { Model.new(nil) }.to raise_error(NativeError)
-          expect { Model.new(true) }.to raise_error(NativeError)
-          expect { Model.new('foo') }.to raise_error(NativeError)
+          expect { Model.new(1) }.to raise_error(ArgumentError)
+          expect { Model.new(nil) }.to raise_error(ArgumentError)
+          expect { Model.new(true) }.to raise_error(ArgumentError)
+          expect { Model.new('foo') }.to raise_error(ArgumentError)
         end
       end
 
@@ -100,7 +100,11 @@ module Wapiti
     end
 
     describe '#train' do
-      let(:model) { Model.new(:pattern => File.expand_path('../../fixtures/pattern.txt', __FILE__)) }
+      let(:model) {
+        Model.new(
+          :pattern => File.expand_path('../../fixtures/pattern.txt', __FILE__)
+        )
+      }
       let(:data) { File.expand_path('../../fixtures/train.txt', __FILE__) }
 
       it 'accepts a filename as input' do
@@ -118,7 +122,9 @@ module Wapiti
 
       context 'when called without a pattern' do
         it 'fails because of wapiti' do
-          expect { expect(Model.new.train(data).nlbl).to eq(6) }.to raise_error(NativeError)
+          expect {
+            expect(Model.new.train(data).nlbl).to eq(6)
+          }.to raise_error(NativeError)
         end
       end
 

@@ -19,6 +19,7 @@ VALUE mNative;
 VALUE cOptions;
 VALUE cModel;
 
+VALUE cArgumentError;
 VALUE cNativeError;
 VALUE cConfigurationError;
 VALUE cLogger;
@@ -108,7 +109,7 @@ static VALUE initialize_options(int argc, VALUE *argv, VALUE self) {
   options->algo = tmp;
 
   if (argc > 1) {
-    rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")),
+    rb_raise(cArgumentError,
       "wrong number of arguments (%d for 0..1)", argc);
   }
 
@@ -640,7 +641,7 @@ static VALUE allocate_model(VALUE self) {
 
 static VALUE model_set_options(VALUE self, VALUE rb_options) {
   if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
-    rb_raise(cNativeError, "argument must be a Wapiti::Options instance");
+    rb_raise(cArgumentError, "argument must be a Wapiti::Options instance");
   }
 
   mdl_t *model = get_model(self);
@@ -661,7 +662,7 @@ static VALUE initialize_model(int argc, VALUE *argv, VALUE self) {
   VALUE options;
 
   if (argc > 1) {
-    rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")),
+    rb_raise(cArgumentError,
       "wrong number of arguments (%d for 0..1)", argc);
   }
 
@@ -671,7 +672,7 @@ static VALUE initialize_model(int argc, VALUE *argv, VALUE self) {
     }
     else {
       if (strncmp("Wapiti::Options", rb_obj_classname(argv[0]), 15) != 0) {
-        rb_raise(cNativeError, "argument must be a hash or an options instance");
+        rb_raise(cArgumentError, "argument must be a hash or an options instance");
       }
       options = argv[0];
     }
@@ -738,7 +739,7 @@ static VALUE model_compact(VALUE self) {
 // otherwise uses the passed-in argument as the Model's path.
 static VALUE model_save(int argc, VALUE *argv, VALUE self) {
   if (argc > 1) {
-    rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")),
+    rb_raise(cArgumentError,
       "wrong number of arguments (%d for 0..1)", argc);
   }
 
@@ -770,7 +771,7 @@ static VALUE model_save(int argc, VALUE *argv, VALUE self) {
 
 static VALUE model_load(int argc, VALUE *argv, VALUE self) {
   if (argc > 1) {
-    rb_raise(rb_const_get(rb_mKernel, rb_intern("ArgumentError")),
+    rb_raise(cArgumentError,
       "wrong number of arguments (%d for 0..1)", argc);
   }
 
@@ -890,7 +891,9 @@ static VALUE model_train(VALUE self, VALUE data) {
   switch (TYPE(data)) {
     case T_STRING:
       if (!(file = fopen(StringValuePtr(data), "r"))) {
-        rb_raise(cNativeError, "failed to train model: failed to open training data '%s", StringValuePtr(data));
+        rb_raise(cNativeError,
+            "failed to train model: failed to open training data '%s",
+            StringValuePtr(data));
       }
 
       model->train = rdr_readdat(model->reader, file, true);
@@ -902,7 +905,8 @@ static VALUE model_train(VALUE self, VALUE data) {
 
       break;
     default:
-      rb_raise(cNativeError, "failed to train model: invalid training data type (expected instance of String or Array)");
+      rb_raise(cNativeError,
+          "failed to train model: invalid training data type (expected instance of String or Array)");
   }
 
   qrk_lock(model->reader->lbl, true);
@@ -917,7 +921,8 @@ static VALUE model_train(VALUE self, VALUE data) {
   if (model->opt->devel) {
     if (!(file = fopen(model->opt->devel, "r"))) {
       rb_raise(cNativeError,
-          "failed to train model: cannot open development file '%s'", model->opt->devel);
+          "failed to train model: cannot open development file '%s'",
+          model->opt->devel);
     }
 
     model->devel = rdr_readdat(model->reader, file, true);
@@ -1188,13 +1193,14 @@ static void Init_model() {
 
 static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {
   if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
-    rb_raise(cNativeError, "argument must be a native options instance");
+    rb_raise(cArgumentError, "argument must be a native options instance");
   }
 
   opt_t *options = get_options(rb_options);
 
   if (options->mode != 1) {
-    rb_raise(cNativeError, "invalid options argument: mode should be set to 1 for labelling");
+    rb_raise(cArgumentError,
+      "invalid options argument: mode should be set to 1 for labelling");
   }
 
   mdl_t *model = mdl_new(rdr_new(options->maxent));
@@ -1210,13 +1216,14 @@ static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {
 #if defined EXTRA
 static VALUE dump(VALUE self __attribute__((__unused__)), VALUE rb_options) {
   if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
-    rb_raise(cNativeError, "argument must be a native options instance");
+    rb_raise(cArgumentError, "argument must be a native options instance");
   }
 
   opt_t *options = get_options(rb_options);
 
   if (options->mode != 2) {
-    rb_raise(cNativeError, "invalid options argument: mode should be set to 2 for training");
+    rb_raise(cArgumentError,
+        "invalid options argument: mode should be set to 2 for training");
   }
 
   mdl_t *model = mdl_new(rdr_new(options->maxent));
@@ -1269,6 +1276,7 @@ void Init_native() {
   mWapiti = rb_const_get(rb_mKernel, rb_intern("Wapiti"));
   mNative = rb_define_module_under(mWapiti, "Native");
 
+  cArgumentError = rb_const_get(rb_mKernel, rb_intern("ArgumentError"));
   cNativeError = rb_const_get(mWapiti, rb_intern("NativeError"));
   cConfigurationError = rb_const_get(mWapiti, rb_intern("ConfigurationError"));
   cLogger = rb_funcall(mWapiti, rb_intern("log"), 0);

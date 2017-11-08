@@ -756,11 +756,11 @@ static VALUE model_save(int argc, VALUE *argv, VALUE self) {
   VALUE path = rb_ivar_get(self, rb_intern("@path"));
 
   if (NIL_P(path)) {
-    rb_raise(cNativeError, "failed to save model: no path given");
+    fatal("failed to save model: no path given");
   }
 
   if (!(file = fopen(StringValueCStr(path), "w"))) {
-    rb_raise(cNativeError, "failed to save model: failed to open model file");
+    fatal("failed to save model: failed to open model file");
   }
 
   mdl_save(model, file);
@@ -788,11 +788,11 @@ static VALUE model_load(int argc, VALUE *argv, VALUE self) {
   VALUE path = rb_ivar_get(self, rb_intern("@path"));
 
   if (NIL_P(path)) {
-    rb_raise(cNativeError, "failed to load model: no path given");
+    fatal("failed to load model: no path given");
   }
 
   if (!(file = fopen(StringValueCStr(path), "r"))) {
-    rb_raise(cNativeError, "failed to load model: failed to open model file");
+    fatal("failed to load model: failed to open model file");
   }
 
   mdl_load(model, file);
@@ -861,8 +861,7 @@ static VALUE model_train(VALUE self, VALUE data) {
   }
 
   if (trn == trn_cnt) {
-    rb_raise(cNativeError,
-        "failed to train model: unknown algorithm '%s'", model->opt->algo);
+    fatal("failed to train model: unknown algorithm '%s'", model->opt->algo);
   }
 
   FILE *file;
@@ -873,8 +872,8 @@ static VALUE model_train(VALUE self, VALUE data) {
     file = fopen(model->opt->pattern, "r");
 
     if (!file) {
-      rb_raise(cNativeError,
-          "failed to train model: failed to load pattern file '%s'", model->opt->pattern);
+      fatal("failed to train model: failed to load pattern file '%s'",
+          model->opt->pattern);
     }
 
     rdr_loadpat(model->reader, file);
@@ -891,9 +890,8 @@ static VALUE model_train(VALUE self, VALUE data) {
   switch (TYPE(data)) {
     case T_STRING:
       if (!(file = fopen(StringValuePtr(data), "r"))) {
-        rb_raise(cNativeError,
-            "failed to train model: failed to open training data '%s",
-            StringValuePtr(data));
+        fatal("failed to train model: failed to open training data '%s",
+          StringValuePtr(data));
       }
 
       model->train = rdr_readdat(model->reader, file, true);
@@ -905,23 +903,21 @@ static VALUE model_train(VALUE self, VALUE data) {
 
       break;
     default:
-      rb_raise(cNativeError,
-          "failed to train model: invalid training data type (expected instance of String or Array)");
+      fatal("failed to train model: invalid training data type (expected instance of String or Array)");
   }
 
   qrk_lock(model->reader->lbl, true);
   qrk_lock(model->reader->obs, true);
 
   if (!model->train || model->train->nseq == 0) {
-    rb_raise(cNativeError, "failed to train model: no training data loaded");
+    fatal("failed to train model: no training data loaded");
   }
 
   // If present, load the development set in the model. If not specified,
   // the training dataset will be used instead.
   if (model->opt->devel) {
     if (!(file = fopen(model->opt->devel, "r"))) {
-      rb_raise(cNativeError,
-          "failed to train model: cannot open development file '%s'",
+      fatal("failed to train model: cannot open development file '%s'",
           model->opt->devel);
     }
 
@@ -1112,7 +1108,7 @@ static VALUE decode_sequence_file(VALUE self, VALUE path) {
   FILE *file;
 
   if (!(file = fopen(StringValueCStr(path), "r"))) {
-    rb_raise(cNativeError, "failed to label data: could not open file '%s'", StringValueCStr(path));
+    fatal("failed to label data: could not open file '%s'", StringValueCStr(path));
   }
 
   mdl_t *model = get_model(self);
@@ -1153,7 +1149,7 @@ static VALUE model_label(VALUE self, VALUE data) {
       result = decode_sequence_array(self, data);
       break;
     default:
-      rb_raise(cNativeError, "failed to label data: invalid data (expected type String or Array)");
+      fatal("failed to label data: invalid data (expected type String or Array)");
   }
 
   return result;

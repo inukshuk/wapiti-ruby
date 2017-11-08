@@ -35,7 +35,9 @@
 #define unused(v) ((void)(v))
 #define none ((uint64_t)-1)
 
+#undef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
+#undef max
 #define max(a, b) ((a) < (b) ? (b) : (a))
 
 void fatal(const char *msg, ...);

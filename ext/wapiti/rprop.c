@@ -176,7 +176,7 @@ void trn_rprop(mdl_t *mdl) {
 		for (uint64_t i = 0; i < nftr; i++) {
 			uint64_t f;
 			double vxp, vstp, vgp;
-			if (fscanf(file, "%"PRIu64" %la %la %la\n", &f, &vxp,
+			if (fscanf(file, "%"PRIu64" %le %le %le\n", &f, &vxp,
 					&vstp, &vgp) != 4)
 				fatal(err);
 			if (wbt && !cut) xp[f] = vxp;
@@ -216,7 +216,7 @@ void trn_rprop(mdl_t *mdl) {
 			double vxp = xp != NULL ? xp[f] : 0.0;
 			double vstp = stp[f], vgp = gp[f];
 			fprintf(file, "%"PRIu64" ", f);
-			fprintf(file, "%la %la %la\n", vxp, vstp, vgp);
+			fprintf(file, "%le %le %le\n", vxp, vstp, vgp);
 		}
 		fclose(file);
 	}

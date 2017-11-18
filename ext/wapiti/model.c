@@ -271,7 +271,7 @@ void mdl_save(mdl_t *mdl, FILE *file) {
 	rdr_save(mdl->reader, file);
 	for (uint64_t f = 0; f < mdl->nftr; f++)
 		if (mdl->theta[f] != 0.0)
-			fprintf(file, "%"PRIu64"=%la\n", f, mdl->theta[f]);
+			fprintf(file, "%"PRIu64"=%le\n", f, mdl->theta[f]);
 }
 
 /* mdl_load:
@@ -297,7 +297,7 @@ void mdl_load(mdl_t *mdl, FILE *file) {
 	for (uint64_t i = 0; i < nact; i++) {
 		uint64_t f;
 		double v;
-		if (fscanf(file, "%"SCNu64"=%la\n", &f, &v) != 2)
+		if (fscanf(file, "%"SCNu64"=%le\n", &f, &v) != 2)
 			fatal(err);
 		mdl->theta[f] = v;
 	}

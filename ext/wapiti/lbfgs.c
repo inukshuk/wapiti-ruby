@@ -104,12 +104,12 @@ void trn_lbfgs(mdl_t *mdl) {
 			uint64_t f;
 			if (fscanf(file, "%"PRIu64, &f) != 1)
 				fatal("1 %s", err);
-			if (fscanf(file, "%la %la", &xp[f], &gp[f]) != 2)
+			if (fscanf(file, "%le %le", &xp[f], &gp[f]) != 2)
 				fatal("2 %s", err);
 			for (uint32_t m = 0; m < M; m++) {
-				if (fscanf(file, "%la", &s[m][f]) != 1)
+				if (fscanf(file, "%le", &s[m][f]) != 1)
 					fatal("3 %s", err);
-				if (fscanf(file, "%la", &y[m][f]) != 1)
+				if (fscanf(file, "%le", &y[m][f]) != 1)
 					fatal("4 %s", err);
 			}
 		}
@@ -314,9 +314,9 @@ void trn_lbfgs(mdl_t *mdl) {
 		fprintf(file, "#state#0#%"PRIu32"#%"PRIu64"\n", M, F);
 		for (uint64_t f = 0; f < F; f++) {
 			fprintf(file, "%"PRIu64, f);
-			fprintf(file, " %la %la", xp[f], gp[f]);
+			fprintf(file, " %le %le", xp[f], gp[f]);
 			for (uint32_t m = 0; m < M; m++)
-				fprintf(file, " %la %la", s[m][f], y[m][f]);
+				fprintf(file, " %le %le", s[m][f], y[m][f]);
 			fprintf(file, "\n");
 		}
 		fclose(file);

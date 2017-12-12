@@ -63,7 +63,7 @@
  *   formating than the printf family and exit program with an error. We let the
  *   OS care about freeing ressources.
  */
-void fatal(const char *msg, ...) {
+__attribute__((noreturn)) void fatal(const char *msg, ...) {
 	va_list args;
 	va_start(args, msg);
 
@@ -79,7 +79,7 @@ void fatal(const char *msg, ...) {
  *   must be carefull to not call other functino that might reset it before
  *   calling pfatal.
  */
-void pfatal(const char *msg, ...) {
+__attribute__((noreturn)) void pfatal(const char *msg, ...) {
 	// const char *err = strerror(errno);
 	va_list args;
 	va_start(args, msg);

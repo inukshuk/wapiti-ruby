@@ -829,7 +829,7 @@ static dat_t *to_dat(rdr_t *reader, VALUE data, bool labelled) {
 
 static dat_t *ld_dat(rdr_t *reader, VALUE data, bool labelled) {
   FILE *file;
-  dat_t *dat;
+  dat_t *dat = (dat_t*)0;
 
   switch (TYPE(data)) {
     case T_STRING:
@@ -1112,7 +1112,7 @@ static VALUE decode_sequence_file(VALUE self, VALUE path) {
 //   m.label(filename, options = {}) # => array of labelled tokens
 //
 static VALUE model_label(VALUE self, VALUE data) {
-  VALUE result;
+  VALUE result = (VALUE)0;
 
   switch (TYPE(data)) {
     case T_STRING:
@@ -1135,7 +1135,6 @@ static void Init_model() {
   rb_define_method(cModel, "initialize", initialize_model, -1);
 
   rb_define_attr(cModel, "options", 1, 0);
-
 
   rb_define_method(cModel, "nlbl", model_nlbl, 0);
   rb_define_method(cModel, "labels", model_labels, 0);

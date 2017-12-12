@@ -25,7 +25,6 @@ module Wapiti
     end
 
     attr_accessor :path
-
     attr_reader :token_count, :token_errors, :sequence_count, :sequence_errors
 
     def pattern
@@ -44,6 +43,14 @@ module Wapiti
       else
         native_label(input)
       end
+    end
+
+    def check(input)
+      original = options.check
+      options.check = true
+      label(input)
+    ensure
+      options.check = original
     end
 
     alias native_train train

@@ -50,7 +50,7 @@ begin
   task :test_with_coveralls => [:compile, :spec, 'coveralls:push']
 rescue LoadError
   # ignore
-end
+end if ENV['CI']
 
 task :default => [:compile, :spec]
 

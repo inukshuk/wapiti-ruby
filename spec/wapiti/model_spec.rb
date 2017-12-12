@@ -94,20 +94,25 @@ module Wapiti
     end
 
     describe '#train' do
-      let(:model) {
-        Model.new(
-          :pattern => File.expand_path('../../fixtures/pattern.txt', __FILE__)
-        )
+      let(:training_data) {
+        File.expand_path('../../fixtures/train.txt', __FILE__)
       }
-      let(:data) { File.expand_path('../../fixtures/train.txt', __FILE__) }
+
+      let(:pattern) {
+        File.expand_path('../../fixtures/pattern.txt', __FILE__)
+      }
+
+      let(:model) {
+        Model.new(:pattern => pattern)
+      }
 
       it 'accepts a filename as input' do
-        expect(model.train(data).nlbl).to eq(6)
+        expect(model.train(training_data).nlbl).to eq(6)
       end
 
       it 'accepts a data array' do
         # sequence = []
-        # File.open(data).each_line do |line|
+        # File.open(training_data).each_line do |line|
         #
         # end
         #
@@ -117,7 +122,7 @@ module Wapiti
       context 'when called without a pattern' do
         it 'fails because of wapiti' do
           expect {
-            expect(Model.new.train(data).nlbl).to eq(6)
+            expect(Model.new.train(training_data).nlbl).to eq(6)
           }.to raise_error(NativeError)
         end
       end
@@ -127,14 +132,10 @@ module Wapiti
     describe '#statistics' do
       context 'given an empty model' do
         it 'returns zeroes' do
-          s = Model.new.statistics
-
-          expect(s[:sequences][:total]).to eq(0)
-          expect(s[:sequences][:errors]).to eq(0)
-          expect(s[:sequences][:rate]).to eq(0)
-          expect(s[:tokens][:total]).to eq(0)
-          expect(s[:tokens][:errors]).to eq(0)
-          expect(s[:tokens][:rate]).to eq(0)
+          expect(Model.new.stats).to eq({
+            :token => { :count => 0, :errors => 0, :rate => 0 },
+            :sequence => { :count => 0, :errors => 0, :rate => 0 }
+          })
         end
       end
 
@@ -143,23 +144,21 @@ module Wapiti
         let(:input) { [['Héllo NN B-VP', ', , O', 'world NN B-NP', '! ! O']] }
 
         it 'returns token and sequcence counts and errors' do
-          expect(model.statistics[:tokens][:total]).to eq(0)
+          expect(model.token_count).to eq(0)
           model.label input
-          expect(model.statistics[:tokens][:total]).to eq(0)
+          expect(model.token_count).to eq(0)
 
           model.options.check = true
           model.label input
 
-          expect(model.statistics[:tokens][:total]).to eq(input.map(&:length).reduce(&:+))
-          expect(model.statistics[:sequences][:total]).to eq(input.length)
+          expect(model.token_count).to eq(input.map(&:length).reduce(&:+))
+          expect(model.sequence_count).to eq(input.length)
         end
       end
     end
 
     describe '#label' do
-
       context 'given an empty model' do
-
       end
 
       context 'given a trained model' do

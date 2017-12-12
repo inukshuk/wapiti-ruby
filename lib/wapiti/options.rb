@@ -1,28 +1,45 @@
 module Wapiti
   class Options
-
     include Comparable
 
-    class << self
+    @attribute_names = %w{
+      algorithm
+      check
+      compact
+      compress
+      convergence_window
+      jobsize
+      max_iterations
+      maxent
+      pattern
+      posterior
+      rho1
+      rho2
+      score
+      skip_tokens
+      sparse
+      stop_epsilon
+      stop_window
+      threads
+    }.map(&:to_sym).freeze
 
-      # Returns a sorted list of available option attributes.
-      def attribute_names
-        @attribute_names ||= %w{ stop_window convergence_window posterior
-          max_iterations jobsize threads rho1 rho2 stop_epsilon score check
-          algorithm pattern development_data maxent compact sparse skip_tokens
-          compress }.sort.map(&:to_sym).freeze
-      end
+    @algorithms = %w{
+      auto
+      bcd
+      l-bfgs
+      rprop
+      rprop+
+      rprop-
+      sgd-l1
+    }.freeze
+
+    class << self
+      attr_reader :attribute_names, :algorithms
 
       # Returns the default options.
       def defaults
         @defaults ||= new.attributes
       end
-
-      # Returns the list of supported algorithm options.
-      def algorithms
-        @algorithms ||= %w{ l-bfgs sgd-l1 bcd rprop rprop+ rprop- auto }.freeze
-      end
-
     end
 
     attr_accessor :compress
@@ -44,7 +61,7 @@ module Wapiti
 
     # Updates all the attributes from the passed-in hash.
     def update(attributes = {})
-      attributes.each_pair do |k,v|
+      attributes.each_pair do |k, v|
         mid = "#{k}="
         send(mid, v) if respond_to?(mid)
       end
@@ -54,27 +71,24 @@ module Wapiti
     alias update_attributes update
 
     def lbfgs
-      { :clip => clip, :histsz => histsz, :maxls => maxls }
+      attributes(:clip, :histsz, :maxls)
     end
 
     def sgdl1
-      { :eta0 => eta0, :alpha => alpha }
+      attributes(:eta0, :alpha)
     end
 
     def bcd
-      { :kappa => kappa }
+      attributes(:kappa)
     end
 
     def rprop
-      {
-        :stpmin => stpmin, :stpmax => stpmax, :stpinc => stpinc,
-        :stpdec => stpdec, :cutoff => cutoff
-      }
+      attributes(:stpmin, :stpmax, :stpinc, :stpdec, :cutoff)
     end
 
-    # Returns a hash of all the attributes with their names and values.
-    def attributes
-      Hash[*Options.attribute_names.map { |a| [a, send(a)] }.flatten]
+    # Returns a hash of the given attributes with their names and values.
+    def attributes(attrs = Options.attribute_names)
+      Hash[*attrs.map { |a| [a, send(a)] }.flatten]
     end
 
     alias to_hash attributes
@@ -118,7 +132,5 @@ module Wapiti
     def <=>(other)
       other.respond_to?(:attributes) ? attributes <=> other.attributes : nil
     end
-
   end
-
 end

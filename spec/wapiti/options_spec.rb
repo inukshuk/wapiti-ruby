@@ -166,7 +166,7 @@ module Wapiti
       end
     end
 
-    %w{ pattern model algorithm devel }.each do |m|
+    %w{ pattern model algorithm }.each do |m|
       describe "##{m}" do
         it 'returns an empty string by default' do
           expect(options.send(m)).to be_a(String)

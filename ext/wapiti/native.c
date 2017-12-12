@@ -77,7 +77,6 @@ static void mark_options(opt_t* options __attribute__((__unused__))) {
 }
 
 static void deallocate_options(opt_t* options) {
-
   // free string options
   if (options->input) { free(options->input); }
   if (options->output) { free(options->output); }
@@ -448,18 +447,6 @@ static VALUE options_set_algorithm(VALUE self, VALUE rb_string) {
   return rb_string;
 }
 
-static VALUE options_development_data(VALUE self) {
-  char *development_data = get_options(self)->devel;
-  return rb_str_new2(development_data ? development_data : "");
-}
-
-static VALUE options_set_development_data(VALUE self, VALUE rb_string) {
-  opt_t *options = get_options(self);
-  copy_string(&(options->devel), rb_string);
-
-  return rb_string;
-}
-
 
 void Init_options() {
   cOptions = rb_define_class_under(mWapiti, "Options", rb_cObject);
@@ -565,12 +552,6 @@ void Init_options() {
 
   rb_define_alias(cOptions, "algo", "algorithm");
   rb_define_alias(cOptions, "algo=", "algorithm=");
-
-  rb_define_method(cOptions, "development_data", options_development_data, 0);
-  rb_define_method(cOptions, "development_data=", options_set_development_data, 1);
-
-  rb_define_alias(cOptions, "devel", "development_data");
-  rb_define_alias(cOptions, "devel=", "development_data=");
 
   rb_define_method(cOptions, "clip", options_clip, 0);
   rb_define_method(cOptions, "clip=", options_set_clip, 1);
@@ -694,7 +675,7 @@ static VALUE initialize_model(int argc, VALUE *argv, VALUE self) {
   }
 
   // initialize counters
-  rb_funcall(self, rb_intern("clear_counters"), 0);
+  rb_funcall(self, rb_intern("reset_counters"), 0);
 
   return self;
 }
@@ -846,9 +827,34 @@ static dat_t *to_dat(rdr_t *reader, VALUE data, bool labelled) {
   return dat;
 }
 
+static dat_t *ld_dat(rdr_t *reader, VALUE data, bool labelled) {
+  FILE *file;
+  dat_t *dat;
 
-static VALUE model_train(VALUE self, VALUE data) {
+  switch (TYPE(data)) {
+    case T_STRING:
+      if (!(file = fopen(StringValuePtr(data), "r"))) {
+        fatal("failed to open data file '%s'", StringValuePtr(data));
+      }
 
+      dat = rdr_readdat(reader, file, labelled);
+      fclose(file);
+      break;
+
+    case T_ARRAY:
+      dat = to_dat(reader, data, labelled);
+      break;
+
+    default:
+      fatal("invalid data type (expected instance of String or Array)");
+  }
+
+  return dat;
+}
+
+
+
+static VALUE model_train(VALUE self, VALUE train, VALUE devel) {
   mdl_t* model = get_model(self);
 
   uint32_t trn;
@@ -882,25 +888,7 @@ static VALUE model_train(VALUE self, VALUE data) {
   // Load the training data. When this is done we lock the quarks as we
   // don't want to put in the model, informations present only in the
   // development set.
-
-  switch (TYPE(data)) {
-    case T_STRING:
-      if (!(file = fopen(StringValuePtr(data), "r"))) {
-        fatal("failed to train model: failed to open training data '%s",
-          StringValuePtr(data));
-      }
-
-      model->train = rdr_readdat(model->reader, file, true);
-      fclose(file);
-
-      break;
-    case T_ARRAY:
-      model->train = to_dat(model->reader, data, true);
-
-      break;
-    default:
-      fatal("failed to train model: invalid training data type (expected instance of String or Array)");
-  }
+  model->train = ld_dat(model->reader, train, true);
 
   qrk_lock(model->reader->lbl, true);
   qrk_lock(model->reader->obs, true);
@@ -911,14 +899,8 @@ static VALUE model_train(VALUE self, VALUE data) {
 
   // If present, load the development set in the model. If not specified,
   // the training dataset will be used instead.
-  if (model->opt->devel) {
-    if (!(file = fopen(model->opt->devel, "r"))) {
-      fatal("failed to train model: cannot open development file '%s'",
-          model->opt->devel);
-    }
-
-    model->devel = rdr_readdat(model->reader, file, true);
-    fclose(file);
+  if (TYPE(devel) != T_NIL) {
+    model->devel = ld_dat(model->reader, devel, true);
   }
 
   // Initialize the model. If a previous model was loaded, this will be
@@ -999,7 +981,6 @@ static VALUE decode_sequence(VALUE self, mdl_t *model, raw_t *raw) {
     }
 
     for (n = 0; n < N; ++n) {
-
       uint64_t lbl = out[t * N + n];
       rb_ary_push(tokens, rb_str_new2(qrk_id2str(lbls, lbl)));
 
@@ -1017,9 +998,7 @@ static VALUE decode_sequence(VALUE self, mdl_t *model, raw_t *raw) {
 
     rb_ary_push(sequence, tokens);
 
-
     // TODO output sequence score: scs[n] (float)
-
   }
 
   // Statistics
@@ -1050,9 +1029,7 @@ static VALUE decode_sequence(VALUE self, mdl_t *model, raw_t *raw) {
 
     serr = FIX2INT(rb_ivar_get(self, rb_intern("@sequence_errors")));
     rb_ivar_set(self, rb_intern("@sequence_errors"), INT2FIX(serr + err));
-
   }
-
 
   // Cleanup memory used for this sequence
   xfree(scs);
@@ -1130,7 +1107,7 @@ static VALUE decode_sequence_file(VALUE self, VALUE path) {
   return result;
 }
 
-// cal-seq:
+// call-seq:
 //   m.label(tokens, options = {})  # => array of labelled tokens
 //   m.label(filename, options = {}) # => array of labelled tokens
 //
@@ -1174,7 +1151,7 @@ static void Init_model() {
   rb_define_method(cModel, "save", model_save, -1);
   rb_define_method(cModel, "load", model_load, -1);
 
-  rb_define_method(cModel, "train", model_train, 1);
+  rb_define_method(cModel, "train", model_train, 2);
   rb_define_method(cModel, "label", model_label, 1);
 }
 

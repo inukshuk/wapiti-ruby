@@ -1,31 +1,27 @@
 module Wapiti
-
   class Model
 
     class << self
+      def train(training_data, options = {}, &block)
+        development_data =
+          options.delete(:development_data) ||
+          options.delete(:data)
 
-      def train(data, options, &block)
         config = Options.new(options, &block)
 
-        # check configuration
-        # if config.pattern.empty?
-        #   raise ConfigurationError, 'invalid options: no pattern specified'
-        # end
-
         unless config.valid?
-          raise ConfigurationError, "invalid options: #{ config.validate.join('; ') }"
+          raise ConfigurationError,
+            "invalid options: #{config.validate.join('; ')}"
         end
 
-        new(config).train(data)
+        new(config).train(training_data, development_data)
       end
 
       def load(filename)
-        m = new
-        m.path = filename
-        m.load
-        m
+        model = new
+        model.path = filename
+        model.load
       end
-
     end
 
     attr_accessor :path
@@ -42,37 +38,50 @@ module Wapiti
 
     alias native_label label
 
-    def label(input, opts = nil)
-      options.update(opts) unless opts.nil?
-      block_given? ? native_label(input, &Proc.new) : native_label(input)
+    def label(input)
+      if block_given?
+        native_label(input, &Proc.new)
+      else
+        native_label(input)
+      end
     end
 
     alias native_train train
 
-    def train(input, opts = nil)
-      options.update(opts) unless opts.nil?
-      block_given? ? native_train(input, &Proc.new) : native_train(input)
+    def train(training_data, development_data = nil)
+      if block_given?
+        native_train(training_data, development_data, &Proc.new)
+      else
+        native_train(training_data, development_data)
+      end
     end
 
-
     def statistics
-      s = {}
-      s[:tokens] = {
-        :total => token_count, :errors => token_errors, :rate => token_error_rate
+      {
+        :token => {
+          :count => token_count,
+          :errors => token_errors,
+          :rate => token_error_rate
+        },
+        :sequence => {
+          :count => sequence_count,
+          :errors => sequence_errors,
+          :rate => sequence_error_rate
+        }
       }
-      s[:sequences] = {
-        :total => sequence_count, :errors => sequence_errors, :rate => sequence_error_rate
-      }
-      s
     end
 
     alias stats statistics
 
-    def clear_counters
-      @token_count = @token_errors = @sequence_count = @sequence_errors = 0
+    def reset_counters
+      @token_count = 0
+      @token_errors = 0
+      @sequence_count = 0
+      @sequence_errors = 0
+      self
     end
 
-    alias clear clear_counters
+    alias reset reset_counters
 
     def token_error_rate
       return 0 if token_errors.zero?
@@ -84,10 +93,6 @@ module Wapiti
       sequence_errors / sequence_count.to_f * 100.0
     end
 
-    # alias native_save save
-
     private :native_label, :native_train
-
   end
-
 end

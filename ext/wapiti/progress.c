@@ -116,7 +116,7 @@ void uit_cleanup(mdl_t *mdl) {
  *   and false if he must stop, so this is were we will implement the trainer
  *   independant stoping criterion.
  */
-bool uit_progress(mdl_t *mdl, uint32_t it, double obj) {
+bool uit_progress(mdl_t *mdl) {
 	// First we just compute the error rate on devel or train data
 	double te, se;
 	tag_eval(mdl, &te, &se);

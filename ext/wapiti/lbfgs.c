@@ -271,7 +271,7 @@ void trn_lbfgs(mdl_t *mdl) {
 			memcpy(x, xp, sizeof(double) * F);
 			break;
 		}
-		if (uit_progress(mdl, k + 1, fx) == false)
+		if (uit_progress(mdl) == false)
 			break;
 		// 3rd step: we update the history used for approximating the
 		// inverse of the diagonal of the hessian

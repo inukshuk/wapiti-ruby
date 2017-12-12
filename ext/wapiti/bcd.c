@@ -377,7 +377,7 @@ void trn_bcd(mdl_t *mdl) {
 			// And update the model
 			bcd_update(mdl, bcd, o);
 		}
-		if (!uit_progress(mdl, i, -1.0))
+		if (!uit_progress(mdl))
 			break;
 	}
 	// Cleanup memory

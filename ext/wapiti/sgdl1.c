@@ -202,7 +202,7 @@ void trn_sgdl1(mdl_t *mdl) {
 		if (uit_stop)
 			break;
 		// Repport progress back to the user
-		if (!uit_progress(mdl, k + 1, -1.0))
+		if (!uit_progress(mdl))
 			break;
 	}
 	grd_stfree(grd_st);

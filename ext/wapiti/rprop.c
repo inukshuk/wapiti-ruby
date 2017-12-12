@@ -199,11 +199,10 @@ void trn_rprop(mdl_t *mdl) {
 	// And iterate the gradient computation / weight update process until
 	// convergence or stop request
 	for (uint32_t k = 0; !uit_stop && k < K; k++) {
-		double fx = grd_gradient(grd);
 		if (uit_stop)
 			break;
 		mth_spawn((func_t *)trn_rpropsub, W, (void **)rprop, 0, 0);
-		if (uit_progress(mdl, k + 1, fx) == false)
+		if (uit_progress(mdl) == false)
 			break;
 	}
 	// Save state if user requested it

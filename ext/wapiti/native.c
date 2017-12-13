@@ -47,6 +47,21 @@ static const struct {
 };
 static const uint32_t trn_cnt = sizeof(trn_lst) / sizeof(trn_lst[0]);
 
+static FILE *ufopen(VALUE path, const char *mode) {
+  FILE *file = (FILE*)0;
+  Check_Type(path, T_STRING);
+
+  if (rb_obj_tainted(path)) {
+    fatal("failed to open file from tainted string '%s'", StringValueCStr(path));
+  }
+
+  if (!(file = fopen(StringValueCStr(path), mode))) {
+    fatal("failed to open file '%s'", StringValueCStr(path));
+  }
+
+  return file;
+}
+
 
 /* --- Options Class --- */
 
@@ -729,17 +744,13 @@ static VALUE model_save(int argc, VALUE *argv, VALUE self) {
   }
 
   // open the output file
-  FILE *file = 0;
   VALUE path = rb_ivar_get(self, rb_intern("@path"));
 
   if (NIL_P(path)) {
     fatal("failed to save model: no path given");
   }
 
-  if (!(file = fopen(StringValueCStr(path), "w"))) {
-    fatal("failed to save model: failed to open model file");
-  }
-
+  FILE *file = ufopen(path, "w");
   mdl_save(model, file);
   fclose(file);
 
@@ -761,17 +772,13 @@ static VALUE model_load(int argc, VALUE *argv, VALUE self) {
   }
 
   // open the model file
-  FILE *file = 0;
   VALUE path = rb_ivar_get(self, rb_intern("@path"));
 
   if (NIL_P(path)) {
     fatal("failed to load model: no path given");
   }
 
-  if (!(file = fopen(StringValueCStr(path), "r"))) {
-    fatal("failed to load model: failed to open model file");
-  }
-
+  FILE *file = ufopen(path, "r");
   mdl_load(model, file);
   fclose(file);
 
@@ -833,10 +840,7 @@ static dat_t *ld_dat(rdr_t *reader, VALUE data, bool labelled) {
 
   switch (TYPE(data)) {
     case T_STRING:
-      if (!(file = fopen(StringValuePtr(data), "r"))) {
-        fatal("failed to open data file '%s'", StringValuePtr(data));
-      }
-
+      file = ufopen(data, "r");
       dat = rdr_readdat(reader, file, labelled);
       fclose(file);
       break;
@@ -855,9 +859,10 @@ static dat_t *ld_dat(rdr_t *reader, VALUE data, bool labelled) {
 
 
 static VALUE model_train(VALUE self, VALUE train, VALUE devel) {
-  mdl_t* model = get_model(self);
-
+  FILE *file;
+  mdl_t *model = get_model(self);
   uint32_t trn;
+
   for (trn = 0; trn < trn_cnt; trn++) {
     if (!strcmp(model->opt->algo, trn_lst[trn].name)) break;
   }
@@ -865,8 +870,6 @@ static VALUE model_train(VALUE self, VALUE train, VALUE devel) {
   if (trn == trn_cnt) {
     fatal("failed to train model: unknown algorithm '%s'", model->opt->algo);
   }
-
-  FILE *file;
 
   // Load the pattern file. This will unlock the database if previously
   // locked by loading a model.
@@ -1077,13 +1080,7 @@ static VALUE decode_sequence_array(VALUE self, VALUE array) {
 }
 
 static VALUE decode_sequence_file(VALUE self, VALUE path) {
-  Check_Type(path, T_STRING);
-  FILE *file;
-
-  if (!(file = fopen(StringValueCStr(path), "r"))) {
-    fatal("failed to label data: could not open file '%s'", StringValueCStr(path));
-  }
-
+  FILE *file = ufopen(path, "r");
   mdl_t *model = get_model(self);
   raw_t *raw;
 

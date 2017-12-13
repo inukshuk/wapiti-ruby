@@ -1,24 +1,8 @@
-require 'logger'
 require 'tempfile'
 
 require 'wapiti/version'
-
-module Wapiti
-  Logger = ::Logger.new(STDERR)
-  Logger.level = ::Logger::INFO
-
-  class << self
-    def log
-      Logger
-    end
-
-    def debug!
-      log.level == ::Logger::DEBUG
-    end
-  end
-end
-
 require 'wapiti/errors'
+require 'wapiti/log'
 require 'wapiti/native'
 require 'wapiti/options'
 require 'wapiti/model'

@@ -1008,7 +1008,6 @@ static VALUE decode_sequence_array(VALUE self, VALUE array) {
     for (j = 0; j < k; ++j) {
       VALUE line = rb_ary_entry(sequence, j);
       Check_Type(line, T_STRING);
-
       raw->lines[j] = StringValueCStr(line);
     }
 

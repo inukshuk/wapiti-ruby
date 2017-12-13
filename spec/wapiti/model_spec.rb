@@ -104,14 +104,23 @@ module Wapiti
       end
 
       it 'accepts a data array' do
-        pending
-        seq = File
-          .open(training_data)
-          .each_line
-          .map { |line| line.split(/\s+/) }
-          .reject(&:empty?)
+        data = []
+        seq = []
 
-        expect(model.train(seq).nlbl).to eq(6)
+        File.open(training_data) do |f|
+          f.each_line do |line|
+            if line.strip.empty?
+              unless seq.empty?
+                data << seq
+                seq = []
+              end
+            else
+              seq << line
+            end
+          end
+        end
+
+        expect(model.train(data).nlbl).to eq(6)
       end
 
       context 'when called without a pattern' do

@@ -1031,7 +1031,6 @@ static VALUE decode_sequence_file(VALUE self, VALUE path) {
   // to take care of not discarding the raw input as we want to send it
   // back to the output with the additional predicted labels.
   while (!feof(file)) {
-
     // So, first read an input sequence keeping the raw_t object
     // available, and label it with Viterbi.
     if ((raw = rdr_readraw(model->reader, file)) == 0) {
@@ -1069,25 +1068,19 @@ static VALUE model_label(VALUE self, VALUE data) {
 static void Init_model() {
   cModel = rb_define_class_under(mWapiti, "Model", rb_cObject);
   rb_define_alloc_func(cModel, allocate_model);
-
-  rb_define_method(cModel, "initialize", initialize_model, -1);
-
   rb_define_attr(cModel, "options", 1, 0);
 
+  rb_define_method(cModel, "initialize", initialize_model, -1);
   rb_define_method(cModel, "nlbl", model_nlbl, 0);
   rb_define_method(cModel, "labels", model_labels, 0);
-
   rb_define_method(cModel, "nobs", model_nobs, 0);
   rb_define_alias(cModel, "observations", "nobs");
-
   rb_define_method(cModel, "nftr", model_nftr, 0);
   rb_define_alias(cModel, "features", "nftr");
-
   rb_define_method(cModel, "sync", model_sync, 0);
   rb_define_method(cModel, "compact", model_compact, 0);
   rb_define_method(cModel, "save", model_save, -1);
   rb_define_method(cModel, "load", model_load, -1);
-
   rb_define_method(cModel, "train", model_train, 2);
   rb_define_method(cModel, "label", model_label, 1);
 }
@@ -1101,6 +1094,7 @@ void Init_native() {
   cArgumentError = rb_const_get(rb_mKernel, rb_intern("ArgumentError"));
   cNativeError = rb_const_get(mWapiti, rb_intern("NativeError"));
   cLogger = rb_funcall(mWapiti, rb_intern("log"), 0);
+
   rb_define_const(mNative, "VERSION", rb_str_new2(VERSION));
 
   Init_options();

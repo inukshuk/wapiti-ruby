@@ -3,18 +3,19 @@
 module Wapiti
   describe 'Model' do
     let(:pattern) { fixture 'pattern.txt' }
+      let(:training_data) { fixture 'train.txt' }
 
     describe '.train' do
       context 'given sufficient options' do
         it 'returns a valid model instance' do
           expect(
-            Model.train(fixture('train.txt'), :pattern => pattern).labels
+            Model.train(training_data, :pattern => pattern).labels
           ).to eq((1..6).map(&:to_s))
         end
 
         it 'is also exposed as Wapiti.train' do
           expect(
-            Wapiti.train(fixture('train.txt'), :pattern => pattern).labels
+            Wapiti.train(training_data, :pattern => pattern).labels
           ).to eq((1..6).map(&:to_s))
         end
       end
@@ -46,10 +47,10 @@ module Wapiti
       end
 
       context 'when passed an options instance' do
-        let(:options) { Options.new(:threads => 42) }
+        let(:options) { Options.new(:threads => 4) }
 
         it 'should create the options from the hash' do
-          expect(Model.new(options).options[:threads]).to eq(42)
+          expect(Model.new(options).options[:threads]).to eq(4)
         end
       end
 
@@ -64,7 +65,7 @@ module Wapiti
 
       context 'when called with a block' do
         it 'should pass the options instance to the block' do
-          expect(Model.new(:threads => 42) { |o| o.threads = 23 }.options.threads).to eq(23)
+          expect(Model.new(:threads => 4) { |o| o.threads = 3 }.options.threads).to eq(3)
         end
       end
     end
@@ -95,19 +96,24 @@ module Wapiti
 
     describe '#train' do
       let(:model) { Model.new(:pattern => pattern) }
-      let(:training_data) { fixture 'train.txt' }
 
       it 'accepts a filename as input' do
         expect(model.train(training_data).nlbl).to eq(6)
       end
 
+      it 'supports multi-threading' do
+        expect(model.train(training_data, nil, :threads => 2).nlbl).to eq(6)
+      end
+
       it 'accepts a data array' do
-        # sequence = []
-        # File.open(training_data).each_line do |line|
-        #
-        # end
-        #
-        # model.train([]).nlbl.should == 6
+        pending
+        seq = File
+          .open(training_data)
+          .each_line
+          .map { |line| line.split(/\s+/) }
+          .reject(&:empty?)
+
+        expect(model.train(seq).nlbl).to eq(6)
       end
 
       context 'when called without a pattern' do

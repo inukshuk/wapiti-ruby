@@ -62,11 +62,20 @@ module Wapiti
 
     alias native_train train
 
-    def train(training_data, development_data = nil)
+    def train(training_data, development_data = nil, opts = nil)
+      unless opts.nil?
+        original_options = options.attributes(opts.keys)
+        options.update(opts)
+      end
+
       if block_given?
         native_train(training_data, development_data, &Proc.new)
       else
         native_train(training_data, development_data)
+      end
+    ensure
+      unless original_options.nil?
+        options.update(original_options)
       end
     end
 

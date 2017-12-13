@@ -932,10 +932,8 @@ static VALUE decode_sequence(VALUE self, mdl_t *model, raw_t *raw) {
     if (!model->opt->label) {
       VALUE token = rb_str_new2(raw->lines[t]);
 
-      #ifdef HAVE_RUBY_ENCODING_H
       int enc = rb_enc_find_index("UTF-8");
       rb_enc_associate_index(token, enc);
-      #endif
 
       rb_ary_push(tokens, token);
     }
@@ -948,7 +946,6 @@ static VALUE decode_sequence(VALUE self, mdl_t *model, raw_t *raw) {
       if (model->opt->outsc) {
         rb_ary_push(tokens, rb_float_new(psc[t * N + n]));
       }
-
     }
 
     // yield token/label pair to block if given

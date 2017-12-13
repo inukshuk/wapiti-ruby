@@ -37,20 +37,25 @@ module Wapiti
 
     alias native_label label
 
-    def label(input)
+    def label(input, opts = nil)
+      unless opts.nil?
+        original_options = options.attributes(opts.keys)
+        options.update(opts)
+      end
+
       if block_given?
         native_label(input, &Proc.new)
       else
         native_label(input)
       end
+    ensure
+      unless original_options.nil?
+        options.update(original_options)
+      end
     end
 
     def check(input)
-      original = options.check
-      options.check = true
-      label(input)
-    ensure
-      options.check = original
+      label input, :check => true
     end
 
     alias native_train train

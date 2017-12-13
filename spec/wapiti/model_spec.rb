@@ -139,11 +139,10 @@ module Wapiti
           model.label input
           expect(model.token_count).to eq(0)
 
-          model.options.check = true
-          model.label input
-
+          model.label input, :check => true
           expect(model.token_count).to eq(input.map(&:length).reduce(&:+))
           expect(model.sequence_count).to eq(input.length)
+          expect(model.options.check).to be(false)
         end
       end
     end

@@ -34,19 +34,6 @@ void dolabel(mdl_t *mdl);
 
 /* --- Utilities --- */
 
-static const struct {
-  const char *name;
-  void (* train)(mdl_t *mdl);
-} trn_lst[] = {
-  {"l-bfgs", trn_lbfgs},
-  {"sgd-l1", trn_sgdl1},
-  {"bcd",    trn_bcd  },
-  {"rprop",  trn_rprop},
-  {"rprop+", trn_rprop},
-  {"rprop-", trn_rprop}
-};
-static const uint32_t trn_cnt = sizeof(trn_lst) / sizeof(trn_lst[0]);
-
 static FILE *ufopen(VALUE path, const char *mode) {
   FILE *file = (FILE*)0;
   Check_Type(path, T_STRING);
@@ -56,7 +43,7 @@ static FILE *ufopen(VALUE path, const char *mode) {
   }
 
   if (!(file = fopen(StringValueCStr(path), mode))) {
-    fatal("failed to open file '%s'", StringValueCStr(path));
+    pfatal("failed to open file '%s'", StringValueCStr(path));
   }
 
   return file;
@@ -665,15 +652,13 @@ static VALUE initialize_model(int argc, VALUE *argv, VALUE self) {
   if (argc) {
     if (TYPE(argv[0]) == T_HASH) {
       options = rb_funcall(cOptions, rb_intern("new"), 1, argv[0]);
-    }
-    else {
+    } else {
       if (strncmp("Wapiti::Options", rb_obj_classname(argv[0]), 15) != 0) {
         rb_raise(cArgumentError, "argument must be a hash or an options instance");
       }
       options = argv[0];
     }
-  }
-  else {
+  } else {
     options = rb_funcall(cOptions, rb_intern("new"), 0);
   }
 
@@ -857,19 +842,10 @@ static dat_t *ld_dat(rdr_t *reader, VALUE data, bool labelled) {
 }
 
 
-
 static VALUE model_train(VALUE self, VALUE train, VALUE devel) {
   FILE *file;
   mdl_t *model = get_model(self);
-  uint32_t trn;
-
-  for (trn = 0; trn < trn_cnt; trn++) {
-    if (!strcmp(model->opt->algo, trn_lst[trn].name)) break;
-  }
-
-  if (trn == trn_cnt) {
-    fatal("failed to train model: unknown algorithm '%s'", model->opt->algo);
-  }
+  trn_t trn = trn_get(model->opt->algo);
 
   // Load the pattern file. This will unlock the database if previously
   // locked by loading a model.
@@ -877,8 +853,8 @@ static VALUE model_train(VALUE self, VALUE train, VALUE devel) {
     file = fopen(model->opt->pattern, "r");
 
     if (!file) {
-      fatal("failed to train model: failed to load pattern file '%s'",
-          model->opt->pattern);
+      pfatal("failed to train model: failed to load pattern file '%s'",
+        model->opt->pattern);
     }
 
     rdr_loadpat(model->reader, file);
@@ -913,7 +889,7 @@ static VALUE model_train(VALUE self, VALUE train, VALUE devel) {
 
   // Train the model.
   uit_setup(model);
-  trn_lst[trn].train(model);
+  trn(model);
   uit_cleanup(model);
 
   // If requested compact the model.
@@ -962,8 +938,7 @@ static VALUE decode_sequence(VALUE self, mdl_t *model, raw_t *raw) {
 
   if (N == 1) {
     tag_viterbi(model, seq, out, scs, psc);
-  }
-  else {
+  } else {
     tag_nbviterbi(model, seq, N, (void*)out, scs, (void*)psc);
   }
 
@@ -1015,8 +990,7 @@ static VALUE decode_sequence(VALUE self, mdl_t *model, raw_t *raw) {
       if (seq->pos[t].lbl != out[t * N]) {
         terr++;
         err = 1;
-      }
-      else {
+      } else {
         stat[2][out[t * N]]++;
       }
     }

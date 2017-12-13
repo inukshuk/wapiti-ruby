@@ -35,5 +35,7 @@ void trn_sgdl1(mdl_t *mdl);
 void trn_bcd(mdl_t *mdl);
 void trn_rprop(mdl_t *mdl);
 
-#endif
+typedef void (*trn_t)(mdl_t*);
+trn_t trn_get(const char *algo);
 
+#endif

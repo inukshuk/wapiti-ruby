@@ -40,10 +40,10 @@
 #undef max
 #define max(a, b) ((a) < (b) ? (b) : (a))
 
-void fatal(const char *msg, ...);
-void pfatal(const char *msg, ...);
-void warning(const char *msg, ...);
-void info(const char *msg, ...);
+void fatal(const char *fmt, ...);
+void pfatal(const char *fmt, ...);
+void warning(const char *fmt, ...);
+void info(const char *fmt, ...);
 
 void *wapiti_xmalloc(size_t size);
 void *wapiti_xrealloc(void *ptr, size_t size);

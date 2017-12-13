@@ -7,3 +7,4 @@ Gemfile.lock
 .ruby-version
 bin
 coverage
+.byebug_history

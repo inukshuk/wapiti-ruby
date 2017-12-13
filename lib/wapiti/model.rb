@@ -55,7 +55,9 @@ module Wapiti
     end
 
     def check(input)
+      reset
       label input, :check => true
+      stats
     end
 
     alias native_train train

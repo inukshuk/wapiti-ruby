@@ -11,12 +11,8 @@ codebase of [wapiti](http://wapiti.limsi.fr/).
 
 Requirements
 ------------
-Wapiti is written in C and Ruby and requires a compiler with C99
-support (e.g., gcc); on GNU/Linux systems it will be fairly easy to install
-all necessary packages through your distribution.
-
-The Wapiti Ruby gem has been confirmed to work with MRI 2.x, 1.9.x, 1.8.7,
-and Rubinius.
+Wapiti is written in C and Ruby and requires a compiler with C99 support; it has
+been confirmed to work on Linux, macOS, and Windows.
 
 Quickstart
 ----------
@@ -48,9 +44,10 @@ You can consult the `Wapiti::Options` class for a list of supported
 configuration options and algorithms:
 
     Wapiti::Options.attribute_names
-    => [:algorithm, :check, :compact, :convergence_window, :development_data,
-    :jobsize, :label, :max_iterations, :maxent, :pattern, :posterior, :rho1,
+    => [:algorithm, :check, :compact, :convergence_window, :jobsize,
+    :label, :max_iterations, :maxent, :pattern, :posterior, :rho1,
     :rho2, :score, :sparse, :stop_epsilon, :stop_window, :threads]
+
     Wapiti::Options.algorithms
     => ["l-bfgs", "sgd-l1", "bcd", "rprop", "rprop+", "rprop-", "auto"]
 
@@ -124,7 +121,6 @@ will append more label and, optionally, score values to each tuple.
 Note how we also suppressed the output of the token string using the
 *:skip_tokens* option.
 
-
 ### Statistics
 
 By setting the *:check* option you can tell Wapiti to keep statistics during
@@ -132,16 +128,18 @@ the labelling phase (for the statistics to be meaningful you obviously need
 to provide input data that is already labelled). Wapiti does not reset the
 counters during consecutive calls to `#label` to allow you to collect
 accumulative date; however, you can reset the counters at any time, by calling
-`#clear_counters`.
+`#reset_counters`.
 
 After calling `#label` with the *:check* options set and appropriately labelled
 input, you can access the statistics via `#statistics` (the individual values
 are also available through the associated attribute readers).
 
     model.label 'test.txt', :check => true
-    => {:tokens=>{:total=>1896, :errors=>137, :rate=>7.225738396624472},
-    :sequences=>{:total=>77, :errors=>50, :rate=>64.93506493506494}}
+    => {:token=>{:count=>1896, :errors=>137, :rate=>7.225738396624472},
+    :sequence=>{:count=>77, :errors=>50, :rate=>64.93506493506494}}
 
+For convenience, you can also use the `#check` method, which
+will reset the counters, check your input, and return the stats.
 
 Contributing
 ------------

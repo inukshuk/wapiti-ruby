@@ -2,25 +2,25 @@
 
 module Wapiti
   describe 'Model' do
+    let(:pattern) { fixture 'pattern.txt' }
 
     describe '.train' do
       context 'given sufficient options' do
-        let(:pattern) { File.expand_path('../../fixtures/pattern.txt', __FILE__) }
-        let(:input) { File.expand_path('../../fixtures/train.txt', __FILE__) }
-
         it 'returns a valid model instance' do
-          expect(Model.train(input, :pattern => pattern).labels).to eq((1..6).map(&:to_s))
+          expect(
+            Model.train(fixture('train.txt'), :pattern => pattern).labels
+          ).to eq((1..6).map(&:to_s))
         end
 
         it 'is also exposed as Wapiti.train' do
-          expect(Wapiti.train(input, :pattern => pattern).labels).to eq((1..6).map(&:to_s))
+          expect(
+            Wapiti.train(fixture('train.txt'), :pattern => pattern).labels
+          ).to eq((1..6).map(&:to_s))
         end
-
       end
     end
 
     describe 'initialization' do
-
       context 'when passed no arguments' do
         it 'creates a new model with default options' do
           m = Model.new
@@ -94,17 +94,8 @@ module Wapiti
     end
 
     describe '#train' do
-      let(:training_data) {
-        File.expand_path('../../fixtures/train.txt', __FILE__)
-      }
-
-      let(:pattern) {
-        File.expand_path('../../fixtures/pattern.txt', __FILE__)
-      }
-
-      let(:model) {
-        Model.new(:pattern => pattern)
-      }
+      let(:model) { Model.new(:pattern => pattern) }
+      let(:training_data) { fixture 'train.txt' }
 
       it 'accepts a filename as input' do
         expect(model.train(training_data).nlbl).to eq(6)
@@ -140,7 +131,7 @@ module Wapiti
       end
 
       context 'given a trained model' do
-        let(:model) { Wapiti.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
+        let(:model) { Wapiti.load(fixture('ch.mod')) }
         let(:input) { [['Héllo NN B-VP', ', , O', 'world NN B-NP', '! ! O']] }
 
         it 'returns token and sequcence counts and errors' do
@@ -162,7 +153,7 @@ module Wapiti
       end
 
       context 'given a trained model' do
-        let(:model) { Wapiti.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
+        let(:model) { Wapiti.load(fixture('ch.mod')) }
 
         context 'when passed an array of arrays' do
           let(:input) { [['Héllo NN B-VP', ', , O', 'world NN B-NP', '! ! O']] }
@@ -195,12 +186,11 @@ module Wapiti
               model.label(input)[0][-1][1,2] == %w{ O O }
             end
           end
-
         end
 
 
         context 'when passed a filename' do
-          let(:input) { File.expand_path('../../fixtures/chtest.txt', __FILE__) }
+          let(:input) { fixture('chtest.txt') }
 
           it 'returns an array of token-label pairs' do
             labels = model.label(input)
@@ -208,9 +198,7 @@ module Wapiti
             expect(labels[0].take(5).map(&:last)).to eq(%w{ B-NP B-PP B-NP I-NP B-VP })
           end
         end
-
       end
-
     end
 
     describe '#labels' do
@@ -219,14 +207,12 @@ module Wapiti
       end
 
       context 'given a trained model' do
-        let(:model) { Model.load(File.expand_path('../../fixtures/ch.mod', __FILE__)) }
+        let(:model) { Model.load(fixture('ch.mod')) }
 
         it 'returns a list of all known labels' do
           expect(model.labels.size).to eq(model.nlbl)
         end
       end
     end
-
-
   end
 end

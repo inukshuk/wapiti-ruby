@@ -35,7 +35,15 @@ RSpec::Matchers.define :be_valid_model_file do
   end
 end
 
+module Fixtures
+  FIXTURES = File.expand_path('../fixtures', __FILE__).untaint
 
-RSpec.configure do |c|
-  c.include(FileUtils)
+  def fixture(name)
+    File.join FIXTURES, name
+  end
+end
+
+RSpec.configure do |config|
+  config.include(FileUtils)
+  config.include(Fixtures)
 end

@@ -63,13 +63,13 @@
  *   formating than the printf family and exit program with an error. We let the
  *   OS care about freeing ressources.
  */
-__attribute__((noreturn)) void fatal(const char *msg, ...) {
+__attribute__((noreturn)) void fatal(const char *fmt, ...) {
+  VALUE msg;
 	va_list args;
-	va_start(args, msg);
-
-	rb_raise(cNativeError, msg, args);
-
+	va_start(args, fmt);
+  msg = rb_vsprintf(fmt, args);
 	va_end(args);
+	rb_raise(cNativeError, StringValueCStr(msg));
 }
 
 /* pfatal:
@@ -79,17 +79,15 @@ __attribute__((noreturn)) void fatal(const char *msg, ...) {
  *   must be carefull to not call other functino that might reset it before
  *   calling pfatal.
  */
-__attribute__((noreturn)) void pfatal(const char *msg, ...) {
-	// const char *err = strerror(errno);
+__attribute__((noreturn)) void pfatal(const char *fmt, ...) {
+	const char *err = strerror(errno);
+  VALUE msg;
 	va_list args;
-	va_start(args, msg);
-
-	// VALUE message = rb_vsprintf(msg, args);
-	// rb_str_catf(message, ": <%s>", err);
-	rb_raise(cNativeError, msg, args);
-
+	va_start(args, fmt);
+  msg = rb_vsprintf(fmt, args);
 	va_end(args);
-
+	rb_str_catf(msg, ": %s", err);
+	rb_raise(cNativeError, StringValueCStr(msg));
 }
 
 /* warning:
@@ -97,14 +95,13 @@ __attribute__((noreturn)) void pfatal(const char *msg, ...) {
  *   exit the program. It is intended to inform the user that something strange
  *   have happen and the result might be not what it have expected.
  */
-void warning(const char *msg, ...) {
+void warning(const char *fmt, ...) {
+  VALUE msg;
 	va_list args;
-	va_start(args, msg);
-
-	// (void)rb_funcall(cLogger, rb_intern("warn"), 1, rb_vsprintf(msg, args));
-	(void)rb_funcall(cLogger, rb_intern("warn"), 1, rb_str_new2(msg));
-
+	va_start(args, fmt);
+  msg = rb_vsprintf(fmt, args);
 	va_end(args);
+	(void)rb_funcall(cLogger, rb_intern("warn"), 1, msg);
 }
 
 /* info:
@@ -113,14 +110,13 @@ void warning(const char *msg, ...) {
  *   just a wrapper for printf to stderr. Note that unlike the previous one,
  *   this function doesn't automatically append a new line character.
  */
-void info(const char *msg, ...) {
+void info(const char *fmt, ...) {
+  VALUE msg;
 	va_list args;
-	va_start(args, msg);
-
-	// (void)rb_funcall(cLogger, rb_intern("info"), 1, rb_vsprintf(msg, args));
-	(void)rb_funcall(cLogger, rb_intern("info"), 1, rb_str_new2(msg));
-
+	va_start(args, fmt);
+  msg = rb_vsprintf(fmt, args);
 	va_end(args);
+	(void)rb_funcall(cLogger, rb_intern("info"), 1, msg);
 }
 
 /*  wapiti_xmalloc:

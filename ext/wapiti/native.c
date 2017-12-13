@@ -10,27 +10,15 @@
 #include "quark.h"
 #include "tools.h"
 #include "wapiti.h"
-
 #include "native.h"
 
 VALUE mWapiti;
 VALUE mNative;
-
 VALUE cOptions;
 VALUE cModel;
-
 VALUE cArgumentError;
 VALUE cNativeError;
-VALUE cConfigurationError;
 VALUE cLogger;
-
-
-/* --- Forward declarations --- */
-
-int wapiti_main(int argc, char *argv[argc]);
-
-void dolabel(mdl_t *mdl);
-
 
 /* --- Options Class --- */
 
@@ -1104,88 +1092,6 @@ static void Init_model() {
   rb_define_method(cModel, "label", model_label, 1);
 }
 
-/* --- Top-Level Utility Methods --- */
-
-
-static VALUE label(VALUE self __attribute__((__unused__)), VALUE rb_options) {
-  if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
-    rb_raise(cArgumentError, "argument must be a native options instance");
-  }
-
-  opt_t *options = get_options(rb_options);
-
-  if (options->mode != 1) {
-    rb_raise(cArgumentError,
-      "invalid options argument: mode should be set to 1 for labelling");
-  }
-
-  mdl_t *model = mdl_new(rdr_new(options->maxent));
-  model->opt = options;
-
-  dolabel(model);
-
-  mdl_free(model);
-
-  return Qnil;
-}
-
-#if defined EXTRA
-static VALUE dump(VALUE self __attribute__((__unused__)), VALUE rb_options) {
-  if (strncmp("Wapiti::Options", rb_obj_classname(rb_options), 15) != 0) {
-    rb_raise(cArgumentError, "argument must be a native options instance");
-  }
-
-  opt_t *options = get_options(rb_options);
-
-  if (options->mode != 2) {
-    rb_raise(cArgumentError,
-        "invalid options argument: mode should be set to 2 for training");
-  }
-
-  mdl_t *model = mdl_new(rdr_new(options->maxent));
-  model->opt = options;
-
-  dodump(model);
-
-  mdl_free(model);
-
-  return Qnil;
-}
-
-// This function is a proxy for Wapiti's main entry point.
-static VALUE wapiti(VALUE self __attribute__((__unused__)), VALUE arguments) {
-  int result = -1, argc = 0;
-  char **ap, *argv[18], *input, *tmp;
-
-  Check_Type(arguments, T_STRING);
-  tmp = StringValueCStr(arguments);
-
-  // allocate space for argument vector
-  input = (char*)malloc(strlen(tmp) + 8);
-
-  // prepend command name
-  strncpy(input, "wapiti ", 8);
-  strncat(input, tmp, strlen(input) - 8);
-
-  // remember allocation pointer
-  tmp = input;
-
-  // turn input string into argument vector (using
-  // only the first seventeen tokens from input)
-  for (ap = argv; (*ap = strsep(&input, " \t")) != (char*)0; ++argc) {
-    if ((**ap != '\0') && (++ap >= &argv[18])) break;
-  }
-
-  // call main entry point
-  result = wapiti_main(argc, argv);
-
-  // free allocated memory
-  free(tmp);
-
-  return INT2FIX(result);
-}
-#endif
-
 /* --- Wapiti Extension Entry Point --- */
 
 void Init_native() {
@@ -1194,12 +1100,7 @@ void Init_native() {
 
   cArgumentError = rb_const_get(rb_mKernel, rb_intern("ArgumentError"));
   cNativeError = rb_const_get(mWapiti, rb_intern("NativeError"));
-  cConfigurationError = rb_const_get(mWapiti, rb_intern("ConfigurationError"));
   cLogger = rb_funcall(mWapiti, rb_intern("log"), 0);
-
-  rb_define_singleton_method(mNative, "label", label, 1);
-  // rb_define_singleton_method(mNative, "wapiti", wapiti, 1);
-
   rb_define_const(mNative, "VERSION", rb_str_new2(VERSION));
 
   Init_options();

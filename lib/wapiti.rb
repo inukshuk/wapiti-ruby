@@ -1,13 +1,11 @@
-
 require 'logger'
 require 'tempfile'
 
 require 'wapiti/version'
 
 module Wapiti
-
-  Logger = ::Logger.new(STDOUT)
-  Logger.level = ::Logger::WARN
+  Logger = ::Logger.new(STDERR)
+  Logger.level = ::Logger::INFO
 
   class << self
     def log
@@ -18,13 +16,10 @@ module Wapiti
       log.level == ::Logger::DEBUG
     end
   end
-
 end
 
 require 'wapiti/errors'
 require 'wapiti/native'
-
 require 'wapiti/options'
 require 'wapiti/model'
-
 require 'wapiti/utility'

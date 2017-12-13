@@ -1,3 +1,11 @@
+1.0.0 / 2017-12-xx
+==================
+* Added support for Windows platform
+* Open files only if names are untainted
+* Finalized API
+* Fixed error reporting
+* Removed progress logging
+
 0.1.1 / 2014-02-27
 ==================
 * Updated train routine

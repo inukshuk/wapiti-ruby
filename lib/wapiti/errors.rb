@@ -1,7 +1,5 @@
 module Wapiti
-
   class Error < StandardError
-
     attr_accessor :original
 
     def initialize(message = '', original = $!)
@@ -12,6 +10,4 @@ module Wapiti
   end
 
   class NativeError < Error; end
-  class ConfigurationError < Error; end
-
 end

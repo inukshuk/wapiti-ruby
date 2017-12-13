@@ -65,6 +65,10 @@ module Wapiti
         mid = "#{k}="
         send(mid, v) if respond_to?(mid)
       end
+
+      errors = validate
+      raise ArgumentError, errors.join('; ') unless errors.empty?
+
       self
     end
 

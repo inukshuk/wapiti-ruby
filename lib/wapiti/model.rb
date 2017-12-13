@@ -1,6 +1,5 @@
 module Wapiti
   class Model
-
     class << self
       def train(training_data, options = {}, &block)
         development_data =
@@ -8,12 +7,6 @@ module Wapiti
           options.delete(:data)
 
         config = Options.new(options, &block)
-
-        unless config.valid?
-          raise ConfigurationError,
-            "invalid options: #{config.validate.join('; ')}"
-        end
-
         new(config).train(training_data, development_data)
       end
 

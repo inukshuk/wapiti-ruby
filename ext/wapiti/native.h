@@ -6,10 +6,8 @@
 
 extern VALUE mWapiti;
 extern VALUE mNative;
-
 extern VALUE cOptions;
 extern VALUE cModel;
-
 extern VALUE cNativeError;
 extern VALUE cLogger;
 

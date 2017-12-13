@@ -39,10 +39,8 @@ module Wapiti
       end
 
       context 'when passed a hash' do
-        let(:options) { { :threads => 42 } }
-
-        it 'should create the options from the hash' do
-          expect(Model.new(options).options[:threads]).to eq(42)
+        it 'creates the options from the hash' do
+          expect(Model.new(:threads => 4).options.threads).to eq(4)
         end
       end
 

@@ -31,6 +31,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <ruby.h>
 
 #define unused(v) ((void)(v))
 #define none ((uint64_t)-1)
@@ -39,6 +40,8 @@
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #undef max
 #define max(a, b) ((a) < (b) ? (b) : (a))
+
+FILE *ufopen(VALUE path, const char *mode);
 
 void fatal(const char *fmt, ...);
 void pfatal(const char *fmt, ...);

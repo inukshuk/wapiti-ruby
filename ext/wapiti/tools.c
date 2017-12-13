@@ -26,13 +26,11 @@
  */
 
 #include <errno.h>
-#include <stdarg.h>
-#include <stddef.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "tools.h"
+#include "native.h"
 
 /*
  * Wapiti Ruby Logging
@@ -42,8 +40,20 @@
  *
  */
 
-#include "native.h"
+FILE *ufopen(VALUE path, const char *mode) {
+  FILE *file = (FILE*)0;
+  Check_Type(path, T_STRING);
 
+  if (rb_obj_tainted(path)) {
+    fatal("failed to open file from tainted string '%s'", StringValueCStr(path));
+  }
+
+  if (!(file = fopen(StringValueCStr(path), mode))) {
+    pfatal("failed to open file '%s'", StringValueCStr(path));
+  }
+
+  return file;
+}
 
 /*******************************************************************************
  * Error handling and memory managment

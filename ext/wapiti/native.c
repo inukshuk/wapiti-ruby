@@ -41,6 +41,14 @@ static void copy_string(char **dst, VALUE rb_string) {
   memcpy(*dst, StringValuePtr(rb_string), RSTRING_LEN(rb_string) + 1);
 }
 
+// Moves a string to the heap. We use this to move default
+// values to the heap during initialization.
+static char *to_heap(const char *string) {
+  char* ptr = calloc(strlen(string), sizeof(char));
+  memcpy(ptr, string, strlen(string));
+  return ptr;
+}
+
 
 // Constructor / Desctructor
 
@@ -53,6 +61,7 @@ static void deallocate_options(opt_t* options) {
   if (options->input) { free(options->input); }
   if (options->output) { free(options->output); }
   if (options->algo) { free((void*)options->algo); }
+  if (options->type) { free((void*)options->type); }
   if (options->devel) { free(options->devel); }
   if (options->pattern) { free((void*)options->pattern); }
 
@@ -73,11 +82,10 @@ static VALUE initialize_options(int argc, VALUE *argv, VALUE self) {
     options->maxiter = INT_MAX;
   }
 
-  // copy the default algorithm name to the heap so that all options strings
-  // are on the heap
-  char* tmp = calloc(strlen(options->algo), sizeof(char));
-  memcpy(tmp, options->algo, strlen(options->algo));
-  options->algo = tmp;
+  // Copy default algorithm and type name to the heap
+  // so that all options strings are on the heap.
+  options->algo = to_heap(options->algo);
+  options->type = to_heap(options->type);
 
   if (argc > 1) {
     rb_raise(cArgumentError,
@@ -403,7 +411,6 @@ static VALUE options_model(VALUE self) {
 static VALUE options_set_model(VALUE self, VALUE rb_string) {
   opt_t *options = get_options(self);
   copy_string(&(options->model), rb_string);
-
   return rb_string;
 }
 
@@ -415,7 +422,17 @@ static VALUE options_algorithm(VALUE self) {
 static VALUE options_set_algorithm(VALUE self, VALUE rb_string) {
   opt_t *options = get_options(self);
   copy_string((char**)&(options->algo), rb_string);
+  return rb_string;
+}
 
+static VALUE options_type(VALUE self) {
+  const char *type = get_options(self)->type;
+  return rb_str_new2(type ? type : "");
+}
+
+static VALUE options_set_type(VALUE self, VALUE rb_string) {
+  opt_t *options = get_options(self);
+  copy_string((char**)&(options->type), rb_string);
   return rb_string;
 }
 
@@ -524,6 +541,9 @@ void Init_options() {
 
   rb_define_alias(cOptions, "algo", "algorithm");
   rb_define_alias(cOptions, "algo=", "algorithm=");
+
+  rb_define_method(cOptions, "type", options_type, 0);
+  rb_define_method(cOptions, "type=", options_set_type, 1);
 
   rb_define_method(cOptions, "clip", options_clip, 0);
   rb_define_method(cOptions, "clip=", options_set_clip, 1);

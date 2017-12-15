@@ -21,6 +21,7 @@ module Wapiti
       stop_epsilon
       stop_window
       threads
+      type
     }.map(&:to_sym).freeze
 
     @algorithms = %w{
@@ -33,8 +34,14 @@ module Wapiti
       sgd-l1
     }.freeze
 
+    @types = %{
+      crf
+      maxent
+      memm
+    }.freeze
+
     class << self
-      attr_reader :attribute_names, :algorithms
+      attr_reader :attribute_names, :algorithms, :types
 
       # Returns the default options.
       def defaults
@@ -105,6 +112,10 @@ module Wapiti
       self.class.algorithms.include?(algorithm)
     end
 
+    def valid_type?
+      self.class.types.include?(type)
+    end
+
     def valid?
       validate.empty?
     end
@@ -120,6 +131,7 @@ module Wapiti
         e << "invalid value for #{name}: #{send(name)}" unless send(name) >= 0.0
       end
 
+      e << "unknown type: #{type}" unless valid_type?
       e << "unknown algorithm: #{algorithm}" unless valid_algorithm?
       e << "BCD not supported for training maxent models" if maxent && algorithm == 'bcd'
       e

@@ -5,41 +5,43 @@ $:.unshift lib unless $:.include?(lib)
 require 'wapiti/version'
 
 Gem::Specification.new do |s|
-  s.name        = 'wapiti'
-  s.version     = Wapiti::VERSION.dup
-  s.platform    = Gem::Platform::RUBY
-
-  s.authors     = ['Sylvester Keil']
-  s.email       = ['http://sylvester.keil.or.at']
-
-  s.homepage    = 'https://github.com/inukshuk/wapiti-ruby'
-  s.summary     = 'Wicked fast Conditional Random Fields for Ruby.'
-  s.description =
-    """
-    This gem provides a Ruby API for Conditional Random Fields (CRF).
-    """
-
-  s.license     = 'BSD-2-Clause'
-  s.date        = Time.now.strftime('%Y-%m-%d')
-
-  s.files        = `git ls-files`.split("\n") - %w{
-    vendor/wapiti
-    .coveralls.yml
-    .travis.yml
-    .gitmodules
-    .gitignore
-  }
-
-  s.test_files   = `git ls-files -- {test,spec,features}/*`.split("\n")
-
-  s.executables  = []
+  s.name         = 'wapiti'
+  s.version      = Wapiti::VERSION.dup
+  s.platform     = Gem::Platform::RUBY
+  s.authors      = ['Sylvester Keil']
+  s.email        = ['sylvester@keil.or.at']
+  s.license      = 'BSD-2-Clause'
+  s.homepage     = 'https://github.com/inukshuk/wapiti-ruby'
+  s.summary      = 'Wicked fast Conditional Random Fields for Ruby.'
+  s.description  = 'This gem provides a Ruby API for Conditional Random Fields (CRF).'
+  s.date         = Time.now.strftime('%Y-%m-%d')
   s.require_path = 'lib'
+  s.extensions   << 'ext/wapiti/extconf.rb'
 
-  s.extensions << 'ext/wapiti/extconf.rb'
+  s.files =
+    `git ls-files`.split('\n') - `git ls-files spec/*`.split('\n') - %w{
+      .coveralls.yml
+      .travis.yml
+      .gitmodules
+      .gitignore
+      .rspec
+      .simplecov
+      .travis.yml
+      Gemfile
+      Rakefile
+      appveyor.yml
+      ext/wapiti/wapiti.c
+      wapiti.gemspec
+    }
 
-  s.rdoc_options      = %w{--line-numbers --inline-source --title "Wapiti-Ruby" --main README.md --webcvs=http://github.com/inukshuk/wapiti-ruby/tree/master/}
-  s.extra_rdoc_files  = %w{README.md LICENSE}
-
+  s.rdoc_options = %w{
+    --line-numbers
+    --inline-source
+    --title "Wapiti-Ruby"
+    --main README.md
+    --webcvs=https://github.com/inukshuk/wapiti-ruby/tree/master/
+  }
+  s.extra_rdoc_files = %w{README.md HISTORY.md LICENSE}
 end
 
 # vim: syntax=ruby

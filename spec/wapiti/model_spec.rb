@@ -99,6 +99,10 @@ module Wapiti
         expect(model.train(training_data).nlbl).to eq(6)
       end
 
+      it 'supports different algorithm' do
+        expect(model.train(training_data, nil, :algorithm => 'sgd-l1').nlbl).to eq(6)
+      end
+
       it 'supports multi-threading' do
         expect(model.train(training_data, nil, :threads => 2).nlbl).to eq(6)
       end

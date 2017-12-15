@@ -104,7 +104,7 @@ void trn_sgdl1(mdl_t *mdl) {
 	// The index is a simple table indexed by sequences number. Each entry
 	// point to two lists of observations terminated by <none>, one for
 	// unigrams obss and one for bigrams obss.
-	info("    - Build the index\n");
+	info("build the index");
 	sgd_idx_t *idx  = wapiti_xmalloc(sizeof(sgd_idx_t) * S);
 	for (uint32_t s = 0; s < S; s++) {
 		const seq_t *seq = mdl->train->seq[s];
@@ -126,7 +126,7 @@ void trn_sgdl1(mdl_t *mdl) {
 		memcpy(idx[s].uobs, uobs, ucnt * sizeof(uint64_t));
 		memcpy(idx[s].bobs, bobs, bcnt * sizeof(uint64_t));
 	}
-	info("      Done\n");
+	info("indexing done");
 	// We will process sequences in random order in each iteration, so we
 	// will have to permute them. The current permutation is stored in a
 	// vector called <perm> shuffled at the start of each iteration. We

@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-
 module Wapiti
   describe 'Model' do
     let(:pattern) { fixture 'pattern.txt' }
@@ -40,12 +38,12 @@ module Wapiti
 
       context 'when passed a hash' do
         it 'creates the options from the hash' do
-          expect(Model.new(:threads => 4).options.threads).to eq(4)
+          expect(Model.new(threads: 4).options.threads).to eq(4)
         end
       end
 
       context 'when passed an options instance' do
-        let(:options) { Options.new(:threads => 4) }
+        let(:options) { Options.new(threads: 4) }
 
         it 'should create the options from the hash' do
           expect(Model.new(options).options[:threads]).to eq(4)
@@ -63,7 +61,7 @@ module Wapiti
 
       context 'when called with a block' do
         it 'should pass the options instance to the block' do
-          expect(Model.new(:threads => 4) { |o| o.threads = 3 }.options.threads).to eq(3)
+          expect(Model.new(threads: 4) { |o| o.threads = 3 }.options.threads).to eq(3)
         end
       end
     end
@@ -100,11 +98,11 @@ module Wapiti
       end
 
       it 'supports different algorithm' do
-        expect(model.train(training_data, nil, :algorithm => 'sgd-l1').nlbl).to eq(6)
+        expect(model.train(training_data, nil, algorithm: 'sgd-l1').nlbl).to eq(6)
       end
 
       it 'supports multi-threading' do
-        expect(model.train(training_data, nil, :threads => 2).nlbl).to eq(6)
+        expect(model.train(training_data, nil, threads: 2).nlbl).to eq(6)
       end
 
       it 'accepts a data array' do
@@ -141,8 +139,8 @@ module Wapiti
       context 'given an empty model' do
         it 'returns zeroes' do
           expect(Model.new.stats).to eq({
-            :token => { :count => 0, :errors => 0, :rate => 0 },
-            :sequence => { :count => 0, :errors => 0, :rate => 0 }
+            token: { count: 0, errors: 0, rate: 0 },
+            sequence: { count: 0, errors: 0, rate: 0 }
           })
         end
       end
@@ -203,7 +201,6 @@ module Wapiti
             end
           end
         end
-
 
         context 'when passed a filename' do
           let(:input) { fixture('chtest.txt') }

@@ -1,5 +1,4 @@
-require 'tempfile'
-
+require 'builder'
 require 'wapiti/version'
 require 'wapiti/errors'
 require 'wapiti/log'

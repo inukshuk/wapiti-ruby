@@ -836,10 +836,12 @@ static VALUE model_train(VALUE self, VALUE train, VALUE devel) {
   FILE *file;
   mdl_t *model = get_model(self);
   trn_t trn = trn_get(model->opt->algo);
+  model->type = typ_get(model->opt->type);
 
   // Load the pattern file. This will unlock the database if previously
   // locked by loading a model.
   if (model->opt->pattern) {
+    info("load patterns");
     file = fopen(model->opt->pattern, "r");
 
     if (!file) {
@@ -872,20 +874,30 @@ static VALUE model_train(VALUE self, VALUE train, VALUE devel) {
     model->devel = ld_dat(model->reader, devel, true);
   }
 
-  // Initialize the model. If a previous model was loaded, this will be
-  // just a resync, else the model structure will be created.
-  // rb_funcall(self, rb_intern("sync"), 0);
+	// Initialize the model. If a previous model was loaded, this will be
+	// just a resync, else the model structure will be created.
+  info((model->theta == NULL) ? "initialize model" : "re-sync model");
 	mdl_sync(model);
 
-  // Train the model.
+	info("nb train:    %"PRIu32"", model->train->nseq);
+	if (model->devel != NULL)
+		info("nb devel:    %"PRIu32"", model->devel->nseq);
+	info("nb labels:   %"PRIu32"", model->nlbl);
+	info("nb blocks:   %"PRIu64"", model->nobs);
+	info("nb features: %"PRIu64"", model->nftr);
+
+	info("training model with %s", model->opt->algo);
   uit_setup(model);
   trn(model);
   uit_cleanup(model);
 
-  // If requested compact the model.
   if (model->opt->compact) {
-    // rb_funcall(self, rb_intern("compact"), 0);
+		const uint64_t O = model->nobs;
+		const uint64_t F = model->nftr;
+		info("compacting model");
 		mdl_compact(model);
+		info("%8"PRIu64" observations removed", O - model->nobs);
+		info("%8"PRIu64" features removed", F - model->nftr);
   }
 
   return self;

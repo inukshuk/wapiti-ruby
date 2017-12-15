@@ -37,5 +37,6 @@ void trn_rprop(mdl_t *mdl);
 
 typedef void (*trn_t)(mdl_t*);
 trn_t trn_get(const char *algo);
+uint32_t typ_get(const char *type);
 
 #endif

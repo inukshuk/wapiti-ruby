@@ -1,4 +1,6 @@
 module Wapiti
+  require 'builder'
+
   class DataSet
     extend Forwardable
     include Comparable

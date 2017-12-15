@@ -27,23 +27,27 @@ module Wapiti
     end
 
     def <=>(other)
-      value.to_s <=> other.to_s
+      if other.is_a?(Token)
+        [value.to_s, label.to_s] <=> [other.value.to_s, other.label.to_s]
+      else
+        nil
+      end
     end
 
     def to_s(spacer: ' ', **options)
       to_a(**options).join(spacer)
     end
 
-    def to_a(expand: false, tag: false)
+    def to_a(expanded: false, tagged: false)
       a = [value]
 
-      if expand
+      if expanded
         raise Error,
           'cannot expand token: missing observations' unless observations?
         a.concat observations
       end
 
-      if tag
+      if tagged
         raise Error,
           'cannot tag token: missing label' unless label?
         a << label

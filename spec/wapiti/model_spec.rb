@@ -1,7 +1,7 @@
 module Wapiti
   describe 'Model' do
     let(:pattern) { fixture 'pattern.txt' }
-      let(:training_data) { fixture 'train.txt' }
+    let(:training_data) { fixture 'train.txt' }
 
     describe '.train' do
       context 'given sufficient options' do

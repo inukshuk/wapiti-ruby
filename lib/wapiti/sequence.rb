@@ -1,4 +1,6 @@
 module Wapiti
+  require 'builder'
+
   class Sequence
     extend Forwardable
     include Comparable

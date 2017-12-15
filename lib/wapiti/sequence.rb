@@ -7,7 +7,15 @@ module Wapiti
     attr_reader :tokens
     def_delegators :tokens, :[], :size
 
-    def initialize(tokens: [])
+    class << self
+      def parse(string, delimiter: /\r?\n/, **options)
+        new(string.split(delimiter).map { |token|
+          Token.parse token, **options
+        })
+      end
+    end
+
+    def initialize(tokens = [])
       @tokens = tokens
     end
 
@@ -29,17 +37,16 @@ module Wapiti
 
     alias_method :each_token, :each
 
-    def each_segment(delimiter: ' ')
+    def each_segment(spacer: ' ')
       if block_given?
-        segment
-        current
+        segment, current = nil
 
         each do |token|
           value, label = token.to_a(tag: true)
 
           if current != label
             unless segment.nil? || segment.empty?
-              yield segment.join(delimiter), current
+              yield segment.join(spacer), current
             end
 
             segment, current = [], label
@@ -58,8 +65,8 @@ module Wapiti
       map { |tk| tk.to_a(**options) }
     end
 
-    def to_s(separator: ' ', **options)
-      map { |tk| tk.to_s(**options) }.join(separator)
+    def to_s(delimiter: '\n', **options)
+      map { |tk| tk.to_s(**options) }.join(delimiter)
     end
 
     def to_h(**options)

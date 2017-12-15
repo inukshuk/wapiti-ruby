@@ -4,7 +4,17 @@ module Wapiti
 
     attr_accessor :value, :label, :observations
 
-    def initialize(value: '', label: '', observations: [])
+    class << self
+      def parse(string, spacer: /\s+/, tagged: false)
+        value, *observations = string.split(spacer)
+        new(value, {
+          label: (tagged ? observations.pop : nil).to_s,
+          observations: observations
+        })
+      end
+    end
+
+    def initialize(value = '', label: '', observations: [])
       @value, @label, @observations = value, label, observations
     end
 
@@ -20,8 +30,8 @@ module Wapiti
       value.to_s <=> other.to_s
     end
 
-    def to_s(delimiter: ' ', **options)
-      to_a(**options).join(delimiter)
+    def to_s(spacer: ' ', **options)
+      to_a(**options).join(spacer)
     end
 
     def to_a(expand: false, tag: false)

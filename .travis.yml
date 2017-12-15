@@ -7,6 +7,8 @@ matrix:
     env: WITH_COVERALLS=true
   - rvm: 2.3
     env: WITH_COVERALLS=false
+  - rvm: 2.2
+    env: WITH_COVERALLS=false
 before_install:
   - gem update --system
   - gem update bundler

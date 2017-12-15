@@ -18,6 +18,8 @@ Gem::Specification.new do |s|
   s.require_path = 'lib'
   s.extensions   << 'ext/wapiti/extconf.rb'
 
+  s.required_ruby_version = '>=2.2'
+
   s.files =
     `git ls-files`.split('\n') - `git ls-files spec/*`.split('\n') - %w{
       .coveralls.yml

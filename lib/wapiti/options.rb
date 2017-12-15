@@ -62,7 +62,9 @@ module Wapiti
     # Updates the value of the attribute identified by +name+ with the
     # passed-in +value+.
     def []=(name, value)
-      raise ArgumentError, "bad attribute name: #{name}" unless has_attribute?(name)
+      raise ArgumentError,
+        "bad attribute name: #{name}" unless has_attribute?(name)
+
       send("#{name}=", value)
     end
 
@@ -72,14 +74,15 @@ module Wapiti
         mid = "#{k}="
         send(mid, v) if respond_to?(mid)
       end
-
-      errors = validate
-      raise ArgumentError, errors.join('; ') unless errors.empty?
-
       self
     end
 
     alias update_attributes update
+
+    def update!(*args)
+      update(*args)
+      validate!
+    end
 
     def lbfgs
       attributes(:clip, :histsz, :maxls)
@@ -120,6 +123,7 @@ module Wapiti
       validate.empty?
     end
 
+
     def validate
       e = []
 
@@ -143,6 +147,11 @@ module Wapiti
         send(writer, true)
         self
       end
+    end
+
+    def validate!
+      errors = validate
+      raise ArgumentError, errors.join('; ') unless errors.empty?
     end
 
     def <=>(other)

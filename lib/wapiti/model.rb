@@ -33,7 +33,7 @@ module Wapiti
     def label(input, opts = nil)
       unless opts.nil?
         original_options = options.attributes(opts.keys)
-        options.update(opts)
+        options.update!(opts)
       end
 
       if block_given?
@@ -49,14 +49,14 @@ module Wapiti
 
     def check(input)
       reset
-      label input, :check => true
+      label input, check: true
       stats
     end
 
     alias native_train train
 
     def train(training_data, development_data = nil, opts = nil)
-      options.update(opts) unless opts.nil?
+      options.update!(opts) unless opts.nil?
 
       if block_given?
         native_train(training_data, development_data, &Proc.new)
@@ -67,15 +67,15 @@ module Wapiti
 
     def statistics
       {
-        :token => {
-          :count => token_count,
-          :errors => token_errors,
-          :rate => token_error_rate
+        token: {
+          count: token_count,
+          errors: token_errors,
+          rate: token_error_rate
         },
-        :sequence => {
-          :count => sequence_count,
-          :errors => sequence_errors,
-          :rate => sequence_error_rate
+        sequence: {
+          count: sequence_count,
+          errors: sequence_errors,
+          rate: sequence_error_rate
         }
       }
     end

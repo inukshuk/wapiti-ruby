@@ -95,7 +95,7 @@ static VALUE initialize_options(int argc, VALUE *argv, VALUE self) {
   // set defaults
   if (argc) {
     Check_Type(argv[0], T_HASH);
-    (void)rb_funcall(self, rb_intern("update"), 1, argv[0]);
+    (void)rb_funcall(self, rb_intern("update!"), 1, argv[0]);
   }
 
   // yield self if block_given?

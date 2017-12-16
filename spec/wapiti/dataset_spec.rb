@@ -3,6 +3,18 @@ module Wapiti
     let(:ch) { File.read(fixture('chtest.txt')).strip }
     let(:ds) { Dataset.open fixture('chtest.txt'), tagged: true }
 
+    describe '.open' do
+      let(:xml) { Dataset.open fixture('chtrain.xml') }
+      let(:txt) { Dataset.open fixture('chtrain.txt'), tagged: true }
+
+      it 'opens xml files' do
+        expect(xml.size).to eq(823)
+      end
+      it 'opens txt files' do
+        expect(txt).to eq(xml)
+      end
+    end
+
     describe '#to_a' do
       it 'returns an array of token string arrays' do
         expect(ds.to_a.length).to eq(77)

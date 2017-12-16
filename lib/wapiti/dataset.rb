@@ -1,7 +1,7 @@
 module Wapiti
   require 'builder'
 
-  class DataSet
+  class Dataset
     extend Forwardable
     include Comparable
     include Enumerable
@@ -48,7 +48,7 @@ module Wapiti
     def <=>(other)
     end
 
-    def to_s(separator: '\n\n', **options)
+    def to_s(separator: "\n\n", **options)
       map { |sq| sq.to_s(**options) }.join(separator)
     end
 
@@ -82,6 +82,10 @@ module Wapiti
       else
         raise ArgumentError, "unknown format: '#{format}'"
       end
+    end
+
+    def inspect
+      "#<Wapiti::Dataset sequences={#{size}}>"
     end
   end
 end

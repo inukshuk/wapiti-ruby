@@ -44,11 +44,11 @@ module Wapiti
         segment, current = nil
 
         each do |token|
-          value, label = token.to_a(tag: true)
+          value, label = token.to_a(expanded: false)
 
           if current != label
             unless segment.nil? || segment.empty?
-              yield segment.join(spacer), current
+              yield current, segment.join(spacer)
             end
 
             segment, current = [], label
@@ -64,13 +64,14 @@ module Wapiti
     end
 
     def to_a(**options)
-      map { |tk| tk.to_a(**options) }
+      map { |tk| tk.to_s(**options) }
     end
 
-    def to_s(delimiter: '\n', **options)
+    def to_s(delimiter: "\n", **options)
       map { |tk| tk.to_s(**options) }.join(delimiter)
     end
 
+    # TODO handle duplicate labels!
     def to_h(**options)
       Hash[*each_segment(**options).to_a]
     end
@@ -81,6 +82,10 @@ module Wapiti
           sq.tag! label, segment
         end
       end
+    end
+
+    def inspect
+      "#<Wapiti::Sequence tokens={#{size}}>"
     end
   end
 end

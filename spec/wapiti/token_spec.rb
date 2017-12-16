@@ -59,22 +59,22 @@ module Wapiti
         Token.new('September', label: 'B-NP', observations: ['NNP'])
       }
 
-      it 'returns value by default' do
-        expect(september.to_s).to eq('September')
+      it 'returns value, observations, and label by default' do
+        expect(september.to_s).to eq('September NNP B-NP')
       end
 
-      it 'includes observations when expanded' do
-        expect(september.to_s(expanded: true)).to eq('September NNP')
+      it 'includes observations when not tagged' do
+        expect(september.to_s(tagged: false)).to eq('September NNP')
       end
 
-      it 'includes label when tagged' do
-        expect(september.to_s(tagged: true)).to eq('September B-NP')
+      it 'includes label when not expanded' do
+        expect(september.to_s(expanded: false)).to eq('September B-NP')
       end
 
-      it 'includes observations and label when expanded and tagged' do
+      it 'returns just the value when neither expanded not tagged' do
         expect(
-          september.to_s(expanded: true, tagged: true)
-        ).to eq('September NNP B-NP')
+          september.to_s(expanded: false, tagged: false)
+        ).to eq('September')
       end
     end
   end

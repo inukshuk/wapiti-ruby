@@ -38,22 +38,15 @@ module Wapiti
       to_a(**options).join(spacer)
     end
 
-    def to_a(expanded: false, tagged: false)
+    def to_a(expanded: true, tagged: true)
       a = [value]
-
-      if expanded
-        raise Error,
-          'cannot expand token: missing observations' unless observations?
-        a.concat observations
-      end
-
-      if tagged
-        raise Error,
-          'cannot tag token: missing label' unless label?
-        a << label
-      end
-
+      a.concat observations if expanded && observations?
+      a << label if tagged && label?
       a
+    end
+
+    def inspect
+      %Q{#<Wapiti::Token "#{to_s tagged: true}">}
     end
   end
 end

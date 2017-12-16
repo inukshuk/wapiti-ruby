@@ -67,6 +67,7 @@ module Wapiti
     end
 
     def <=>(other)
+      Dataset === other ? sequences <=> other.sequences : nil
     end
 
     def to_s(separator: "\n\n", **options)

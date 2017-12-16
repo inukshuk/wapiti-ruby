@@ -14,7 +14,7 @@ module Wapiti
       end
     end
 
-    def initialize(value = '', label = '', observations: [], score: nil)
+    def initialize(value = '', label: '', observations: [], score: nil)
       @value, @label, @observations, @score = value, label, observations, score
     end
 

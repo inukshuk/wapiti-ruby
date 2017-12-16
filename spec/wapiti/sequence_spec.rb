@@ -46,7 +46,7 @@ module Wapiti
     end
 
     describe '#to_s' do
-      it 'returns just the tokens by default' do
+      it 'returns expanded tokens by default' do
         expect(s.to_s).to eq(<<~EOS.strip)
           Confidence NN B-NP
           in IN B-PP

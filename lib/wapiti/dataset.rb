@@ -10,27 +10,22 @@ module Wapiti
     def_delegators :sequences, :[], :sample, :size, :slice!
 
     class << self
-      def parse(
-        input,
-        format: format_for(input),
-        separator: /(?:\r?\n){2,}/,
-        **options
-      )
-        case format.downcase
-        when 'wapiti'
+      def parse(input, separator: /(?:\r?\n){2,}/, **options)
+        case input
+        when Array
           new(input.map { |seq|
             Sequence.new(seq.map { |tk|
               Token.new tk[0], label: tk[1].to_s, score: tk[2]
             })
           })
-        when '.txt', 'txt'
+        when String
           new(input.split(separator).map { |seq|
             Sequence.parse(seq, **options)
           })
-        when '.xml', 'xml'
+        when REXML::Document
           new
         else
-          raise ArgumentError, "unknown format: '#{format}'"
+          raise ArgumentError, "unknown input type: #{input.class}"
         end
       end
 
@@ -38,17 +33,12 @@ module Wapiti
         raise ArgumentError,
           "cannot open dataset from tainted path: '#{path}'" if path.tainted?
 
-        parse(File.read(path, encoding: 'utf-8'), format: format, **options)
-      end
-
-      private
-
-      def format_for(input)
-        case input
-        when Array
-          'wapiti'
+        input = File.read(path, encoding: 'utf-8')
+        case format.downcase
+        when '.xml', 'xml'
+          parse(REXML::Document.new(input), **options)
         else
-          'txt'
+          parse(input, **options)
         end
       end
     end

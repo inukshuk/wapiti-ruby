@@ -82,11 +82,21 @@ module Wapiti
     end
 
     describe '#to_xml' do
-      #it 'returns a <sequence> node' do
-      #  expect(s.to_xml.to_s).to eq(
-      #    "<sequence><B-NP>Confidence</B-NP> <I-VP>expected to take</I-VP><I-NP>dive</I-NP><O>.</O></sequence>"
-      #  )
-      #end
+      it 'returns a <sequence> node' do
+        expect(s.to_xml(Builder::XmlMarkup.new(indent: 2)).to_s).to eq(<<~EOS)
+          <sequence>
+            <B-NP>Confidence</B-NP>
+            <B-PP>in</B-PP>
+            <B-NP>the</B-NP>
+            <I-NP>pound</I-NP>
+            <B-VP>is</B-VP>
+            <I-VP>widely expected to take</I-VP>
+            <B-NP>another</B-NP>
+            <I-NP>sharp dive</I-NP>
+            <O>.</O>
+          </sequence>
+        EOS
+      end
     end
   end
 end

@@ -2,7 +2,7 @@ module Wapiti
   class Token
     include Comparable
 
-    attr_accessor :value, :label, :observations
+    attr_accessor :value, :label, :observations, :score
 
     class << self
       def parse(string, spacer: /\s+/, tagged: false)
@@ -14,8 +14,8 @@ module Wapiti
       end
     end
 
-    def initialize(value = '', label: '', observations: [])
-      @value, @label, @observations = value, label, observations
+    def initialize(value = '', label = '', observations: [], score: nil)
+      @value, @label, @observations, @score = value, label, observations, score
     end
 
     def observations?
@@ -24,6 +24,10 @@ module Wapiti
 
     def label?
       !(label.nil? || label.empty?)
+    end
+
+    def score?
+      !score.nil?
     end
 
     def <=>(other)

@@ -74,10 +74,11 @@ module Wapiti
     end
 
     describe '#to_h' do
-      #it 'returns a hash of segment arrays' do
-      #  expect(s.to_h).to be_a(Hash)
-      #  expect(s.to_h.keys).to eq(
-      #end
+      it 'returns a hash of segment arrays' do
+        expect(s.to_h.keys).to eq(%w{B-NP B-PP I-NP B-VP I-VP O})
+        expect(s.to_h['I-VP']).to eq(['widely expected to take'])
+        expect(s.to_h['I-NP']).to eq(['pound', 'sharp dive'])
+      end
     end
 
     describe '#to_xml' do

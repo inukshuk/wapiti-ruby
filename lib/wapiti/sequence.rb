@@ -41,21 +41,18 @@ module Wapiti
 
     def each_segment(spacer: ' ')
       if block_given?
-        segment, current = nil
+        lbl, sgm = nil, []
 
-        each do |token|
-          value, label = token.to_a(expanded: false)
-
-          if current != label
-            unless segment.nil? || segment.empty?
-              yield current, segment.join(spacer)
-            end
-
-            segment, current = [], label
+        each do |tk|
+          if lbl != tk.label
+            yield [lbl, sgm.join(spacer)] unless sgm.empty?
+            lbl, sgm = tk.label, [tk.value]
           else
-            segment << value
+            sgm << tk.value
           end
         end
+
+        yield [lbl, sgm.join(spacer)] unless sgm.empty?
 
         self
       else
@@ -71,14 +68,17 @@ module Wapiti
       map { |tk| tk.to_s(**options) }.join(delimiter)
     end
 
-    # TODO handle duplicate labels!
     def to_h(**options)
-      Hash[*each_segment(**options).to_a]
+      each_segment(**options).reduce({}) do |h, (label, segment)|
+        h[label] = [] unless h.key? label
+        h[label] << segment
+        h
+      end
     end
 
     def to_xml(xml = Builder::XmlMarkup.new)
       xml.sequence do |sq|
-        each_segment do |label, segment|
+        each_segment do |(label, segment)|
           sq.tag! label, segment
         end
       end

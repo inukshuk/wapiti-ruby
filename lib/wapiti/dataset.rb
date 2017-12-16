@@ -10,10 +10,21 @@ module Wapiti
     def_delegators :sequences, :[], :sample, :size, :slice!
 
     class << self
-      def parse(string, format: 'txt', separator: /(?:\r?\n){2,}/, **options)
+      def parse(
+        input,
+        format: format_for(input),
+        separator: /(?:\r?\n){2,}/,
+        **options
+      )
         case format.downcase
+        when 'wapiti'
+          new(input.map { |seq|
+            Sequence.new(seq.map { |tk|
+              Token.new tk[0], label: tk[1].to_s, score: tk[2]
+            })
+          })
         when '.txt', 'txt'
-          new(string.split(separator).map { |seq|
+          new(input.split(separator).map { |seq|
             Sequence.parse(seq, **options)
           })
         when '.xml', 'xml'
@@ -30,6 +41,16 @@ module Wapiti
         parse(File.read(path, encoding: 'utf-8'), format: format, **options)
       end
 
+      private
+
+      def format_for(input)
+        case input
+        when Array
+          'wapiti'
+        else
+          'txt'
+        end
+      end
     end
 
     def initialize(sequences = [])

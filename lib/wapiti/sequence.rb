@@ -22,6 +22,7 @@ module Wapiti
     end
 
     def <=>(other)
+      Sequence === other ? tokens <=> other.tokens : nil
     end
 
     def tagged?

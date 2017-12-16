@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.require_path = 'lib'
   s.extensions   << 'ext/wapiti/extconf.rb'
 
-  s.required_ruby_version = '>=2.2'
+  s.required_ruby_version = '>=2.3'
   s.add_runtime_dependency('builder', '~>3.2')
 
   s.files =

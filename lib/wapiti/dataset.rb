@@ -16,7 +16,8 @@ module Wapiti
         when Array
           new(dataset.map { |seq|
             Sequence.new(seq.map { |tk|
-              Token.new tk[0], label: tk[1].to_s, score: tk[2]
+              value, *obs = tk[0].split(/\s+/)
+              Token.new value, label: tk[1].to_s, observations: obs, score: tk[2]
             })
           })
         when String

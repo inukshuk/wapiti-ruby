@@ -36,11 +36,17 @@ module Wapiti
         options.update!(opts)
       end
 
+      input = input.to_a if input.is_a?(Dataset)
+
       if block_given?
-        native_label(input, &Proc.new)
+        output = native_label(input, &Proc.new)
       else
-        native_label(input)
+        output = native_label(input)
       end
+
+      return output if options.nbest > 1 || options.skip_tokens
+
+      Dataset.parse output, tagged: true
     ensure
       unless original_options.nil?
         options.update(original_options)

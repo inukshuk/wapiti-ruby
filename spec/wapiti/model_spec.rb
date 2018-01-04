@@ -170,26 +170,27 @@ module Wapiti
         let(:model) { Wapiti.load(fixture('ch.mod')) }
 
         context 'when passed an array of arrays' do
-          let(:input) { [['Héllo NN B-VP', ', , O', 'world NN B-NP', '! ! O']] }
+          let(:input) { [['Hello NN B-VP', ', , O', 'world NN B-NP', '! ! O']] }
 
-          it 'returns an array of token-label pairs' do
-            labels = model.label(input)
-            expect(labels[0].map(&:first)).to eq(input[0])
-            expect(labels[0].map(&:last)).to eq(%w{ B-NP O B-NP O })
+          it 'returns a tagged dataset' do
+            dataset = model.label(input)
+            expect(dataset[0].map(&:value)).to eq(%w{ Hello , world ! })
+            expect(dataset[0].map(&:label)).to eq(%w{ B-NP O B-NP O })
           end
 
           it 'yields each token/label pair to the supplied block' do
-            labels = model.label(input) do |token, label|
+            dataset = model.label(input) do |token, label|
               [token.downcase, label.downcase]
             end
-            expect(labels[0].map(&:last)).to eq(%w{ b-np o b-np o })
+
+            expect(dataset[0].map(&:label)).to eq(%w{ b-np o b-np o })
           end
 
           context 'with the :score option set' do
             before(:each) { model.options.score! }
 
             it 'returns an array of token-label-score tuples' do
-              model.label(input)[0].map { |t,l,s| s.class }.uniq == [Float]
+              expect(model.label(input)[0].all?(&:score?)).to be(true)
             end
           end
 
@@ -197,7 +198,7 @@ module Wapiti
             before(:each) { model.options.nbest = 2 }
 
             it 'returns an array of token-label-label tuples' do
-              model.label(input)[0][-1][1,2] == %w{ O O }
+              expect(model.label(input)[0][-1][1,2]).to eq(%w{ O O })
             end
           end
         end
@@ -205,10 +206,10 @@ module Wapiti
         context 'when passed a filename' do
           let(:input) { fixture('chtest.txt') }
 
-          it 'returns an array of token-label pairs' do
-            labels = model.label(input)
-            expect(labels.size).to eq(77)
-            expect(labels[0].take(5).map(&:last)).to eq(%w{ B-NP B-PP B-NP I-NP B-VP })
+          it 'returns a tagged dataset' do
+            dataset = model.label(input)
+            expect(dataset.size).to eq(77)
+            expect(dataset[0].take(5).map(&:label)).to eq(%w{ B-NP B-PP B-NP I-NP B-VP })
           end
         end
       end

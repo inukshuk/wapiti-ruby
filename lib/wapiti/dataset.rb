@@ -27,7 +27,7 @@ module Wapiti
         when REXML::Document
           new(dataset.elements.to_a('dataset/sequence').map { |seq|
             Sequence.new(seq.elements.to_a.map { |sgm|
-              sgm.text.split(options[:spacer] || /\s+/).map { |tk|
+              sgm.text.strip.split(options[:spacer] || /\s+/).map { |tk|
                 Token.new tk, label: sgm.name
               }
             }.flatten)

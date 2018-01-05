@@ -73,8 +73,9 @@ module Wapiti
       to_s(delimiter: delimiter, expanded: false, tagged: false)
     end
 
-    def to_h(**options)
+    def to_h(symbolize_keys: false, **options)
       each_segment(**options).reduce({}) do |h, (label, segment)|
+        label = label.intern if symbolize_keys
         h[label] = [] unless h.key? label
         h[label] << segment
         h

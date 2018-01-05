@@ -8,7 +8,7 @@ module Wapiti
     include Enumerable
 
     attr_reader :sequences
-    def_delegators :sequences, :[], :sample, :size, :slice!
+    def_delegators :sequences, :[], :empty?, :sample, :size, :slice!
 
     class << self
       def parse(dataset, separator: /(?:\r?\n){2,}/, **options)

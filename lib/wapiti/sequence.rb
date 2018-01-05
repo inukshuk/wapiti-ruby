@@ -69,6 +69,10 @@ module Wapiti
       map { |tk| tk.to_s(**options) }.join(delimiter)
     end
 
+    def to_sentence(delimiter: ' ')
+      to_s(delimiter: delimiter, expanded: false, tagged: false)
+    end
+
     def to_h(**options)
       each_segment(**options).reduce({}) do |h, (label, segment)|
         h[label] = [] unless h.key? label

@@ -76,6 +76,10 @@ module Wapiti
       map { |sq| sq.to_s(**options) }.join(separator)
     end
 
+    def to_txt(separator: "\n", **options)
+      map { |sq| sq.to_sentence(**options) }.join(separator)
+    end
+
     def to_a(**options)
       map { |sq| sq.to_a(**options) }
     end

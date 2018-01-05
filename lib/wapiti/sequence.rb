@@ -7,13 +7,13 @@ module Wapiti
     include Enumerable
 
     attr_reader :tokens
-    def_delegators :tokens, :[], :size
+    def_delegators :tokens, :[], :empty?, :size
 
     class << self
       def parse(string, delimiter: /\r?\n/, **options)
         new(string.split(delimiter).map { |token|
           Token.parse token, **options
-        })
+        }.reject(&:empty?))
       end
     end
 

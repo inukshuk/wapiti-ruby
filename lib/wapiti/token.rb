@@ -22,6 +22,10 @@ module Wapiti
       !(observations.nil? || observations.empty?)
     end
 
+    def empty?
+      value.nil? || value.strip.empty?
+    end
+
     def label?
       !(label.nil? || label.empty?)
     end

@@ -23,7 +23,7 @@ module Wapiti
         when String
           new(dataset.split(separator).map { |seq|
             Sequence.parse(seq, **options)
-          })
+          }.reject(&:empty?))
         when REXML::Document
           new(dataset.elements.to_a('dataset/sequence').map { |seq|
             Sequence.new(seq.elements.to_a.map { |sgm|

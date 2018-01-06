@@ -25,6 +25,10 @@ module Wapiti
       tokens.hash
     end
 
+    def eql?(other)
+      hash == other.hash
+    end
+
     def ==(other)
       0 == (self <=> other)
     end

@@ -72,6 +72,10 @@ module Wapiti
       0 == (self <=> other)
     end
 
+    def eql?(other)
+      hash == other.hash
+    end
+
     def <=>(other)
       Dataset === other ? sequences <=> other.sequences : nil
     end

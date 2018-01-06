@@ -64,6 +64,10 @@ module Wapiti
       end
     end
 
+    def labels
+      map { |sq| sq.map(&:label).uniq }.flatten.uniq.sort
+    end
+
     def hash
       sequences.hash
     end

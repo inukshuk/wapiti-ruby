@@ -75,5 +75,11 @@ module Wapiti
         expect(x.size).to eq(77)
       end
     end
+
+    describe '#labels' do
+      it 'returns sorted list of lables present in the set' do
+        expect(ds.labels.take(3)).to eq(%w{ B-ADJP B-ADVP B-NP })
+      end
+    end
   end
 end

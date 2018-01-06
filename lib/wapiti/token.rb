@@ -34,6 +34,10 @@ module Wapiti
       !score.nil?
     end
 
+    def ==(other)
+      0 == (self <=> other)
+    end
+
     def <=>(other)
       if other.is_a?(Token)
         [value.to_s, label.to_s] <=> [other.value.to_s, other.label.to_s]

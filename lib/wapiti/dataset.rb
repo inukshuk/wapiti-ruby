@@ -64,6 +64,10 @@ module Wapiti
       end
     end
 
+    def ==(other)
+      0 == (self <=> other)
+    end
+
     def <=>(other)
       Dataset === other ? sequences <=> other.sequences : nil
     end

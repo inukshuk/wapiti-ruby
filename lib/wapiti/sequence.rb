@@ -21,6 +21,10 @@ module Wapiti
       @tokens = tokens
     end
 
+    def hash
+      tokens.hash
+    end
+
     def ==(other)
       0 == (self <=> other)
     end

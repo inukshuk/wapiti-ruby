@@ -34,6 +34,10 @@ module Wapiti
       !score.nil?
     end
 
+    def hash
+      [value.to_s, label.to_s].hash
+    end
+
     def ==(other)
       0 == (self <=> other)
     end

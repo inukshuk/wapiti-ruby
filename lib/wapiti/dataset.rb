@@ -64,6 +64,10 @@ module Wapiti
       end
     end
 
+    def hash
+      sequences.hash
+    end
+
     def ==(other)
       0 == (self <=> other)
     end

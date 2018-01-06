@@ -68,10 +68,6 @@ module Wapiti
       sequences.hash
     end
 
-    def ==(other)
-      0 == (self <=> other)
-    end
-
     def eql?(other)
       hash == other.hash
     end

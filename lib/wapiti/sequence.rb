@@ -29,10 +29,6 @@ module Wapiti
       hash == other.hash
     end
 
-    def ==(other)
-      0 == (self <=> other)
-    end
-
     def <=>(other)
       Sequence === other ? tokens <=> other.tokens : nil
     end

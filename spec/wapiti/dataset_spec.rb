@@ -3,10 +3,10 @@ module Wapiti
     let(:ch) { File.read(fixture('chtest.txt')).strip }
     let(:ds) { Dataset.open fixture('chtest.txt'), tagged: true }
 
-    describe '.open' do
-      let(:xml) { Dataset.open fixture('chtrain.xml') }
-      let(:txt) { Dataset.open fixture('chtrain.txt'), tagged: true }
+    let(:xml) { Dataset.open fixture('chtrain.xml') }
+    let(:txt) { Dataset.open fixture('chtrain.txt'), tagged: true }
 
+    describe '.open' do
       it 'opens xml files' do
         expect(xml.size).to eq(823)
       end
@@ -54,6 +54,25 @@ module Wapiti
             <sequence>
               <B-NP>Confidence</B-NP>
         EOS
+      end
+    end
+
+    describe '#|' do
+      it 'combines two datasets' do
+        expect((ds|xml).size).to eq(900)
+      end
+
+      it 'excludes duplicates' do
+        expect((ds|ds).size).to eq(77)
+      end
+    end
+
+    describe '#uniq!' do
+      it 'removes duplicate sequences' do
+        x = ds + ds
+        expect(x.size).to eq(154)
+        x.uniq!
+        expect(x.size).to eq(77)
       end
     end
   end

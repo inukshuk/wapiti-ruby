@@ -8,7 +8,7 @@ module Wapiti
     include Enumerable
 
     attr_reader :sequences
-    def_delegators :sequences, :[], :empty?, :sample, :size, :slice!, :uniq!
+    def_delegators :sequences, :[], :empty?, :length, :size, :slice!, :uniq!
 
     class << self
       def parse(dataset, separator: /(?:\r?\n){2,}/, **options)
@@ -76,6 +76,19 @@ module Wapiti
       Dataset === other ? sequences <=> other.sequences : nil
     end
 
+    def concat(other)
+      sequences.concat other.sequences
+      self
+    end
+
+    def sample(n = 1, **options)
+      Dataset.new sequences.sample(n, **options)
+    end
+
+    def slice(*args)
+      Dataset.new [*sequences.slice(*args)]
+    end
+
     def +(other)
       Dataset.new(sequences + other.sequences)
     end
@@ -90,15 +103,6 @@ module Wapiti
 
     def &(other)
       Dataset.new(sequences & other.sequences)
-    end
-
-    def concat(other)
-      sequences.concat other.sequences
-      self
-    end
-
-    def diff(other)
-      raise NotImplementedError
     end
 
     def to_s(separator: "\n\n", **options)

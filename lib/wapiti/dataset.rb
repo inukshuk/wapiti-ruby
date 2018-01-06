@@ -85,8 +85,12 @@ module Wapiti
       Dataset.new sequences.sample(n, **options)
     end
 
-    def slice(*args)
-      Dataset.new [*sequences.slice(*args)]
+    def slice(start, length = 1)
+      if Range === start
+        Dataset.new sequences.slice(start)
+      else
+        Dataset.new sequences.slice(start, length)
+      end
     end
 
     def +(other)

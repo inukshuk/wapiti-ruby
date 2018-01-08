@@ -340,7 +340,7 @@ char *pat_exec(const pat_t *pat, const tok_t *tok, uint32_t at) {
 			else if (pos >= (int32_t)T)
 				value = eval[min( pos - (int32_t)T, 4)];
 			else if (col >= tok->cnts[pos])
-				fatal("missing tokens, cannot apply pattern");
+				fatal("missing tokens at %d: %d/%d, cannot apply pattern", pos, col, tok->cnts[pos]);
 			else
 				value = tok->toks[pos][col];
 		}

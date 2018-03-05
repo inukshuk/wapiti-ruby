@@ -37,6 +37,10 @@ module Wapiti
       all?(&:label?)
     end
 
+    def label?(label)
+      any? { |tk| tk.label == label }
+    end
+
     def each
       if block_given?
         tokens.each(&Proc.new)

@@ -24,9 +24,8 @@ Gem::Specification.new do |s|
   s.files =
     `git ls-files`.split("\n") - `git ls-files spec`.split("\n") - %w{
       .coveralls.yml
-      .travis.yml
-      .gitmodules
       .gitignore
+      .gitmodules
       .rspec
       .simplecov
       .travis.yml

@@ -1,3 +1,5 @@
+require 'zlib'
+
 module Wapiti
   class Token
     include Comparable
@@ -38,6 +40,10 @@ module Wapiti
       [value.to_s, label.to_s].hash
     end
 
+    def value(encode: false)
+      encode ? Zlib::crc32(@value).to_s(16) : @value
+    end
+
     def eql?(other)
       hash == other.hash
     end
@@ -54,8 +60,8 @@ module Wapiti
       to_a(**options).join(spacer)
     end
 
-    def to_a(expanded: true, tagged: true)
-      a = [value]
+    def to_a(expanded: true, tagged: true, encode: false)
+      a = [value(encode: encode)]
       a.concat observations if expanded && observations?
       a << label if tagged && label?
       a

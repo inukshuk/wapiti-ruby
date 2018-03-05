@@ -1,5 +1,6 @@
 module Wapiti
   require 'builder'
+  require 'forwardable'
   require 'rexml/document'
 
   class Dataset

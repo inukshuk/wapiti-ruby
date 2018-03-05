@@ -1,5 +1,6 @@
 module Wapiti
   require 'builder'
+  require 'forwardable'
 
   class Sequence
     extend Forwardable

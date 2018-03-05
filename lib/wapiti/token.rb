@@ -1,6 +1,6 @@
-require 'zlib'
-
 module Wapiti
+  require 'zlib'
+
   class Token
     include Comparable
 

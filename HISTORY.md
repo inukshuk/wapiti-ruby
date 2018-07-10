@@ -1,3 +1,6 @@
+1.0.3 / 2018-07-10
+==================
+* Fix compile time format-security
 1.0.0 / 2017-12-xx
 ==================
 * Added support for Windows platform

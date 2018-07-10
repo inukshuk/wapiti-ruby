@@ -79,7 +79,7 @@ __attribute__((noreturn)) void fatal(const char *fmt, ...) {
 	va_start(args, fmt);
   msg = rb_vsprintf(fmt, args);
 	va_end(args);
-	rb_raise(cNativeError, StringValueCStr(msg));
+	rb_raise(cNativeError, "%s", StringValueCStr(msg));
 }
 
 /* pfatal:
@@ -97,7 +97,7 @@ __attribute__((noreturn)) void pfatal(const char *fmt, ...) {
   msg = rb_vsprintf(fmt, args);
 	va_end(args);
 	rb_str_catf(msg, ": %s", err);
-	rb_raise(cNativeError, StringValueCStr(msg));
+	rb_raise(cNativeError, "%s", StringValueCStr(msg));
 }
 
 /* warning:

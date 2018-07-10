@@ -6,6 +6,7 @@ cflags = %w{
   -W
   -Wall
   -Wno-declaration-after-statement
+  -Werror=format-security
   -O3
 }
 

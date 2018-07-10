@@ -38,6 +38,10 @@ module Wapiti
       tokens.all?(&:label?)
     end
 
+    def token_length
+      tokens.reduce(0) { |len, tk| len + tk.value.length }
+    end
+
     def label?(label)
       tokens.any? { |tk| tk.label == label }
     end

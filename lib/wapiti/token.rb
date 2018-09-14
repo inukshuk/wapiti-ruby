@@ -7,7 +7,7 @@ module Wapiti
     attr_accessor :value, :label, :observations, :score
 
     class << self
-      def parse(string, spacer: /\s+/, tagged: false)
+      def parse(string, spacer: /\s+/, tagged: false, **opts)
         value, *observations = string.split(spacer)
         new(value, {
           label: (tagged ? observations.pop : nil).to_s,
@@ -56,8 +56,8 @@ module Wapiti
       end
     end
 
-    def to_s(spacer: ' ', **options)
-      to_a(**options).join(spacer)
+    def to_s(spacer: ' ', **opts)
+      to_a(**opts).join(spacer)
     end
 
     def to_a(expanded: true, tagged: true, encode: false)

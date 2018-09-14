@@ -12,7 +12,7 @@ module Wapiti
     def_delegators :sequences, :[], :empty?, :length, :size, :slice!, :uniq!
 
     class << self
-      def parse(dataset, separator: /(?:\r?\n){2,}/, **options)
+      def parse(dataset, separator: /(?:\r?\n){2,}/, **opts)
         case dataset
         when Array
           new(dataset.map { |seq|
@@ -23,12 +23,12 @@ module Wapiti
           })
         when String
           new(dataset.split(separator).map { |seq|
-            Sequence.parse(seq, **options)
+            Sequence.parse(seq, **opts)
           }.reject(&:empty?))
         when REXML::Document
           new(dataset.elements.to_a('dataset/sequence').map { |seq|
             Sequence.new(seq.elements.to_a.map { |sgm|
-              sgm.text.strip.split(options[:spacer] || /\s+/).map { |tk|
+              sgm.text.strip.split(opts[:spacer] || /\s+/).map { |tk|
                 Token.new tk, label: sgm.name
               }
             }.flatten)
@@ -38,16 +38,16 @@ module Wapiti
         end
       end
 
-      def open(path, format: File.extname(path), **options)
+      def open(path, format: File.extname(path), **opts)
         raise ArgumentError,
           "cannot open dataset from tainted path: '#{path}'" if path.tainted?
 
         input = File.read(path, encoding: 'utf-8')
         case format.downcase
         when '.xml', 'xml'
-          parse(REXML::Document.new(input), **options)
+          parse(REXML::Document.new(input), **opts)
         else
-          parse(input, **options)
+          parse(input, **opts)
         end
       end
     end
@@ -86,8 +86,8 @@ module Wapiti
       self
     end
 
-    def sample(n = 1, **options)
-      Dataset.new sequences.sample(n, **options)
+    def sample(n = 1, **opts)
+      Dataset.new sequences.sample(n, **opts)
     end
 
     def slice(start, length = 1)
@@ -114,20 +114,20 @@ module Wapiti
       Dataset.new(sequences & other.sequences)
     end
 
-    def to_s(separator: "\n\n", **options)
-      map { |sq| sq.to_s(**options) }.join(separator)
+    def to_s(separator: "\n\n", **opts)
+      map { |sq| sq.to_s(**opts) }.join(separator)
     end
 
-    def to_txt(separator: "\n", **options)
-      map { |sq| sq.to_sentence(**options) }.join(separator)
+    def to_txt(separator: "\n", **opts)
+      map { |sq| sq.to_sentence(**opts) }.join(separator)
     end
 
-    def to_a(**options)
-      map { |sq| sq.to_a(**options) }
+    def to_a(**opts)
+      map { |sq| sq.to_a(**opts) }
     end
 
-    def to_xml(**options)
-      xml = Builder::XmlMarkup.new(**options)
+    def to_xml(**opts)
+      xml = Builder::XmlMarkup.new(**opts)
       xml.instruct!
       xml.dataset do |ds|
         each do |seq|
@@ -136,19 +136,19 @@ module Wapiti
       end
     end
 
-    def to_yml(**options)
-      map { |sq| sq.to_h(**options) }
+    def to_yml(**opts)
+      map { |sq| sq.to_h(**opts) }
     end
 
-    def save(path, format: File.extname(path), **options)
+    def save(path, format: File.extname(path), **opts)
       raise ArgumentError,
         "cannot write dataset to tainted path: '#{path}'" if path.tainted?
 
       output = case format.downcase
         when '.txt', 'txt'
-          to_s(**options)
+          to_s(**opts)
         when '.xml', 'xml'
-          to_xml(**options)
+          to_xml(**opts)
         else
           raise ArgumentError, "unknown format: '#{format}'"
         end

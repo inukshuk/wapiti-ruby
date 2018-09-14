@@ -11,9 +11,9 @@ module Wapiti
     def_delegators :tokens, :[], :empty?, :size
 
     class << self
-      def parse(string, delimiter: /\r?\n/, **options)
+      def parse(string, delimiter: /\r?\n/, **opts)
         new(string.split(delimiter).map { |token|
-          Token.parse token, **options
+          Token.parse token, **opts
         }.reject(&:empty?))
       end
     end
@@ -82,20 +82,20 @@ module Wapiti
       end
     end
 
-    def to_a(**options)
-      tokens.map { |tk| tk.to_s(**options) }
+    def to_a(**opts)
+      tokens.map { |tk| tk.to_s(**opts) }
     end
 
-    def to_s(delimiter: "\n", **options)
-      tokens.map { |tk| tk.to_s(**options) }.join(delimiter)
+    def to_s(delimiter: "\n", **opts)
+      tokens.map { |tk| tk.to_s(**opts) }.join(delimiter)
     end
 
     def to_sentence(delimiter: ' ')
       to_s(delimiter: delimiter, expanded: false, tagged: false)
     end
 
-    def to_h(symbolize_keys: false, **options)
-      each_segment(**options).reduce({}) do |h, (label, segment)|
+    def to_h(symbolize_keys: false, **opts)
+      each_segment(**opts).reduce({}) do |h, (label, segment)|
         label = label.intern if symbolize_keys
         h[label] = [] unless h.key? label
         h[label] << segment

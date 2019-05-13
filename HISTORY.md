@@ -1,4 +1,4 @@
-1.0.4 / 2019-05-13
+1.0.5 / 2019-05-13
 ==================
 * Updated examples in README.md to current API
 * Fix crash when Model#label(input, check: true) is called on input with new labels 

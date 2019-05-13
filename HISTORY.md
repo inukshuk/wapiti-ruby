@@ -1,6 +1,12 @@
+1.0.4 / 2019-05-13
+==================
+* Updated examples in README.md to current API
+* Fix crash when Model#label(input, check: true) is called on input with new labels 
+
 1.0.3 / 2018-07-10
 ==================
 * Fix compile time format-security
+
 1.0.0 / 2017-12-xx
 ==================
 * Added support for Windows platform

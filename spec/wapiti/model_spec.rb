@@ -148,8 +148,9 @@ module Wapiti
       context 'given a trained model' do
         let(:model) { Wapiti.load(fixture('ch.mod')) }
         let(:input) { [['Héllo NN B-VP', ', , O', 'world NN B-NP', '! ! O']] }
+        let(:input_extra_label) { [['Héllo NN EXTRA1', ', , EXTRA2', 'world NN EXTRA3', '! ! EXTRA4']] }
 
-        it 'returns token and sequcence counts and errors' do
+        it 'returns token and sequence counts and errors' do
           expect(model.token_count).to eq(0)
           model.label input
           expect(model.token_count).to eq(0)
@@ -157,6 +158,19 @@ module Wapiti
           model.label input, :check => true
           expect(model.token_count).to eq(input.map(&:length).reduce(&:+))
           expect(model.sequence_count).to eq(input.length)
+          expect(model.options.check).to be(false)
+        end
+
+        it 'returns token and sequence counts and errors with extra label' do
+          expect(model.token_count).to eq(0)
+          model.label input
+          expect(model.token_count).to eq(0)
+
+          model.label input_extra_label, :check => true
+          expect(model.token_count).to eq(input.map(&:length).reduce(&:+))
+          expect(model.sequence_count).to eq(input.length)
+          expect(model.stats[:token][:rate]).to eq(100)
+          expect(model.stats[:sequence][:rate]).to eq(100)
           expect(model.options.check).to be(false)
         end
       end

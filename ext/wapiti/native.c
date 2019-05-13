@@ -981,19 +981,18 @@ static VALUE decode_sequence(VALUE self, mdl_t *model, raw_t *raw) {
 
   if (model->opt->check) {
     int err = 0;
-    uint32_t label_pos=0;
+    uint32_t lbl = 0;
+
     for (t = 0; t < T; ++t) {
+      lbl = seq->pos[t].lbl;
 
-
-
-      label_pos=seq->pos[t].lbl;
       // ((uint32_t)-1) is a magic value for no asigned token
-      if(label_pos!=((uint32_t)-1)) {
-        stat[0][label_pos]++;
+      if (lbl != ((uint32_t)-1)) {
+        stat[0][lbl]++;
       }
       stat[1][out[t * N]]++;
 
-      if (label_pos != out[t * N]) {
+      if (lbl != out[t * N]) {
         terr++;
         err = 1;
       } else {

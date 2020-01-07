@@ -24,7 +24,7 @@ Quickstart
 ### Creating a Model
 
 You can run the following examples starting the ruby interpreter (irb or pry) inside spec/fixtures directory.
- 
+
 Using a pattern and training data stored in a file:
 
     require 'wapiti'
@@ -40,15 +40,15 @@ this class supports the default text format used by Wapiti as well as
 additional formats (such as YAML or XML) and an API, to make it easier
 to manage data sets used for input and training.
 
-    options = {threads:3, pattern: 'chpattern.txt'} 
-    
+    options = {threads:3, pattern: 'chpattern.txt'}
+
     data_text = Wapiti::Dataset.open('chtrain.txt',tagged:true)
     model2= Wapiti.train(data_text,options)
     model2.labels
     => ["B-ADJP", "B-ADVP", "B-CONJP" ...]
 
-    options = {threads:3, pattern: 'chpattern_only_tag.txt'} 
-    
+    options = {threads:3, pattern: 'chpattern_only_tag.txt'}
+
     data_xml    = Wapiti::Dataset.open('chtrain.xml')
     #=> #<Wapiti::Dataset sequences={823}>
     model3   = Wapiti.train(data_xml, options)
@@ -104,7 +104,7 @@ argument to the passed-in block.
     # => Dataset where each token will include a score
     output_with_score.first.map(&:score)
     # => [5.950832716249245, 8.870883529621942, ...]
-    
+
 ### Statistics
 
 By setting the *:check* option you can tell Wapiti to keep statistics during
@@ -142,7 +142,7 @@ example, fix the bug and submit a pull request.
 
 License
 -------
-Copyright 2011-2018 Sylvester Keil. All rights reserved.
+Copyright 2011-2020 Sylvester Keil. All rights reserved.
 
 Copyright 2009-2013 CNRS. All rights reserved.
 

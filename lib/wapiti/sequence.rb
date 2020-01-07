@@ -50,9 +50,9 @@ module Wapiti
       tokens.map(&:label).uniq
     end
 
-    def each
+    def each(&block)
       if block_given?
-        tokens.each(&Proc.new)
+        tokens.each(&block)
         self
       else
         to_enum

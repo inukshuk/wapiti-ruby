@@ -56,9 +56,9 @@ module Wapiti
       @sequences = sequences
     end
 
-    def each
+    def each(&block)
       if block_given?
-        sequences.each(&Proc.new)
+        sequences.each(&block)
         self
       else
         to_enum

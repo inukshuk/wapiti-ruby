@@ -30,7 +30,7 @@ module Wapiti
 
     alias native_label label
 
-    def label(input, opts = nil)
+    def label(input, opts = nil, &block)
       unless opts.nil?
         original_options = options.attributes(opts.keys)
         options.update!(opts)
@@ -39,7 +39,7 @@ module Wapiti
       input = input.to_a(tagged: options.check) if input.is_a?(Dataset)
 
       if block_given?
-        output = native_label(input, &Proc.new)
+        output = native_label(input, &block)
       else
         output = native_label(input)
       end
@@ -61,14 +61,14 @@ module Wapiti
 
     alias native_train train
 
-    def train(tdat, ddat = nil, opts = nil)
+    def train(tdat, ddat = nil, opts = nil, &block)
       options.update!(opts) unless opts.nil?
 
       tdat = tdat.to_a(tagged: true) if tdat.is_a?(Dataset)
       ddat = ddat.to_a(tagged: true) if ddat.is_a?(Dataset)
 
       if block_given?
-        native_train(tdat, ddat, &Proc.new)
+        native_train(tdat, ddat, &block)
       else
         native_train(tdat, ddat)
       end

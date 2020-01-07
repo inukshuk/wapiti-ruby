@@ -9,10 +9,10 @@ module Wapiti
     class << self
       def parse(string, spacer: /\s+/, tagged: false, **opts)
         value, *observations = string.split(spacer)
-        new(value, {
+        new(value,
           label: (tagged ? observations.pop : nil).to_s,
           observations: observations
-        })
+        )
       end
     end
 

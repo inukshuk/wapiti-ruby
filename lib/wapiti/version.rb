@@ -1,3 +1,3 @@
 module Wapiti
-  VERSION = '1.0.7'.freeze
+  VERSION = '2.0.0'.freeze
 end

@@ -32,7 +32,7 @@ RSpec::Matchers.define :be_valid_model_file do
 end
 
 module Fixtures
-  FIXTURES = File.expand_path('../fixtures', __FILE__).untaint
+  FIXTURES = File.expand_path('../fixtures', __FILE__)
 
   def fixture(name)
     File.join FIXTURES, name

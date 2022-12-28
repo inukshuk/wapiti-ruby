@@ -39,9 +39,6 @@ module Wapiti
       end
 
       def open(path, format: File.extname(path), **opts)
-        raise ArgumentError,
-          "cannot open dataset from tainted path: '#{path}'" if path.tainted?
-
         input = File.read(path, encoding: 'utf-8')
         case format.downcase
         when '.xml', 'xml'
@@ -141,9 +138,6 @@ module Wapiti
     end
 
     def save(path, format: File.extname(path), **opts)
-      raise ArgumentError,
-        "cannot write dataset to tainted path: '#{path}'" if path.tainted?
-
       output = case format.downcase
         when '.txt', 'txt'
           to_s(**opts)

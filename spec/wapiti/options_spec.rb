@@ -77,12 +77,8 @@ module Wapiti
 
     describe '#maxiter' do
       it 'returns a large number by default' do
-        # NB temporariy exploration for win32
-        if options.maxiter > 0
-          expect(options.maxiter).to be > 0
-        else
-          puts "maxiter = #{options.maxiter}"
-        end
+        # TODO figure out why win32 defaults to -1
+        expect(options.maxiter).to be > 0 unless Gem.win_platform?
       end
     end
 

@@ -1,10 +1,12 @@
 Wapiti-Ruby
 ===========
+[![CI](https://github.com/inukshuk/wapiti-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/inukshuk/wapiti-ruby/actions/workflows/ci.yml)
+
 The Wapiti-Ruby gem provides a wicked fast linear-chain CRF
 ([Conditional Random Fields](http://en.wikipedia.org/wiki/Conditional_random_field))
 API for sequence segmentation and labelling; it is based on the
 codebase of [wapiti](http://wapiti.limsi.fr/).
-[![CI](https://github.com/inukshuk/wapiti-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/inukshuk/wapiti-ruby/actions/workflows/ci.yml)
+
 
 Requirements
 ------------

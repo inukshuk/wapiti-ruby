@@ -1,3 +1,7 @@
+2.1.0 / 2023-01-02
+==================
+* Removed tainted strings checks (deprecated in Ruby 3.2)
+
 1.0.5 / 2019-05-13
 ==================
 * Updated examples in README.md to current API

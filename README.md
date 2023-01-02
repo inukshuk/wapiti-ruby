@@ -4,10 +4,7 @@ The Wapiti-Ruby gem provides a wicked fast linear-chain CRF
 ([Conditional Random Fields](http://en.wikipedia.org/wiki/Conditional_random_field))
 API for sequence segmentation and labelling; it is based on the
 codebase of [wapiti](http://wapiti.limsi.fr/).
-
-[![Linux Build Status](https://travis-ci.org/inukshuk/wapiti-ruby.svg?branch=master)](https://travis-ci.org/inukshuk/wapiti-ruby)
-[![Windows Build Status](https://ci.appveyor.com/api/projects/status/12rtxe2o8p55g1w6/branch/master?svg=true)](https://ci.appveyor.com/project/inukshuk/wapiti-ruby/branch/master)
-[![Coverage Status](https://coveralls.io/repos/github/inukshuk/wapiti-ruby/badge.svg?branch=master)](https://coveralls.io/github/inukshuk/wapiti-ruby?branch=master)
+[![CI](https://github.com/inukshuk/wapiti-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/inukshuk/wapiti-ruby/actions/workflows/ci.yml)
 
 Requirements
 ------------
@@ -142,7 +139,7 @@ example, fix the bug and submit a pull request.
 
 License
 -------
-Copyright 2011-2020 Sylvester Keil. All rights reserved.
+Copyright 2011-2023 Sylvester Keil. All rights reserved.
 
 Copyright 2009-2013 CNRS. All rights reserved.
 

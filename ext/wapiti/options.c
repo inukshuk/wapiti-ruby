@@ -285,7 +285,7 @@ void opt_parse(int argc, char *argv[argc], opt_t *opt) {
 	}
 	// Small trick for the maxiter switch
 	if (opt->maxiter == 0)
-		opt->maxiter = INT32_MAX;
+		opt->maxiter = INT_MAX;
 	// Check that all options are valid
 	#define argchecksub(name, test)                      \
 		if (!(test))                                 \

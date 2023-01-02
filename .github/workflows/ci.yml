@@ -8,6 +8,7 @@ jobs:
   ci:
     name: ${{ matrix.ruby-version }} ${{ matrix.friendlyName }}-${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         ruby-version:
@@ -18,7 +19,7 @@ jobs:
           - "3.2"
         arch:
           - x64
-        includes:
+        include:
           - os: ubuntu-latest
             friendlyName: Linux
           - os: macos-latest

@@ -4,6 +4,9 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   ci:
     name: ${{ matrix.ruby-version }} ${{ matrix.friendlyName }}-${{ matrix.arch }}
